@@ -1,0 +1,42 @@
+{
+  "funnyWords": {
+    "a": ["applesauce", "avocado toast", "artichoke", "armadillo", "acorns"],
+    "b": ["banana splits", "butterscotch", "biscuits", "bubblegum", "broccoli", "bumbleberry"],
+    "c": ["crumbs", "cupcakes", "cotton candy", "coconuts", "cinnamon sticks", "cheese wheels"],
+    "d": ["doodlebug", "dagnabbit", "donut holes", "dingleberry", "dumplings"],
+    "e": ["egads", "enchiladas", "elderberries", "eggnog"],
+    "f": ["fiddlesticks", "fluffernutter", "flapjacks", "fudgesicle", "french toast", "fig newtons"],
+    "g": ["gummy bears", "gadzooks", "gravy boats", "gumdrops", "goldfish crackers"],
+    "h": ["hot dogs", "holy guacamole", "huckleberry", "honeybuns", "hash browns"],
+    "i": ["iced tea", "igloo", "ice pops"],
+    "j": ["jellyfish", "jumping jellybeans", "jelly rolls", "jambalaya"],
+    "k": ["kerfuffle", "kumquats", "kale chips", "kitten mittens"],
+    "l": ["lollipops", "lemon drops", "licorice", "ladybug"],
+    "m": ["muffins", "marshmallows", "monkey business", "milkshakes"],
+    "n": ["noodles", "nutmeg", "nonsense", "nachos"],
+    "o": ["oh pickles", "oatmeal", "oranges"],
+    "p": ["pickles", "pancakes", "poppycock", "pudding cups", "peanut butter"],
+    "q": ["quiche", "quinoa"],
+    "r": ["razzleberry", "rutabaga", "rhubarb", "rainbow sprinkles"],
+    "s": ["sugar plums", "snickerdoodle", "sassafras", "silly goose", "sprinkles", "sweet potato"],
+    "t": ["tater tots", "thundermuffin", "tapioca", "twinkle toes", "tootsie rolls"],
+    "u": ["unicorn dust", "upside-down cake"],
+    "v": ["vanilla wafers", "veggie straws"],
+    "w": ["waffles", "whippersnapper", "wiggles", "wonky noodle"],
+    "x": ["xylophone"],
+    "y": ["yikes-a-doodle", "yogurt cups"],
+    "z": ["zippity-doo", "zucchini"]
+  },
+  "fallbackWords": [
+    "oh fiddlesticks",
+    "good gravy",
+    "holy moly",
+    "jeepers creepers",
+    "oh snap",
+    "great googly moogly",
+    "son of a biscuit",
+    "what the fudge",
+    "cheese and crackers",
+    "oh my stars"
+  ]
+}

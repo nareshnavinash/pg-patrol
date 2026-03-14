@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Infinite Scroll Test — PG Patrol</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+    h1 { text-align: center; margin-bottom: 20px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .card img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      display: block;
+    }
+    .card .label {
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #666;
+    }
+    .spacer {
+      height: 200px; /* Extra space so page is scrollable */
+    }
+    #loading {
+      text-align: center;
+      padding: 20px;
+      color: #999;
+      font-size: 14px;
+    }
+    #stats {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <h1>Image Gallery — Infinite Scroll Test</h1>
+  <div id="stats">Batches loaded: <span id="batch-count">1</span></div>
+  <div class="grid" id="grid"></div>
+  <div id="loading" style="display:none;">Loading more images...</div>
+
+  <script>
+    // Simulate Pixabay-style infinite scroll with 3 batches of 7 images
+    const BATCH_SIZE = 7;
+    const TOTAL_IMAGES = 21;
+    let currentBatch = 0;
+    let loading = false;
+
+    // Safe images (from picsum.photos) interspersed with NSFW fixtures
+    const safeImages = [
+      'https://picsum.photos/seed/safe1/400/300',
+      'https://picsum.photos/seed/safe2/400/300',
+      'https://picsum.photos/seed/safe3/400/300',
+      'https://picsum.photos/seed/safe4/400/300',
+      'https://picsum.photos/seed/safe5/400/300',
+      'https://picsum.photos/seed/safe6/400/300',
+      'https://picsum.photos/seed/safe7/400/300',
+      'https://picsum.photos/seed/safe8/400/300',
+      'https://picsum.photos/seed/safe9/400/300',
+    ];
+    let safeIdx = 0;
+
+    function getNsfwSrc(idx) {
+      return `nsfw-fixture-${String(idx).padStart(2, '0')}.png`;
+    }
+
+    function addBatch() {
+      if (loading || currentBatch * BATCH_SIZE >= TOTAL_IMAGES) return;
+      loading = true;
+      document.getElementById('loading').style.display = 'block';
+
+      // Simulate network delay
+      setTimeout(() => {
+        const grid = document.getElementById('grid');
+        const start = currentBatch * BATCH_SIZE;
+        const end = Math.min(start + BATCH_SIZE, TOTAL_IMAGES);
+
+        for (let i = start; i < end; i++) {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.dataset.batch = String(currentBatch + 1);
+
+          const img = document.createElement('img');
+          img.width = 400;
+          img.height = 300;
+
+          // Mix: every 3rd image is safe, rest are NSFW fixtures
+          if ((i % 3) === 2 && safeIdx < safeImages.length) {
+            img.src = safeImages[safeIdx++];
+            img.alt = `Safe image ${safeIdx}`;
+            img.dataset.expectation = 'safe';
+          } else {
+            // Use NSFW fixture image (1-indexed)
+            const nsfwIdx = i - Math.floor(i / 3) + 1;
+            if (nsfwIdx <= TOTAL_IMAGES) {
+              img.src = getNsfwSrc(nsfwIdx);
+              img.alt = `NSFW fixture ${nsfwIdx}`;
+              img.dataset.expectation = 'nsfw';
+            }
+          }
+
+          const label = document.createElement('div');
+          label.className = 'label';
+          label.textContent = `Image ${i + 1} (Batch ${currentBatch + 1})`;
+
+          card.appendChild(img);
+          card.appendChild(label);
+          grid.appendChild(card);
+        }
+
+        currentBatch++;
+        document.getElementById('batch-count').textContent = String(currentBatch);
+        document.getElementById('loading').style.display = 'none';
+        loading = false;
+      }, 300);
+    }
+
+    // Load initial batch immediately
+    addBatch();
+
+    // Infinite scroll: load next batch when user scrolls near bottom
+    const scrollObserver = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && !loading) {
+          addBatch();
+        }
+      }
+    }, { rootMargin: '200px' });
+
+    // Create a sentinel at the bottom
+    const sentinel = document.createElement('div');
+    sentinel.id = 'scroll-sentinel';
+    sentinel.style.height = '1px';
+    document.body.appendChild(sentinel);
+    scrollObserver.observe(sentinel);
+  </script>
+</body>
+</html>

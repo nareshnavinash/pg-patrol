@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@keyframes pulse-shield {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.shield-pulse {
+  animation: pulse-shield 2s ease-in-out infinite;
+}

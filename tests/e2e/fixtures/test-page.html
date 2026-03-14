@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Daily Patrol — PG Patrol Test Page</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Georgia, 'Times New Roman', serif; background: #f5f0eb; color: #1a1a1a; line-height: 1.6; }
+
+    /* Masthead */
+    .masthead { text-align: center; padding: 24px 16px 16px; border-bottom: 4px double #333; }
+    .masthead h1 { font-size: 48px; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 4px; text-transform: uppercase; }
+    .masthead .date { font-family: Arial, sans-serif; font-size: 13px; color: #666; margin-top: 4px; }
+    .masthead .tagline { font-style: italic; font-size: 14px; color: #888; margin-top: 2px; }
+
+    /* Layout */
+    .container { max-width: 1100px; margin: 0 auto; padding: 20px 16px; }
+    .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-top: 20px; }
+    .article-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 28px; padding-top: 20px; border-top: 2px solid #ccc; }
+
+    /* Articles */
+    .lead-article { border-bottom: 1px solid #ddd; padding-bottom: 20px; }
+    .lead-article h2 { font-size: 32px; line-height: 1.2; margin-bottom: 8px; }
+    .byline { font-family: Arial, sans-serif; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .lead-article p, .article-card p, .comment-body { font-size: 15px; margin-bottom: 10px; }
+    .lead-article img { width: 100%; height: 240px; object-fit: cover; margin: 12px 0; border: 1px solid #ddd; }
+
+    /* Sidebar */
+    .sidebar { border-left: 2px solid #ccc; padding-left: 20px; }
+    .sidebar h3 { font-family: Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 2px; color: #c00; margin-bottom: 12px; }
+    .sidebar-item { padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+    .sidebar-item:last-child { border-bottom: none; }
+
+    /* Article cards */
+    .article-card { }
+    .article-card h3 { font-size: 18px; margin-bottom: 6px; line-height: 1.3; }
+    .article-card .category { font-family: Arial, sans-serif; font-size: 11px; text-transform: uppercase; color: #c00; letter-spacing: 1px; margin-bottom: 4px; }
+    .article-card img { width: 100%; height: 140px; object-fit: cover; margin-bottom: 8px; border: 1px solid #ddd; }
+
+    /* Comments */
+    .comments-section { margin-top: 28px; padding-top: 20px; border-top: 2px solid #ccc; }
+    .comments-section h3 { font-family: Arial, sans-serif; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+    .comment { padding: 12px 0; border-bottom: 1px solid #eee; }
+    .comment-author { font-family: Arial, sans-serif; font-weight: bold; font-size: 13px; color: #444; }
+    .comment-time { font-family: Arial, sans-serif; font-size: 11px; color: #999; }
+    .comment-body { margin-top: 4px; font-size: 14px; }
+    .comment-reply { margin-left: 32px; border-left: 2px solid #ddd; padding-left: 12px; }
+
+    /* Breaking news area */
+    .breaking-news { margin-top: 28px; padding: 16px; background: #fff8e1; border: 2px solid #f9a825; }
+    .breaking-news h3 { font-family: Arial, sans-serif; color: #c00; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+    #add-dynamic { font-family: Arial, sans-serif; padding: 8px 16px; background: #c00; color: white; border: none; cursor: pointer; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+    #add-dynamic:hover { background: #a00; }
+    #add-dynamic-leet, #add-dynamic-negative { font-family: Arial, sans-serif; padding: 8px 16px; background: #c00; color: white; border: none; cursor: pointer; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-left: 8px; }
+    #add-dynamic-leet:hover, #add-dynamic-negative:hover { background: #a00; }
+  </style>
+</head>
+<body>
+
+  <!-- Masthead -->
+  <header class="masthead">
+    <h1>The Daily Patrol</h1>
+    <div class="date">Friday, March 13, 2026 — Morning Edition</div>
+    <div class="tagline">"All the news that's fit to filter"</div>
+  </header>
+
+  <div class="container">
+    <div class="main-grid">
+
+      <!-- Lead Article -->
+      <div class="lead-article">
+        <h2 id="profanity-1">What the fuck is happening to civil discourse in this country?</h2>
+        <div class="byline">By Staff Reporter &bull; 6 hours ago</div>
+        <img src="https://picsum.photos/seed/patrol1/700/300" alt="Town hall meeting" />
+        <p id="profanity-2">This is total bullshit and everyone knows it. A new study released Thursday found that profanity in public forums has increased by 300% over the last decade. Researchers say the trend shows no sign of slowing down.</p>
+        <p id="clean-1">This is a perfectly clean sentence.</p>
+        <p>Experts from the National Language Institute spent three years cataloguing offensive language across social media platforms, town hall meetings, and cable news broadcasts. Their findings paint a grim picture of modern communication.</p>
+        <p id="profanity-3">That asshole cut me off in traffic. "It's become normalized," said Dr. Helen Park, the study's lead author. "People don't even realize they're doing it anymore."</p>
+        <p id="clean-2">The weather is beautiful today.</p>
+        <p>Community leaders are calling for new initiatives to promote respectful dialogue. Several school districts have already adopted the report's recommendations for classroom language programs.</p>
+      </div>
+
+      <!-- Sidebar: Trending -->
+      <div class="sidebar">
+        <h3>Trending Now</h3>
+        <div class="sidebar-item">City council meeting devolves into shouting — "This whole damn budget is a joke," says councilman</div>
+        <div class="sidebar-item">Tech CEO's leaked email: "We're so fucked if we don't ship by Q3"</div>
+        <div class="sidebar-item" id="url-text">Check out <span id="profane-url">https://example.com/shitpost</span> for the viral thread everyone's talking about</div>
+        <div class="sidebar-item">Local bakery wins "Best Croissant" — owner says "holy crap, I can't believe it"</div>
+        <div class="sidebar-item">Weather forecast: clear skies and mild temperatures all weekend</div>
+      </div>
+
+    </div>
+
+    <!-- Article Grid -->
+    <div class="article-grid">
+
+      <!-- Safe Words Article -->
+      <div class="article-card">
+        <div class="category">Analysis</div>
+        <img src="https://picsum.photos/seed/patrol2/400/200" alt="Analyst at desk" />
+        <h3 id="safe-word">The assassin in the movie was very skilled</h3>
+        <p>A classic analysis of action cinema reveals that audiences prefer complex characters. The analyst who conducted the study says the classification of anti-heroes has changed dramatically in recent years.</p>
+      </div>
+
+      <!-- Leetspeak Article -->
+      <div class="article-card">
+        <div class="category">Internet Culture</div>
+        <img src="https://picsum.photos/seed/patrol3/400/200" alt="Internet culture" />
+        <h3>The Rise of Creative Spelling Online</h3>
+        <p>Internet users are getting creative with how they express frustration. Terms like "sh1t" and "f@ck" have become common on platforms with strict moderation policies.</p>
+        <p>Linguists argue this represents a natural evolution of language rather than simple rule-breaking.</p>
+      </div>
+
+      <!-- Sensitivity Test Article -->
+      <div class="article-card">
+        <div class="category">Opinion</div>
+        <h3>Where Do We Draw the Line?</h3>
+        <p>Some words are universally offensive, but others exist in a gray area. Is "damn" really that bad? What about "crap" or "piss"? The answer depends on who you ask.</p>
+        <p>The debate over what constitutes profanity has raged for centuries, and there's no sign of consensus anytime soon.</p>
+      </div>
+
+    </div>
+
+    <!-- ====== Good Vibes Mode Showcase Section ====== -->
+    <div style="margin-top:28px; padding-top:20px; border-top:2px solid #ccc;">
+      <h2 style="font-family:Arial,sans-serif; font-size:16px; text-transform:uppercase; letter-spacing:2px; color:#6366f1; margin-bottom:16px;">
+        Good Vibes Mode — Test Zone
+      </h2>
+    </div>
+
+    <!-- Row 1: War & Conflict vs Safe Sports -->
+    <div class="article-grid" id="news-section">
+
+      <div class="article-card" id="negative-news-1">
+        <div class="category">World</div>
+        <h3>War in region continues as casualties mount</h3>
+        <p>The bombing campaign has killed dozens of civilians across multiple provinces. Victims were taken to overwhelmed local hospitals as the death toll continues to rise. International observers describe the situation as a humanitarian crisis.</p>
+      </div>
+
+      <div class="article-card" id="negative-news-2">
+        <div class="category">Local</div>
+        <h3>Shooting leaves three injured downtown</h3>
+        <p>Police respond to a deadly attack near the city center. Witnesses describe scenes of chaos as gunfire erupted during the evening commute. The victims are in critical condition at Memorial Hospital.</p>
+      </div>
+
+      <div class="article-card" id="safe-news">
+        <div class="category">Sports</div>
+        <h3>Curry shooting 60% in Warriors victory</h3>
+        <p>Golden State dominates with a record-breaking performance in the basketball game this season. The team scored 140 points in a thrilling overtime match that had fans on their feet the entire fourth quarter.</p>
+      </div>
+
+    </div>
+
+    <!-- Row 2: Terrorism, Disaster, and Safe Entertainment -->
+    <div class="article-grid" id="news-section-2">
+
+      <div class="article-card" id="negative-news-terrorism">
+        <div class="category">World</div>
+        <h3>Terrorist attack rocks coastal city</h3>
+        <p>A terrorist bombing at a crowded marketplace killed at least fifteen people and wounded dozens more. Extremist groups have claimed responsibility for the horrific attack. Emergency responders rushed victims to nearby hospitals as the siege continued into the night.</p>
+      </div>
+
+      <div class="article-card" id="negative-news-disaster">
+        <div class="category">Weather</div>
+        <h3>Hurricane devastates island communities</h3>
+        <p>A catastrophic hurricane has destroyed thousands of homes and left entire towns underwater. The death toll from the flooding has risen to over forty, with hundreds still missing. Emergency crews are battling to reach devastated communities cut off by collapsed bridges and roads.</p>
+      </div>
+
+      <div class="article-card" id="safe-news-entertainment">
+        <div class="category">Entertainment</div>
+        <h3>Summer blockbuster breaks box office record</h3>
+        <p>The latest action movie from acclaimed director James Zhou has shattered opening weekend records. The film features incredible visual effects and a star-studded cast. Critics praise the movie for its balance of humor and heart, giving it a 92% rating on review aggregator sites.</p>
+      </div>
+
+    </div>
+
+    <!-- Row 3: Crime, Political unrest, and Safe Lifestyle -->
+    <div class="article-grid" id="news-section-3">
+
+      <div class="article-card" id="negative-news-crime">
+        <div class="category">Crime</div>
+        <h3>Kidnapping suspect arrested after week-long manhunt</h3>
+        <p>Police have arrested a suspect in connection with the kidnapping and assault of two victims last Tuesday. The robbery turned violent when the suspect brandished a weapon. Investigators say the case is linked to a broader pattern of gang violence in the area.</p>
+      </div>
+
+      <div class="article-card" id="negative-news-political">
+        <div class="category">Politics</div>
+        <h3>Coup attempt triggers martial law declaration</h3>
+        <p>The government has declared martial law following an attempted coup by military officers. Rioting and looting erupted in the capital after troops stormed government buildings. Casualties have been reported as the uprising spreads to neighboring provinces.</p>
+      </div>
+
+      <div class="article-card" id="safe-news-lifestyle">
+        <div class="category">Lifestyle</div>
+        <h3>Community garden project brings neighbors together</h3>
+        <p>A new community garden in the downtown neighborhood has become a gathering place for families and friends. Volunteers of all ages come together each Saturday to tend vegetables, plant flowers, and share gardening tips over homemade lemonade. The project has won a regional sustainability award.</p>
+      </div>
+
+    </div>
+
+    <!-- Custom Words Test Zone -->
+    <div id="custom-words-section" style="margin-top:20px; padding:16px; border:1px solid #ddd;">
+      <h3>Custom Words Test Zone</h3>
+      <p id="custom-word-test-1">The character in the show is bald and proud of it.</p>
+      <p id="custom-word-test-2">She bought a pineapple from the market yesterday.</p>
+    </div>
+
+    <!-- Code section preserved for backward compat -->
+    <div style="display:none">
+      <p id="code-text">Run the command <code>git push origin master</code> to deploy.</p>
+    </div>
+
+    <!-- Comments Section -->
+    <div class="comments-section">
+      <h3>Reader Comments</h3>
+
+      <div class="comment">
+        <span class="comment-author">FrustratedReader42</span>
+        <span class="comment-time">2 hours ago</span>
+        <p class="comment-body">This article is spot on. I'm so sick of this shit everywhere I look. Can we please just be decent to each other?</p>
+        <div class="comment-reply">
+          <div class="comment">
+            <span class="comment-author">CalmVoice</span>
+            <span class="comment-time">1 hour ago</span>
+            <p class="comment-body">I agree with the sentiment, but maybe we could make the point without the language? Just a thought.</p>
+          </div>
+          <div class="comment">
+            <span class="comment-author">TellItLikeItIs</span>
+            <span class="comment-time">45 min ago</span>
+            <p class="comment-body">Oh give me a damn break. Sometimes you need strong language to make a strong point. Stop being such a prude.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="comment">
+        <span class="comment-author">GrammarNerd</span>
+        <span class="comment-time">3 hours ago</span>
+        <p class="comment-body">The real bullshit is that people confuse profanity with ignorance. Shakespeare used crude language all the time. It's about context, not vocabulary.</p>
+      </div>
+
+      <div class="comment">
+        <span class="comment-author">ParentOfThree</span>
+        <span class="comment-time">4 hours ago</span>
+        <p class="comment-body">As a parent, I'm tired of explaining to my kids why adults say words they're not allowed to use. The hypocrisy is astounding.</p>
+      </div>
+    </div>
+
+    <!-- Breaking News / Dynamic Content -->
+    <div class="breaking-news">
+      <h3>Breaking News Ticker</h3>
+      <div id="dynamic-container"></div>
+      <button id="add-dynamic" onclick="addDynamicContent()">Flash: Breaking Story</button>
+      <button id="add-dynamic-leet" onclick="addLeetspeakContent()">Flash: Leetspeak Story</button>
+      <button id="add-dynamic-negative" onclick="addNegativeContent()">Flash: Negative Story</button>
+    </div>
+
+    <!-- ====== Leetspeak & Unicode Evasion Section ====== -->
+    <div id="leetspeak-section" style="margin-top:28px; padding:16px; border:1px solid #ddd;">
+      <h3 style="font-family:Arial,sans-serif; font-size:14px; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Leetspeak Test Zone</h3>
+      <p id="leet-1">This is such sh1t content online</p>
+      <p id="leet-2">What the f*ck is wrong with people</p>
+      <p id="leet-3">He's a complete a$$hole</p>
+      <p id="leet-4">That's so f_u_c_k_i_n_g annoying</p>
+      <p id="leet-5">Everyone says b!tch nowadays</p>
+      <p id="leet-clean">Normal text with numbers like 4 and symbols like @ should stay</p>
+    </div>
+
+    <!-- ====== N-gram Safe Context Section (Good Vibes Mode) ====== -->
+    <div id="ngram-section" style="margin-top:28px; padding:16px; border:1px solid #ddd;">
+      <h3 style="font-family:Arial,sans-serif; font-size:14px; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">N-gram Context Test Zone</h3>
+      <article id="ngram-safe-1"><p>She absolutely killed it at the talent show last night.</p></article>
+      <article id="ngram-safe-2"><p>We watched shooting stars from the hilltop all evening.</p></article>
+      <article id="ngram-safe-3"><p>Star Wars remains the most popular movie franchise in history.</p></article>
+      <article id="ngram-safe-4"><p>She took a crash course in web development over the summer.</p></article>
+      <article id="ngram-negative"><p>The bombing campaign killed dozens of civilians in overnight strikes. Victims were rushed to overwhelmed hospitals.</p></article>
+    </div>
+
+    <!-- ====== Negation Detection Section (Good Vibes Mode) ====== -->
+    <div id="negation-section" style="margin-top:28px; padding:16px; border:1px solid #ddd;">
+      <h3 style="font-family:Arial,sans-serif; font-size:14px; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Negation Detection Test Zone</h3>
+      <article id="negation-safe-1"><p>This movie is not violent at all, despite what critics say.</p></article>
+      <article id="negation-safe-2"><p>The city never experienced any terrorist threats this year.</p></article>
+      <article id="negation-safe-3"><p>There were no casualties reported from the incident.</p></article>
+      <article id="negation-negative"><p>The violent attack left multiple casualties and widespread destruction across the district.</p></article>
+    </div>
+
+    <!-- ====== Profanity Context Window Section ====== -->
+    <div id="profanity-context-section" style="margin-top:28px; padding:16px; border:1px solid #ddd;">
+      <h3 style="font-family:Arial,sans-serif; font-size:14px; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Profanity Context Test Zone</h3>
+      <p id="ctx-safe-1">The beaver dam blocked the stream near the hiking trail.</p>
+      <p id="ctx-safe-2">The cockpit of the airplane was state-of-the-art.</p>
+      <p id="ctx-safe-3">The rooster (or cock) crowed at dawn every morning.</p>
+      <p id="ctx-safe-4">We visited Scunthorpe during our road trip through England.</p>
+      <p id="ctx-profane">That asshole just cut me off in traffic again.</p>
+    </div>
+
+    <!-- ====== Sensitivity Level Content Section ====== -->
+    <div id="sensitivity-section" style="margin-top:28px; padding:16px; border:1px solid #ddd;">
+      <h3 style="font-family:Arial,sans-serif; font-size:14px; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Sensitivity Level Test Zone</h3>
+      <p id="sens-mild-only">Holy crap, that was unexpected!</p>
+      <p id="sens-moderate">This whole situation is such bullshit, honestly.</p>
+      <p id="sens-strict">What the fuck is going on with this project?</p>
+    </div>
+
+    <!-- ====== Image & Video Scanning Section ====== -->
+    <div id="media-section" style="margin-top:28px; padding:16px; border:1px solid #ddd;">
+      <h3 style="font-family:Arial,sans-serif; font-size:14px; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Media Scanning Test Zone</h3>
+      <img id="test-img-1" src="https://picsum.photos/seed/e2e1/200/200" width="200" height="200" alt="Test image 1" />
+      <img id="test-img-small" src="https://picsum.photos/seed/e2e2/30/30" width="30" height="30" alt="Tiny image" />
+      <img id="test-img-svg" src="data:image/svg+xml,<svg></svg>" alt="SVG image" />
+      <video id="test-video-poster" poster="https://picsum.photos/seed/e2evid/400/300" width="400"></video>
+      <video id="test-video-no-poster" width="400"><source src="test.mp4" /></video>
+      <div id="test-bg-thumb" class="video-thumbnail" style="width:200px;height:150px;background-image:url('https://picsum.photos/seed/e2ebg/200/150')"></div>
+    </div>
+
+    <!-- ====== Adult Content Filtering Section ====== -->
+    <div id="adult-content-section" style="margin-top:28px; padding:16px; border:1px solid #ddd;">
+      <h3 style="font-family:Arial,sans-serif; font-size:14px; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">
+        Adult Content Filtering Test Zone
+      </h3>
+
+      <!-- NSFW text that should be filtered at moderate sensitivity -->
+      <p id="adult-text-1">Play with interactive sex toys</p>
+      <p id="adult-text-2">Chat with sexy models online</p>
+      <p id="adult-text-3">Watch live porn shows for free</p>
+      <p id="adult-text-4">Browse nude photos and videos</p>
+
+      <!-- Safe context: "sex" in educational use — should NOT be filtered -->
+      <p id="adult-text-safe-1">The biological sex of the specimen was determined through DNA analysis.</p>
+      <p id="adult-text-safe-2">The school board approved the new sex education curriculum for high schoolers.</p>
+
+      <!-- NSFW fixture images — Photos by TieuBaoTruong on Pixabay
+           https://pixabay.com/users/9985330/ -->
+      <div style="display:flex; flex-direction:column; gap:16px; margin:12px 0;">
+        <img id="nsfw-fixture-01" src="nsfw-fixture-01.png" width="400" height="400" alt="NSFW test 1" style="max-width:400px;" />
+        <img id="nsfw-fixture-02" src="nsfw-fixture-02.png" width="400" height="400" alt="NSFW test 2" style="max-width:400px;" />
+        <img id="nsfw-fixture-03" src="nsfw-fixture-03.png" width="400" height="400" alt="NSFW test 3" style="max-width:400px;" />
+        <img id="nsfw-fixture-04" src="nsfw-fixture-04.png" width="400" height="400" alt="NSFW test 4" style="max-width:400px;" />
+        <img id="nsfw-fixture-05" src="nsfw-fixture-05.png" width="400" height="400" alt="NSFW test 5" style="max-width:400px;" />
+        <img id="nsfw-fixture-06" src="nsfw-fixture-06.png" width="400" height="400" alt="NSFW test 6" style="max-width:400px;" />
+        <img id="nsfw-fixture-07" src="nsfw-fixture-07.png" width="400" height="400" alt="NSFW test 7" style="max-width:400px;" />
+        <img id="nsfw-fixture-08" src="nsfw-fixture-08.png" width="400" height="400" alt="NSFW test 8" style="max-width:400px;" />
+        <img id="nsfw-fixture-09" src="nsfw-fixture-09.png" width="400" height="400" alt="NSFW test 9" style="max-width:400px;" />
+        <img id="nsfw-fixture-10" src="nsfw-fixture-10.png" width="400" height="400" alt="NSFW test 10" style="max-width:400px;" />
+        <img id="nsfw-fixture-11" src="nsfw-fixture-11.png" width="400" height="400" alt="NSFW test 11" style="max-width:400px;" />
+        <img id="nsfw-fixture-12" src="nsfw-fixture-12.png" width="400" height="400" alt="NSFW test 12" style="max-width:400px;" />
+        <img id="nsfw-fixture-13" src="nsfw-fixture-13.png" width="400" height="400" alt="NSFW test 13" style="max-width:400px;" />
+        <img id="nsfw-fixture-14" src="nsfw-fixture-14.png" width="400" height="400" alt="NSFW test 14" style="max-width:400px;" />
+        <img id="nsfw-fixture-15" src="nsfw-fixture-15.png" width="400" height="400" alt="NSFW test 15" style="max-width:400px;" />
+        <img id="nsfw-fixture-16" src="nsfw-fixture-16.png" width="400" height="400" alt="NSFW test 16" style="max-width:400px;" />
+        <img id="nsfw-fixture-17" src="nsfw-fixture-17.png" width="400" height="400" alt="NSFW test 17" style="max-width:400px;" />
+        <img id="nsfw-fixture-18" src="nsfw-fixture-18.png" width="400" height="400" alt="NSFW test 18" style="max-width:400px;" />
+        <img id="nsfw-fixture-19" src="nsfw-fixture-19.png" width="400" height="400" alt="NSFW test 19" style="max-width:400px;" />
+        <img id="nsfw-fixture-20" src="nsfw-fixture-20.png" width="400" height="400" alt="NSFW test 20" style="max-width:400px;" />
+        <img id="nsfw-fixture-21" src="nsfw-fixture-21.png" width="400" height="400" alt="NSFW test 21" style="max-width:400px;" />
+      </div>
+      <p style="font-size:11px; color:#999; margin-top:4px;">
+        Photos by <a href="https://pixabay.com/users/9985330/" target="_blank" rel="noopener">TieuBaoTruong</a> on Pixabay. Used under Pixabay License for testing purposes.
+      </p>
+
+      <!-- Safe image for comparison -->
+      <img id="safe-test-img" src="https://picsum.photos/seed/safetest/400/400" width="400" height="400" alt="Safe landscape" />
+
+      <!-- SPA-style delayed content injection -->
+      <div id="spa-adult-container"></div>
+      <script>
+        // Simulate SPA content injection after 1 second (tests delayed re-scan)
+        setTimeout(function() {
+          var container = document.getElementById('spa-adult-container');
+          var p = document.createElement('p');
+          p.id = 'spa-adult-text';
+          p.textContent = 'Have fun in Private shows with nude models';
+          container.appendChild(p);
+        }, 1000);
+      </script>
+    </div>
+
+  </div>
+
+  <script>
+    function addDynamicContent() {
+      const container = document.getElementById('dynamic-container');
+      const article = document.createElement('div');
+      article.style.marginBottom = '12px';
+      article.style.paddingBottom = '12px';
+      article.style.borderBottom = '1px solid #e0c080';
+
+      const headline = document.createElement('p');
+      headline.id = 'dynamic-profanity';
+      headline.style.fontWeight = 'bold';
+      headline.textContent = 'BREAKING: This dynamically added text contains the word damn and shit.';
+      article.appendChild(headline);
+
+      const detail = document.createElement('p');
+      detail.style.fontSize = '13px';
+      detail.style.marginTop = '4px';
+      detail.innerHTML = 'Sources confirm the leaked report is at <span id="dynamic-profane-url">https://news.example.com/fucking-leaked-memo</span> — officials have not commented.';
+      article.appendChild(detail);
+
+      container.appendChild(article);
+    }
+
+    function addLeetspeakContent() {
+      const container = document.getElementById('dynamic-container');
+      const p = document.createElement('p');
+      p.id = 'dynamic-leet';
+      p.style.fontWeight = 'bold';
+      p.textContent = 'This is such sh1t and f*ck this situation';
+      container.appendChild(p);
+    }
+
+    function addNegativeContent() {
+      const container = document.getElementById('dynamic-container');
+      const article = document.createElement('article');
+      article.id = 'dynamic-negative';
+      const p = document.createElement('p');
+      p.textContent = 'Breaking: Violent attack kills dozens in city center bombing';
+      article.appendChild(p);
+      container.appendChild(article);
+    }
+  </script>
+
+</body>
+</html>

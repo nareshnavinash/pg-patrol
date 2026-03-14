@@ -1,0 +1,124 @@
+{
+  "../../../../../@crx/manifest": {
+    "file": "assets/crx-manifest.js-CTOqAE9S.js",
+    "name": "crx-manifest.js",
+    "src": "../../../../../@crx/manifest",
+    "isEntry": true
+  },
+  "_modulepreload-polyfill-B5Qt9EMX.js": {
+    "file": "assets/modulepreload-polyfill-B5Qt9EMX.js",
+    "name": "modulepreload-polyfill"
+  },
+  "_negative-news-engine-Bjpui72q.js": {
+    "file": "assets/negative-news-engine-Bjpui72q.js",
+    "name": "negative-news-engine",
+    "imports": [
+      "_negative-news-words-CYoML0CM.js"
+    ]
+  },
+  "_negative-news-words-CYoML0CM.js": {
+    "file": "assets/negative-news-words-CYoML0CM.js",
+    "name": "negative-news-words"
+  },
+  "_nsfw-preprocessing-CHu622tu.js": {
+    "file": "assets/nsfw-preprocessing-CHu622tu.js",
+    "name": "nsfw-preprocessing"
+  },
+  "_storage-BCEqwvk3.js": {
+    "file": "assets/storage-BCEqwvk3.js",
+    "name": "storage",
+    "imports": [
+      "_types-BAQNa_K3.js"
+    ]
+  },
+  "_types-BAQNa_K3.js": {
+    "file": "assets/types-BAQNa_K3.js",
+    "name": "types"
+  },
+  "_word-list-updater-DKeYspeL.js": {
+    "file": "assets/word-list-updater-DKeYspeL.js",
+    "name": "word-list-updater",
+    "imports": [
+      "_negative-news-words-CYoML0CM.js"
+    ]
+  },
+  "index.ts-loader.js": {
+    "file": "assets/index.ts-loader-7MahHtkA.js",
+    "src": "index.ts-loader.js"
+  },
+  "node_modules/onnxruntime-web/dist/ort.wasm.min.mjs": {
+    "file": "assets/ort.wasm.min-CqSmhCtL.js",
+    "name": "ort.wasm.min",
+    "src": "node_modules/onnxruntime-web/dist/ort.wasm.min.mjs",
+    "isDynamicEntry": true
+  },
+  "src/background/index.ts": {
+    "file": "assets/index.ts-BkF-unLH.js",
+    "name": "index.ts",
+    "src": "src/background/index.ts",
+    "isEntry": true,
+    "imports": [
+      "_types-BAQNa_K3.js",
+      "_word-list-updater-DKeYspeL.js",
+      "_negative-news-words-CYoML0CM.js"
+    ]
+  },
+  "src/content/filter-worker.ts": {
+    "file": "assets/filter-worker-DwLAvh_J.js",
+    "name": "filter-worker",
+    "src": "src/content/filter-worker.ts",
+    "isEntry": true,
+    "imports": [
+      "_negative-news-words-CYoML0CM.js",
+      "_negative-news-engine-Bjpui72q.js"
+    ]
+  },
+  "src/content/index.ts": {
+    "file": "assets/index.ts-Bz1rT_VQ.js",
+    "name": "index.ts",
+    "src": "src/content/index.ts",
+    "isEntry": true,
+    "imports": [
+      "_negative-news-words-CYoML0CM.js",
+      "_storage-BCEqwvk3.js",
+      "_word-list-updater-DKeYspeL.js",
+      "_types-BAQNa_K3.js",
+      "_nsfw-preprocessing-CHu622tu.js",
+      "_negative-news-engine-Bjpui72q.js"
+    ]
+  },
+  "src/content/pre-blur.ts": {
+    "file": "assets/pre-blur.ts-DCAbtoWW.js",
+    "name": "pre-blur.ts",
+    "src": "src/content/pre-blur.ts",
+    "isEntry": true
+  },
+  "src/ml-inference/offscreen.html": {
+    "file": "assets/offscreen-DIJFDy-c.js",
+    "name": "offscreen",
+    "src": "src/ml-inference/offscreen.html",
+    "isEntry": true,
+    "imports": [
+      "_modulepreload-polyfill-B5Qt9EMX.js",
+      "_nsfw-preprocessing-CHu622tu.js"
+    ],
+    "dynamicImports": [
+      "node_modules/onnxruntime-web/dist/ort.wasm.min.mjs",
+      "node_modules/onnxruntime-web/dist/ort.wasm.min.mjs"
+    ]
+  },
+  "src/popup/index.html": {
+    "file": "assets/index.html-DljMfgGP.js",
+    "name": "index.html",
+    "src": "src/popup/index.html",
+    "isEntry": true,
+    "imports": [
+      "_modulepreload-polyfill-B5Qt9EMX.js",
+      "_types-BAQNa_K3.js",
+      "_storage-BCEqwvk3.js"
+    ],
+    "css": [
+      "assets/index-ByB2orZZ.css"
+    ]
+  }
+}
