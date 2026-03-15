@@ -190,6 +190,23 @@ function ensureChild<T extends HTMLElement>(
   return next;
 }
 
+/**
+ * Detect if the target is behind a modal/lightbox by checking ancestor attributes.
+ * Sites set aria-hidden="true" or the inert attribute on main content when a
+ * modal is open (standard accessibility practice used by Twitter, Facebook,
+ * Instagram, Reddit, and most major sites).
+ */
+function isInsideHiddenLayer(target: HTMLElement): boolean {
+  let ancestor = target.parentElement;
+  while (ancestor && ancestor !== document.documentElement) {
+    if (ancestor.getAttribute('aria-hidden') === 'true' || ancestor.hasAttribute('inert')) {
+      return true;
+    }
+    ancestor = ancestor.parentElement;
+  }
+  return false;
+}
+
 function positionSurface(record: SurfaceRecord): void {
   if (!record.target.isConnected) {
     removeMediaSurface(record.target);
@@ -198,6 +215,12 @@ function positionSurface(record: SurfaceRecord): void {
 
   const rect = record.target.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) {
+    record.shell.style.display = 'none';
+    return;
+  }
+
+  // Hide overlay when a lightbox/modal covers the target
+  if (isInsideHiddenLayer(record.target)) {
     record.shell.style.display = 'none';
     return;
   }

@@ -8,6 +8,7 @@ import {
   showErrorSurface,
   removeMediaSurface,
   removeAllMediaSurfaces,
+  refreshAllMediaSurfaces,
 } from '../../src/content/media-surfaces';
 
 const OVERLAY_ROOT_ID = 'pg-patrol-media-overlay-root';
@@ -114,6 +115,103 @@ describe('media-surfaces', () => {
       const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
       const shell = overlayRoot!.firstElementChild as HTMLElement;
       expect(shell.style.backdropFilter).toBe('blur(8px)');
+    });
+  });
+
+  describe('occlusion detection (lightbox/modal)', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('hides overlay when ancestor has aria-hidden="true" (modal open)', () => {
+      // Create a wrapper that simulates main content behind a lightbox
+      const wrapper = document.createElement('div');
+      document.body.appendChild(wrapper);
+      const target = document.createElement('div');
+      wrapper.appendChild(target);
+      jest.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+        width: 400, height: 400, top: 0, left: 0,
+        bottom: 400, right: 400, x: 0, y: 0, toJSON: () => {},
+      });
+
+      showBlockedSurface(target);
+      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
+      const shell = overlayRoot!.firstElementChild as HTMLElement;
+
+      // Simulate site opening a lightbox: sets aria-hidden on main content
+      wrapper.setAttribute('aria-hidden', 'true');
+
+      refreshAllMediaSurfaces();
+      jest.runAllTimers();
+
+      expect(shell.style.display).toBe('none');
+    });
+
+    it('hides overlay when ancestor has inert attribute', () => {
+      const wrapper = document.createElement('div');
+      document.body.appendChild(wrapper);
+      const target = document.createElement('div');
+      wrapper.appendChild(target);
+      jest.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+        width: 400, height: 400, top: 0, left: 0,
+        bottom: 400, right: 400, x: 0, y: 0, toJSON: () => {},
+      });
+
+      showPendingSurface(target);
+      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
+      const shell = overlayRoot!.firstElementChild as HTMLElement;
+
+      wrapper.setAttribute('inert', '');
+
+      refreshAllMediaSurfaces();
+      jest.runAllTimers();
+
+      expect(shell.style.display).toBe('none');
+    });
+
+    it('keeps overlay visible when no ancestor is hidden', () => {
+      const target = createTarget(400, 400);
+      showBlockedSurface(target);
+
+      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
+      const shell = overlayRoot!.firstElementChild as HTMLElement;
+
+      // No aria-hidden or inert set → overlay stays visible
+      refreshAllMediaSurfaces();
+      jest.runAllTimers();
+
+      expect(shell.style.display).not.toBe('none');
+    });
+
+    it('re-shows overlay when aria-hidden is removed (lightbox closed)', () => {
+      const wrapper = document.createElement('div');
+      document.body.appendChild(wrapper);
+      const target = document.createElement('div');
+      wrapper.appendChild(target);
+      jest.spyOn(target, 'getBoundingClientRect').mockReturnValue({
+        width: 400, height: 400, top: 0, left: 0,
+        bottom: 400, right: 400, x: 0, y: 0, toJSON: () => {},
+      });
+
+      showBlockedSurface(target);
+      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
+      const shell = overlayRoot!.firstElementChild as HTMLElement;
+
+      // Open lightbox → hidden
+      wrapper.setAttribute('aria-hidden', 'true');
+      refreshAllMediaSurfaces();
+      jest.runAllTimers();
+      expect(shell.style.display).toBe('none');
+
+      // Close lightbox → visible again
+      wrapper.removeAttribute('aria-hidden');
+      refreshAllMediaSurfaces();
+      jest.runAllTimers();
+      expect(shell.style.display).not.toBe('none');
     });
   });
 
