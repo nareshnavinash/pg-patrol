@@ -43,7 +43,7 @@
     },
     {
       "js": [
-        "assets/index.ts-loader-7MahHtkA.js"
+        "assets/index.ts-loader-BnB-uur3.js"
       ],
       "matches": [
         "<all_urls>"
@@ -69,9 +69,9 @@
         "assets/storage-BCEqwvk3.js",
         "assets/word-list-updater-DKeYspeL.js",
         "assets/types-BAQNa_K3.js",
-        "assets/nsfw-preprocessing-CHu622tu.js",
+        "assets/nsfw-preprocessing-CNcnUBRi.js",
         "assets/negative-news-engine-Bjpui72q.js",
-        "assets/index.ts-Bz1rT_VQ.js"
+        "assets/index.ts-Dz6UPj-z.js"
       ],
       "use_dynamic_url": false
     }

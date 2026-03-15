@@ -28,16 +28,6 @@ const MAX_CONCURRENT = 6; // Max concurrent classifications
 const LOAD_TIMEOUT_MS = 10_000; // Max time to wait for an image to load
 const FINAL_STATUSES = new Set(['safe', 'nsfw', 'error', 'skipped']);
 
-// Known video platform thumbnail URL patterns
-const VIDEO_THUMBNAIL_PATTERNS = [
-  'ytimg.com',
-  'img.youtube.com',
-  'vimeocdn.com',
-  'dailymotion.com/thumbnail',
-  'twimg.com',
-  'tiktokcdn.com',
-];
-
 let activeScanCount = 0;
 const scanQueue: HTMLImageElement[] = [];
 const videoQueue: HTMLVideoElement[] = [];
@@ -782,35 +772,41 @@ export function extractBgImageUrl(bgValue: string): string | null {
 }
 
 /**
- * Check if an element's background-image is likely a video thumbnail.
+ * Get the background-image URL from an element, checking inline style
+ * first, then falling back to computed style.
  */
-export function isVideoThumbnailBg(element: HTMLElement): boolean {
+function getElementBgImageUrl(element: HTMLElement): string | null {
+  const inlineBg = element.style.backgroundImage || '';
+  const inlineUrl = extractBgImageUrl(inlineBg);
+  if (inlineUrl) return inlineUrl;
+
+  const computedBg = getComputedStyle(element).backgroundImage || '';
+  return extractBgImageUrl(computedBg);
+}
+
+/**
+ * Check if an element's background-image should be scanned for NSFW content.
+ * Scans any element with a meaningful image URL and minimum rendered size.
+ */
+export function shouldScanBgImage(element: HTMLElement): boolean {
   if (element.getAttribute(BG_PROCESSED_ATTR)) return false;
 
-  const bg = element.style.backgroundImage || '';
-  const url = extractBgImageUrl(bg);
+  const url = getElementBgImageUrl(element);
   if (!url) return false;
 
   // Skip SVGs and small data URIs
   if (url.endsWith('.svg') || url.startsWith('data:image/svg')) return false;
   if (url.startsWith('data:') && url.length < 1000) return false;
 
-  // Known video platform thumbnail URLs
-  if (VIDEO_THUMBNAIL_PATTERNS.some((p) => url.includes(p))) return true;
+  // Skip elements too small to contain meaningful imagery
+  const rect = element.getBoundingClientRect();
+  if (rect.width < MIN_IMAGE_SIZE || rect.height < MIN_IMAGE_SIZE) return false;
 
-  // Elements with video-related CSS class names or IDs
-  const classAndId = (
-    (element.className || '') + ' ' +
-    (element.id || '') + ' ' +
-    (element.parentElement?.className || '')
-  ).toLowerCase();
-
-  if (/video|player|thumb|poster|preview/.test(classAndId)) {
-    return true;
-  }
-
-  return false;
+  return true;
 }
+
+/** @deprecated Use shouldScanBgImage instead */
+export const isVideoThumbnailBg = shouldScanBgImage;
 
 /**
  * Process an element with a background-image: classify and handle result.
@@ -819,7 +815,7 @@ export function isVideoThumbnailBg(element: HTMLElement): boolean {
 async function processBackgroundImage(element: HTMLElement): Promise<void> {
   if (element.getAttribute(BG_PROCESSED_ATTR)) return;
 
-  const url = extractBgImageUrl(element.style.backgroundImage || '');
+  const url = getElementBgImageUrl(element);
   if (!url) {
     element.setAttribute(BG_PROCESSED_ATTR, 'skipped');
     return;
@@ -953,7 +949,7 @@ export function queueVideoElements(videos: HTMLVideoElement[]): void {
  */
 export function queueBackgroundImages(elements: HTMLElement[]): void {
   for (const el of elements) {
-    if (isVideoThumbnailBg(el)) {
+    if (shouldScanBgImage(el)) {
       applyBlur(el); // Blur immediately on queue (fail-safe)
       bgQueue.push(el);
       totalQueued++;
@@ -1038,8 +1034,8 @@ export function collectVideoThumbnails(root?: Node): HTMLVideoElement[] {
  */
 export function collectBackgroundThumbnails(root?: Node): HTMLElement[] {
   const container = root instanceof HTMLElement ? root : document;
-  const candidates = Array.from(container.querySelectorAll('div, span, a, figure'));
-  return candidates.filter((el) => isVideoThumbnailBg(el as HTMLElement)) as HTMLElement[];
+  const candidates = Array.from(container.querySelectorAll('div, span, a, figure, section, article, header, li'));
+  return candidates.filter((el) => shouldScanBgImage(el as HTMLElement)) as HTMLElement[];
 }
 
 /**

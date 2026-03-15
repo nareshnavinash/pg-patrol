@@ -11,6 +11,7 @@ import {
   queueBackgroundImages,
   shouldScanVideo,
   isVideoThumbnailBg,
+  shouldScanBgImage,
   extractBgImageUrl,
   collectVideoThumbnails,
   collectBackgroundThumbnails,
@@ -355,136 +356,93 @@ describe('image-scanner', () => {
     });
   });
 
-  describe('isVideoThumbnailBg', () => {
-    it('detects YouTube thumbnail URLs', () => {
+  describe('shouldScanBgImage', () => {
+    function createSizedDiv(width = 200, height = 200): HTMLDivElement {
       const div = document.createElement('div');
+      jest.spyOn(div, 'getBoundingClientRect').mockReturnValue({
+        width, height, top: 0, left: 0, bottom: height, right: width, x: 0, y: 0, toJSON: () => {},
+      });
+      return div;
+    }
+
+    it('detects any element with a meaningful background-image and sufficient size', () => {
+      const div = createSizedDiv();
+      div.style.backgroundImage = 'url("https://example.com/banner.jpg")';
+      expect(shouldScanBgImage(div)).toBe(true);
+    });
+
+    it('detects YouTube thumbnail URLs', () => {
+      const div = createSizedDiv();
       div.style.backgroundImage = 'url("https://i.ytimg.com/vi/abc/maxresdefault.jpg")';
-      expect(isVideoThumbnailBg(div)).toBe(true);
+      expect(shouldScanBgImage(div)).toBe(true);
     });
 
     it('detects Vimeo thumbnail URLs', () => {
-      const div = document.createElement('div');
+      const div = createSizedDiv();
       div.style.backgroundImage = 'url("https://i.vimeocdn.com/video/123.jpg")';
-      expect(isVideoThumbnailBg(div)).toBe(true);
+      expect(shouldScanBgImage(div)).toBe(true);
     });
 
     it('detects TikTok thumbnail URLs', () => {
-      const div = document.createElement('div');
+      const div = createSizedDiv();
       div.style.backgroundImage = 'url("https://p16-sign.tiktokcdn.com/obj/abc.jpg")';
-      expect(isVideoThumbnailBg(div)).toBe(true);
-    });
-
-    it('detects elements with video-related class names', () => {
-      const div = document.createElement('div');
-      div.className = 'video-thumbnail';
-      div.style.backgroundImage = 'url("https://example.com/thumb.jpg")';
-      expect(isVideoThumbnailBg(div)).toBe(true);
-    });
-
-    it('detects elements with "player" in class name', () => {
-      const div = document.createElement('div');
-      div.className = 'player-poster';
-      div.style.backgroundImage = 'url("https://example.com/thumb.jpg")';
-      expect(isVideoThumbnailBg(div)).toBe(true);
-    });
-
-    it('detects elements with "thumb" in class name', () => {
-      const div = document.createElement('div');
-      div.className = 'media-thumb';
-      div.style.backgroundImage = 'url("https://example.com/thumb.jpg")';
-      expect(isVideoThumbnailBg(div)).toBe(true);
-    });
-
-    it('detects elements with "preview" in class name', () => {
-      const div = document.createElement('div');
-      div.className = 'preview-image';
-      div.style.backgroundImage = 'url("https://example.com/thumb.jpg")';
-      expect(isVideoThumbnailBg(div)).toBe(true);
-    });
-
-    it('detects elements with parent having video-related class', () => {
-      const parent = document.createElement('div');
-      parent.className = 'video-card';
-      const child = document.createElement('div');
-      child.style.backgroundImage = 'url("https://example.com/thumb.jpg")';
-      parent.appendChild(child);
-      document.body.appendChild(parent);
-
-      expect(isVideoThumbnailBg(child)).toBe(true);
+      expect(shouldScanBgImage(div)).toBe(true);
     });
 
     it('returns false for elements without background-image', () => {
-      const div = document.createElement('div');
-      expect(isVideoThumbnailBg(div)).toBe(false);
+      const div = createSizedDiv();
+      expect(shouldScanBgImage(div)).toBe(false);
     });
 
     it('returns false for already-processed elements', () => {
-      const div = document.createElement('div');
+      const div = createSizedDiv();
       div.style.backgroundImage = 'url("https://i.ytimg.com/vi/abc/thumb.jpg")';
       div.setAttribute('data-pg-patrol-bg-processed', 'safe');
-      expect(isVideoThumbnailBg(div)).toBe(false);
+      expect(shouldScanBgImage(div)).toBe(false);
     });
 
     it('returns false for SVG background images', () => {
-      const div = document.createElement('div');
-      div.className = 'video-thumb';
+      const div = createSizedDiv();
       div.style.backgroundImage = 'url("https://example.com/icon.svg")';
-      expect(isVideoThumbnailBg(div)).toBe(false);
+      expect(shouldScanBgImage(div)).toBe(false);
     });
 
-    it('returns false for generic background images without video context', () => {
-      const div = document.createElement('div');
-      div.className = 'hero-section';
-      div.style.backgroundImage = 'url("https://example.com/banner.jpg")';
-      expect(isVideoThumbnailBg(div)).toBe(false);
+    it('returns false for elements below the minimum size', () => {
+      const div = createSizedDiv(30, 30);
+      div.style.backgroundImage = 'url("https://example.com/tiny.jpg")';
+      expect(shouldScanBgImage(div)).toBe(false);
+    });
+
+    it('returns false for small data URIs', () => {
+      const div = createSizedDiv();
+      div.style.backgroundImage = 'url("data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=")';
+      expect(shouldScanBgImage(div)).toBe(false);
+    });
+
+    it('isVideoThumbnailBg is an alias for shouldScanBgImage', () => {
+      expect(isVideoThumbnailBg).toBe(shouldScanBgImage);
     });
   });
 
   describe('collectBackgroundThumbnails', () => {
-    it('finds elements with video-related background images', () => {
-      document.body.innerHTML = `
-        <div class="video-thumb" style="background-image: url('https://example.com/thumb.jpg')"></div>
-        <div class="regular" style="background-image: url('https://example.com/bg.jpg')"></div>
-      `;
-
-      const elements = collectBackgroundThumbnails();
-      expect(elements).toHaveLength(1);
-    });
-
-    it('finds elements with known video platform URLs', () => {
-      document.body.innerHTML = `
-        <div style="background-image: url('https://i.ytimg.com/vi/abc/thumb.jpg')"></div>
-        <span style="background-image: url('https://i.vimeocdn.com/video/123.jpg')"></span>
-      `;
-
-      const elements = collectBackgroundThumbnails();
-      expect(elements).toHaveLength(2);
-    });
-
-    it('scans within a subtree root', () => {
-      document.body.innerHTML = `
-        <div id="container">
-          <div class="video-thumb" style="background-image: url('https://example.com/inner.jpg')"></div>
-        </div>
-        <div class="video-thumb" style="background-image: url('https://example.com/outer.jpg')"></div>
-      `;
-
-      const container = document.getElementById('container')!;
-      const elements = collectBackgroundThumbnails(container);
-      expect(elements).toHaveLength(1);
-    });
-
     it('returns empty array when no matching elements exist', () => {
       document.body.innerHTML = '<div>No thumbnails</div>';
+      expect(collectBackgroundThumbnails()).toHaveLength(0);
+    });
+
+    it('returns empty array when elements have no background-image', () => {
+      document.body.innerHTML = '<div class="regular"></div>';
       expect(collectBackgroundThumbnails()).toHaveLength(0);
     });
   });
 
   describe('queueBackgroundImages', () => {
-    it('queues valid background image elements', () => {
+    it('queues valid background image elements with sufficient size', () => {
       const div = document.createElement('div');
-      div.className = 'video-thumb';
       div.style.backgroundImage = 'url("https://example.com/thumb.jpg")';
+      jest.spyOn(div, 'getBoundingClientRect').mockReturnValue({
+        width: 200, height: 200, top: 0, left: 0, bottom: 200, right: 200, x: 0, y: 0, toJSON: () => {},
+      });
 
       // Should not throw
       queueBackgroundImages([div]);

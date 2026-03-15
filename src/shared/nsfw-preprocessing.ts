@@ -22,6 +22,21 @@ export function softmax(logits: Float32Array | number[]): number[] {
 }
 
 /**
+ * Compute center-crop source coordinates for an image.
+ * Returns { sx, sy, sSize } — the top-left corner and side length
+ * of the largest centered square within the source dimensions.
+ */
+export function centerCropParams(
+  srcWidth: number,
+  srcHeight: number,
+): { sx: number; sy: number; sSize: number } {
+  const sSize = Math.min(srcWidth, srcHeight);
+  const sx = Math.floor((srcWidth - sSize) / 2);
+  const sy = Math.floor((srcHeight - sSize) / 2);
+  return { sx, sy, sSize };
+}
+
+/**
  * Preprocess raw ImageData into a Float32 NCHW tensor for the ViT-Tiny model.
  * Applies ImageNet normalization: pixel = (pixel / 255 - mean) / std
  */

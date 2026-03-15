@@ -11,6 +11,7 @@ import { MessageType } from './types';
 import {
   MODEL_INPUT_SIZE,
   preprocessImageData,
+  centerCropParams,
 } from './nsfw-preprocessing';
 
 export { MODEL_INPUT_SIZE, softmax } from './nsfw-preprocessing';
@@ -103,22 +104,28 @@ export function isModelLoading(): boolean {
 export function preprocessImage(
   imgElement: HTMLImageElement | HTMLCanvasElement,
 ): Float32Array {
+  const srcW = imgElement instanceof HTMLImageElement ? imgElement.naturalWidth : imgElement.width;
+  const srcH = imgElement instanceof HTMLImageElement ? imgElement.naturalHeight : imgElement.height;
+  const { sx, sy, sSize } = centerCropParams(srcW, srcH);
+
   const canvas = document.createElement('canvas');
   canvas.width = MODEL_INPUT_SIZE;
   canvas.height = MODEL_INPUT_SIZE;
   const ctx = canvas.getContext('2d')!;
-  ctx.drawImage(imgElement, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
+  ctx.drawImage(imgElement, sx, sy, sSize, sSize, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
 
   const imageData = ctx.getImageData(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
   return preprocessImageData(imageData);
 }
 
 function extractPixelPayload(imgElement: HTMLImageElement): NSFWImageInput {
+  const { sx, sy, sSize } = centerCropParams(imgElement.naturalWidth, imgElement.naturalHeight);
+
   const canvas = document.createElement('canvas');
   canvas.width = MODEL_INPUT_SIZE;
   canvas.height = MODEL_INPUT_SIZE;
   const ctx = canvas.getContext('2d')!;
-  ctx.drawImage(imgElement, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
+  ctx.drawImage(imgElement, sx, sy, sSize, sSize, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
   const imageData = ctx.getImageData(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
 
   return {
