@@ -190,26 +190,6 @@ function ensureChild<T extends HTMLElement>(
   return next;
 }
 
-function isOccluded(target: HTMLElement, rect: DOMRect): boolean {
-  if (typeof document.elementFromPoint !== 'function') return false;
-
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-
-  // Skip check if center is outside the viewport
-  if (centerX < 0 || centerX >= window.innerWidth ||
-      centerY < 0 || centerY >= window.innerHeight) {
-    return false;
-  }
-
-  // elementFromPoint sees through our overlay shells (pointer-events: none).
-  // If the topmost element is unrelated to the target, a modal/lightbox is covering it.
-  const topEl = document.elementFromPoint(centerX, centerY);
-  if (!topEl) return false;
-
-  return !target.contains(topEl) && !topEl.contains(target);
-}
-
 function positionSurface(record: SurfaceRecord): void {
   if (!record.target.isConnected) {
     removeMediaSurface(record.target);
@@ -218,12 +198,6 @@ function positionSurface(record: SurfaceRecord): void {
 
   const rect = record.target.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) {
-    record.shell.style.display = 'none';
-    return;
-  }
-
-  // Hide overlay when a lightbox/modal covers the target image
-  if (isOccluded(record.target, rect)) {
     record.shell.style.display = 'none';
     return;
   }

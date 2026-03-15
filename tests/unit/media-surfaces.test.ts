@@ -8,16 +8,9 @@ import {
   showErrorSurface,
   removeMediaSurface,
   removeAllMediaSurfaces,
-  refreshAllMediaSurfaces,
 } from '../../src/content/media-surfaces';
 
 const OVERLAY_ROOT_ID = 'pg-patrol-media-overlay-root';
-
-// jsdom doesn't implement elementFromPoint — provide a default that returns null
-// (individual occlusion tests override this with jest.spyOn)
-if (typeof document.elementFromPoint !== 'function') {
-  document.elementFromPoint = () => null;
-}
 
 describe('media-surfaces', () => {
   beforeEach(() => {
@@ -121,71 +114,6 @@ describe('media-surfaces', () => {
       const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
       const shell = overlayRoot!.firstElementChild as HTMLElement;
       expect(shell.style.backdropFilter).toBe('blur(8px)');
-    });
-  });
-
-  describe('occlusion detection (lightbox/modal)', () => {
-    let elementFromPointSpy: jest.SpyInstance;
-
-    beforeEach(() => {
-      jest.useFakeTimers();
-    });
-
-    afterEach(() => {
-      elementFromPointSpy?.mockRestore();
-      jest.useRealTimers();
-    });
-
-    it('hides overlay when a lightbox covers the target', () => {
-      const target = createTarget(400, 400);
-      showBlockedSurface(target);
-
-      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
-      const shell = overlayRoot!.firstElementChild as HTMLElement;
-
-      // Simulate a lightbox element covering the target
-      const lightbox = document.createElement('div');
-      document.body.appendChild(lightbox);
-      elementFromPointSpy = jest.spyOn(document, 'elementFromPoint').mockReturnValue(lightbox);
-
-      // Trigger re-layout (scheduleSurfaceLayout uses rAF → shimmed as setTimeout in jsdom)
-      refreshAllMediaSurfaces();
-      jest.runAllTimers();
-
-      expect(shell.style.display).toBe('none');
-    });
-
-    it('keeps overlay visible when target is the topmost element', () => {
-      const target = createTarget(400, 400);
-      showBlockedSurface(target);
-
-      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
-      const shell = overlayRoot!.firstElementChild as HTMLElement;
-
-      // elementFromPoint returns the target itself — no occlusion
-      elementFromPointSpy = jest.spyOn(document, 'elementFromPoint').mockReturnValue(target);
-
-      refreshAllMediaSurfaces();
-      jest.runAllTimers();
-
-      expect(shell.style.display).not.toBe('none');
-    });
-
-    it('keeps overlay visible when target ancestor is topmost', () => {
-      const target = createTarget(400, 400);
-      showPendingSurface(target);
-
-      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
-      const shell = overlayRoot!.firstElementChild as HTMLElement;
-
-      // elementFromPoint returns an ancestor of the target (e.g., parent container)
-      elementFromPointSpy = jest.spyOn(document, 'elementFromPoint').mockReturnValue(document.body);
-
-      refreshAllMediaSurfaces();
-      jest.runAllTimers();
-
-      // document.body contains the target, so overlay stays visible
-      expect(shell.style.display).not.toBe('none');
     });
   });
 
