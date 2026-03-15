@@ -43,7 +43,7 @@
     ]
   },
   "index.ts-loader.js": {
-    "file": "assets/index.ts-loader-pCqC-5Zj.js",
+    "file": "assets/index.ts-loader-DT77Nj_Y.js",
     "src": "index.ts-loader.js"
   },
   "node_modules/onnxruntime-web/dist/ort.wasm.min.mjs": {
@@ -74,7 +74,7 @@
     ]
   },
   "src/content/index.ts": {
-    "file": "assets/index.ts-DlqgchUT.js",
+    "file": "assets/index.ts-BRyaCo5m.js",
     "name": "index.ts",
     "src": "src/content/index.ts",
     "isEntry": true,
