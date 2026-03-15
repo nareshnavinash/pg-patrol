@@ -43,7 +43,7 @@
     ]
   },
   "index.ts-loader.js": {
-    "file": "assets/index.ts-loader-CwYLsd4v.js",
+    "file": "assets/index.ts-loader-Dv8BD5T3.js",
     "src": "index.ts-loader.js"
   },
   "node_modules/onnxruntime-web/dist/ort.wasm.min.mjs": {
@@ -74,7 +74,7 @@
     ]
   },
   "src/content/index.ts": {
-    "file": "assets/index.ts-DEihqlNT.js",
+    "file": "assets/index.ts-D59nb2lE.js",
     "name": "index.ts",
     "src": "src/content/index.ts",
     "isEntry": true,
@@ -94,7 +94,7 @@
     "isEntry": true
   },
   "src/ml-inference/offscreen.html": {
-    "file": "assets/offscreen-V9zB7CDk.js",
+    "file": "assets/offscreen-pPfHGxhj.js",
     "name": "offscreen",
     "src": "src/ml-inference/offscreen.html",
     "isEntry": true,
@@ -108,7 +108,7 @@
     ]
   },
   "src/popup/index.html": {
-    "file": "assets/index.html-Tt_S5z0M.js",
+    "file": "assets/index.html-DESgriIm.js",
     "name": "index.html",
     "src": "src/popup/index.html",
     "isEntry": true,
@@ -118,7 +118,7 @@
       "_storage-BqH49hLa.js"
     ],
     "css": [
-      "assets/index-7quKZXFj.css"
+      "assets/index-DDKM8w1B.css"
     ]
   }
 }

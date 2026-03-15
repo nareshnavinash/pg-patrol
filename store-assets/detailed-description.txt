@@ -1,0 +1,59 @@
+PG Patrol: Protect Your Family from Accidental Exposure to 18+ Content
+
+PG Patrol is a privacy-first browser extension that helps families browse the web more safely. It works in real time — filtering profanity, hiding NSFW images, and softening distress-heavy content as pages load and scroll.
+
+ALL FILTERING HAPPENS LOCALLY ON YOUR DEVICE. No data is ever sent to external servers.
+
+━━━ CORE FEATURES ━━━
+
+★ Profanity Filter
+Replaces swear words and offensive language with funny, family-friendly alternatives. Pages stay readable and natural.
+
+★ NSFW Image Blocker
+Detects and hides explicit or sexual images using a local AI model. Blocked images are replaced with a clean PG Patrol banner — the page layout stays intact.
+
+★ Good Vibes Mode
+Softens distress-heavy content blocks (graphic news, toxic discussions) with a gentle overlay, creating a calmer browsing experience.
+
+★ Real-Time Protection
+Works on dynamic pages: social feeds, infinite scroll, lazy-loaded images, and comment sections. Protection continues as new content appears.
+
+━━━ CUSTOMIZATION ━━━
+
+• Three sensitivity levels: Mild, Moderate, Strict
+• Add your own blocked words and safe words
+• Whitelist trusted websites
+• Per-page activity log shows what was filtered
+• All-time stats tracking
+• Reveal toggle to temporarily view original content
+
+━━━ AI & PRIVACY ━━━
+
+PG Patrol uses two local AI models:
+• Text toxicity detection (MiniLM-based transformer, 6-label Jigsaw model)
+• Image NSFW detection (ViT-Tiny ONNX model with multi-crop inference)
+
+Both models run entirely on your device using WebAssembly. No cloud APIs required.
+
+Optional: Connect your own Google Perspective API key for enhanced text analysis. This is completely opt-in and disabled by default.
+
+━━━ PERMISSIONS EXPLAINED ━━━
+
+• storage — saves your settings and preferences
+• activeTab — accesses the current tab for filtering
+• alarms — schedules periodic word list updates
+• offscreen — runs AI models in an isolated background context (Chrome only)
+• host_permissions (all URLs) — injects content scripts to filter pages you visit
+
+━━━ WHO IS THIS FOR? ━━━
+
+• Parents managing shared family devices
+• Schools and classrooms
+• Anyone wanting a calmer browsing experience
+• Adults who want to reduce surprise explicit content on social media and news sites
+
+━━━ IMPORTANT NOTE ━━━
+
+No filter is perfect. PG Patrol significantly reduces unwanted exposure but some content may occasionally slip through or be over-filtered. Adjust sensitivity and custom word lists for the best experience.
+
+Open source and community-driven.

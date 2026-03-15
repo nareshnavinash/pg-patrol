@@ -386,6 +386,16 @@ function onMessage(
           setDeveloperMode(settings.developerMode);
           setCustomThreshold(settings.customThreshold);
         }
+        if (!settings.enabled) {
+          stopObserver();
+          stopViewportScanner();
+          stopShadowDomScanner();
+          revealOriginals();
+          resetManagedMedia();
+          removeAllOverlays();
+          removeImageFilterBanner();
+          terminateWorker();
+        }
       }
       break;
     case MessageType.TOGGLE_FILTERING:
@@ -705,7 +715,10 @@ async function init(): Promise<void> {
       stopObserver();
       stopViewportScanner();
       stopShadowDomScanner();
+      revealOriginals();
       resetManagedMedia();
+      removeAllOverlays();
+      removeImageFilterBanner();
       terminateWorker();
     }
   });

@@ -1,0 +1,1 @@
+Family-friendly web filter — replaces profanity with funny words and hides NSFW images. All AI runs locally.

@@ -12,24 +12,16 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const steps = [
     // Step 1: Welcome
     <div key="welcome" className="flex flex-col items-center text-center px-6">
-      <div className="w-16 h-16 flex items-center justify-center mb-4">
+      <div className="relative w-16 h-16 flex items-center justify-center mb-4">
         <svg viewBox="0 0 32 32" width="64" height="64" xmlns="http://www.w3.org/2000/svg">
           <path
             d="M16 2 L28 7 L28 15 C28 22.5 22.5 28.5 16 30 C9.5 28.5 4 22.5 4 15 L4 7 Z"
             fill="#4f46e5"
           />
-          <text
-            x="16"
-            y="19"
-            textAnchor="middle"
-            fill="white"
-            fontWeight="bold"
-            fontSize="10"
-            fontFamily="system-ui, sans-serif"
-          >
-            PG
-          </text>
         </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg" style={{ paddingBottom: '4px' }}>
+          PG
+        </span>
       </div>
       <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
         Welcome to PG Patrol
