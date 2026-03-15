@@ -1,9 +1,13 @@
 import { MessageType } from '../shared/types';
-import type { Message, StatsResponse, MLClassifyResult } from '../shared/types';
+import type { Message, StatsResponse, MLClassifyResult, ActivityEntry } from '../shared/types';
 import { fetchAndCacheWordList } from '../shared/word-list-updater';
 
 // Per-tab replacement counts
 const tabStats = new Map<number, { wordsReplaced: number; imagesReplaced: number }>();
+
+// Per-tab activity log (ring buffer, max 50 entries per tab)
+const MAX_ACTIVITY_ENTRIES = 50;
+const tabActivityLog = new Map<number, ActivityEntry[]>();
 
 // ---- Offscreen document lifecycle ----
 let offscreenCreated = false;
@@ -92,6 +96,29 @@ chrome.runtime.onMessage.addListener(
           }
         });
         break;
+      }
+
+      case MessageType.LOG_ACTIVITY: {
+        if (tabId != null) {
+          let entries = tabActivityLog.get(tabId);
+          if (!entries) {
+            entries = [];
+            tabActivityLog.set(tabId, entries);
+          }
+          entries.push(message.data);
+          // Ring buffer: drop oldest on overflow
+          if (entries.length > MAX_ACTIVITY_ENTRIES) {
+            entries.shift();
+          }
+        }
+        break;
+      }
+
+      case MessageType.GET_ACTIVITY_LOG: {
+        const logTabId = message.tabId ?? tabId;
+        const entries = logTabId ? tabActivityLog.get(logTabId) ?? [] : [];
+        sendResponse(entries);
+        return true; // async response
       }
 
       case MessageType.ML_CLASSIFY_REQUEST: {
@@ -223,9 +250,10 @@ chrome.runtime.onMessage.addListener(
   },
 );
 
-// Clean up tab stats when tab is closed
+// Clean up tab stats and activity log when tab is closed
 chrome.tabs.onRemoved.addListener((tabId) => {
   tabStats.delete(tabId);
+  tabActivityLog.delete(tabId);
 });
 
 // Periodic remote word list update (every 24 hours)
@@ -238,11 +266,21 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-// Fetch word list on install/update
-chrome.runtime.onInstalled.addListener(() => {
+// Fetch word list on install/update; skip onboarding for existing users
+chrome.runtime.onInstalled.addListener((details) => {
   fetchAndCacheWordList().catch(() => {
     // Silent fail — offline still works with bundled defaults
   });
+
+  // Existing users upgrading should skip the onboarding flow
+  if (details.reason === 'update') {
+    chrome.storage.sync.get('settings').then((result) => {
+      const current = result.settings || {};
+      chrome.storage.sync.set({
+        settings: { ...current, hasSeenOnboarding: true },
+      });
+    }).catch(() => {});
+  }
 });
 
 console.log('PG Patrol background service worker loaded');

@@ -16,6 +16,20 @@ import {
 
 export { MODEL_INPUT_SIZE, softmax } from './nsfw-preprocessing';
 
+// Reusable canvas for pixel extraction — avoids creating a new one per call
+let sharedCanvas: HTMLCanvasElement | null = null;
+let sharedCtx: CanvasRenderingContext2D | null = null;
+
+function getSharedCanvas(): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
+  if (!sharedCanvas || !sharedCtx) {
+    sharedCanvas = document.createElement('canvas');
+    sharedCanvas.width = MODEL_INPUT_SIZE;
+    sharedCanvas.height = MODEL_INPUT_SIZE;
+    sharedCtx = sharedCanvas.getContext('2d')!;
+  }
+  return { canvas: sharedCanvas, ctx: sharedCtx };
+}
+
 export interface ClassificationResult {
   isNSFW: boolean;
   score: number;
@@ -23,7 +37,7 @@ export interface ClassificationResult {
   topClass: string;
 }
 
-const THRESHOLDS: Record<Sensitivity, number> = {
+export const THRESHOLDS: Record<Sensitivity, number> = {
   mild: 0.85,
   moderate: 0.60,
   strict: 0.30,
@@ -108,10 +122,8 @@ export function preprocessImage(
   const srcH = imgElement instanceof HTMLImageElement ? imgElement.naturalHeight : imgElement.height;
   const { sx, sy, sSize } = centerCropParams(srcW, srcH);
 
-  const canvas = document.createElement('canvas');
-  canvas.width = MODEL_INPUT_SIZE;
-  canvas.height = MODEL_INPUT_SIZE;
-  const ctx = canvas.getContext('2d')!;
+  const { ctx } = getSharedCanvas();
+  ctx.clearRect(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
   ctx.drawImage(imgElement, sx, sy, sSize, sSize, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
 
   const imageData = ctx.getImageData(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
@@ -121,10 +133,8 @@ export function preprocessImage(
 function extractPixelPayload(imgElement: HTMLImageElement): NSFWImageInput {
   const { sx, sy, sSize } = centerCropParams(imgElement.naturalWidth, imgElement.naturalHeight);
 
-  const canvas = document.createElement('canvas');
-  canvas.width = MODEL_INPUT_SIZE;
-  canvas.height = MODEL_INPUT_SIZE;
-  const ctx = canvas.getContext('2d')!;
+  const { ctx } = getSharedCanvas();
+  ctx.clearRect(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
   ctx.drawImage(imgElement, sx, sy, sSize, sSize, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
   const imageData = ctx.getImageData(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
 

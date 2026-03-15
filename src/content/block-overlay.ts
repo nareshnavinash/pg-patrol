@@ -100,6 +100,10 @@ export function applyOverlay(element: HTMLElement, options?: ApplyOverlayOptions
   const elHeight = element.getBoundingClientRect().height;
   const useRow = elHeight < 80;
 
+  const overlayBorder = darkPage
+    ? '1px solid rgba(255, 255, 255, 0.08)'
+    : '1px solid rgba(255, 255, 255, 0.12)';
+
   Object.assign(overlay.style, {
     position: 'absolute',
     inset: '0',
@@ -111,7 +115,9 @@ export function applyOverlay(element: HTMLElement, options?: ApplyOverlayOptions
     background: overlayBg,
     backdropFilter: 'blur(16px)',
     WebkitBackdropFilter: 'blur(16px)',
+    border: overlayBorder,
     borderRadius: '8px',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 16px rgba(0,0,0,0.15)',
     cursor: 'pointer',
     zIndex: '10',
     minHeight: '44px',

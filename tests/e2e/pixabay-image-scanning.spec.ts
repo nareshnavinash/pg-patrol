@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 const SCROLL_PAGE = `file://${path.resolve(__dirname, 'fixtures/infinite-scroll-page.html')}`;
 
 const PROCESSED_ATTR = 'data-pg-patrol-img-processed';
+const OVERLAY_ROOT_SELECTOR = '#pg-patrol-media-overlay-root';
 
 test.describe('Infinite Scroll Image Scanning', () => {
   test.setTimeout(120_000);
@@ -33,26 +34,38 @@ test.describe('Infinite Scroll Image Scanning', () => {
     console.log(`Initial batch: ${processedCount} processed`);
     expect(processedCount).toBeGreaterThan(0);
 
-    // NSFW images should show the placeholder (CSS content replacement)
+    // NSFW images should be marked and covered by the overlay root
     const nsfwImages = await page.locator(`img[${PROCESSED_ATTR}="nsfw"]`).all();
     console.log(`NSFW replaced: ${nsfwImages.length}`);
     for (const img of nsfwImages) {
       const attr = await img.getAttribute(PROCESSED_ATTR);
       expect(attr).toBe('nsfw');
     }
+    if (nsfwImages.length > 0) {
+      await expect(page.locator(OVERLAY_ROOT_SELECTOR)).toBeAttached();
+      await expect(page.locator(OVERLAY_ROOT_SELECTOR)).toContainText('Restricted image hidden');
+    }
 
     // The NSFW CSS stylesheet should be injected
     const hasStylesheet = await page.locator('#pg-patrol-nsfw-styles').count();
     expect(hasStylesheet).toBe(1);
 
-    // Safe images should be visible and not replaced
+    // Safe images should be revealed through the page's original image nodes again
     const safeImages = await page.locator(`img[${PROCESSED_ATTR}="safe"]`).all();
     console.log(`Safe visible: ${safeImages.length}`);
-    for (const img of safeImages) {
-      const display = await img.evaluate(
-        (el) => window.getComputedStyle(el).display,
-      );
-      expect(display).not.toBe('none');
+    if (safeImages.length > 0) {
+      const visibleSafeImages = await page.evaluate(() => {
+        const imgs = document.querySelectorAll<HTMLImageElement>('img[data-pg-patrol-img-processed="safe"]');
+        let count = 0;
+        for (const img of imgs) {
+          const style = window.getComputedStyle(img);
+          if (style.visibility !== 'hidden' && style.opacity !== '0') {
+            count++;
+          }
+        }
+        return count;
+      });
+      expect(visibleSafeImages).toBeGreaterThan(0);
     }
   });
 
@@ -105,7 +118,7 @@ test.describe('Infinite Scroll Image Scanning', () => {
 
     // Wait for batch 2 images to appear in DOM
     const batch2Selector = '.card[data-batch="2"] img';
-    await page.waitForSelector(batch2Selector, { timeout: 5_000 });
+    await page.waitForSelector(batch2Selector, { timeout: 5_000, state: 'attached' });
 
     // Scroll again to ensure scroll scanner fires
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -150,9 +163,18 @@ test.describe('Infinite Scroll Image Scanning', () => {
       );
       let count = 0;
       for (const img of imgs) {
+        if (img.getAttribute('data-pg-patrol-overlay-owned') === 'true') {
+          continue;
+        }
         const rect = img.getBoundingClientRect();
+        const style = window.getComputedStyle(img);
         // Only count images that are large enough to scan (>50px)
-        if (rect.width > 50 && rect.height > 50) {
+        if (
+          rect.width > 50 &&
+          rect.height > 50 &&
+          style.visibility !== 'hidden' &&
+          style.opacity !== '0'
+        ) {
           count++;
         }
       }

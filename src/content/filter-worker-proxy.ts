@@ -12,6 +12,15 @@ import type { WorkerResponse } from './filter-worker';
 
 let worker: Worker | null = null;
 let requestId = 0;
+let crashCount = 0;
+let lastCustomWords: {
+  customBlockedWords: string[];
+  customSafeWords: string[];
+  customNegativeTriggers: string[];
+  customSafeContext: string[];
+} | null = null;
+
+const MAX_CRASH_RETRIES = 3;
 
 const pendingRequests = new Map<
   number,
@@ -41,8 +50,15 @@ export function initFilterWorker(): boolean {
     };
 
     worker.onerror = () => {
-      // Worker failed — fall back to sync
       worker = null;
+      crashCount++;
+      if (crashCount < MAX_CRASH_RETRIES) {
+        // Attempt to reinitialize after a crash
+        initFilterWorker();
+        if (worker && lastCustomWords) {
+          syncCustomWords(lastCustomWords);
+        }
+      }
     };
 
     return true;
@@ -109,6 +125,7 @@ export function syncCustomWords(words: {
   customNegativeTriggers: string[];
   customSafeContext: string[];
 }): void {
+  lastCustomWords = words;
   if (!worker) return;
   worker.postMessage({ type: 'SET_CUSTOM_WORDS', ...words });
 }
@@ -129,6 +146,7 @@ export function terminateWorker(): void {
     worker.terminate();
     worker = null;
   }
+  crashCount = 0;
   for (const [id, pending] of pendingRequests) {
     clearTimeout(pending.timer);
     pendingRequests.delete(id);

@@ -71,9 +71,14 @@ function copyOnnxAssets() {
         __dirname,
         'node_modules/@huggingface/transformers/dist',
       );
+      // Only copy the WASM backends we actually use (SIMD + threaded)
+      const neededWasm = new Set([
+        'ort-wasm-simd-threaded.wasm',
+        'ort-wasm-simd.wasm',
+      ]);
       if (existsSync(transformersOrtDir)) {
         for (const f of readdirSync(transformersOrtDir)) {
-          if (f.endsWith('.wasm')) {
+          if (f.endsWith('.wasm') && neededWasm.has(f)) {
             copyFileSync(resolve(transformersOrtDir, f), resolve(wasmOutDir, f));
           }
         }

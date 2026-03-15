@@ -5,6 +5,7 @@
 const mockPixelData = new Uint8ClampedArray(384 * 384 * 4).fill(128);
 const mockCanvasContext = {
   drawImage: jest.fn(),
+  clearRect: jest.fn(),
   getImageData: jest.fn().mockReturnValue({ data: mockPixelData }),
 };
 

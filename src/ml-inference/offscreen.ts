@@ -57,9 +57,19 @@ async function getClassifier(): Promise<any> {
   return classifierPromise;
 }
 
+function disposeModels(): void {
+  nsfwSession?.release?.();
+  nsfwSession = null;
+  nsfwSessionPromise = null;
+  classifier?.dispose?.();
+  classifier = null;
+  classifierPromise = null;
+}
+
 function resetIdleTimer(): void {
   if (idleTimer) clearTimeout(idleTimer);
   idleTimer = setTimeout(() => {
+    disposeModels();
     chrome.runtime.sendMessage({ type: 'OFFSCREEN_IDLE' }).catch(() => {});
   }, IDLE_TIMEOUT);
 }
@@ -115,6 +125,7 @@ async function getImageDataForSource(source: NSFWImageInput): Promise<ImageData>
   const canvas = new OffscreenCanvas(MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
   const ctx = canvas.getContext('2d')!;
   ctx.drawImage(bitmap, sx, sy, sSize, sSize, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
+  bitmap.close();
   return ctx.getImageData(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
 }
 
@@ -135,22 +146,19 @@ async function runInference(imageData: ImageData): Promise<number> {
   feeds[nsfwSession!.inputNames[0]] = inputTensor;
 
   const results = await nsfwSession!.run(feeds);
-  const outputData = results[nsfwSession!.outputNames[0]].data as Float32Array;
+  const outputTensor = results[nsfwSession!.outputNames[0]];
+  const outputData = outputTensor.data as Float32Array;
   const [nsfwProb] = softmax(outputData);
+  inputTensor.dispose();
+  outputTensor.dispose?.();
   return nsfwProb;
 }
 
 /**
  * Create a zoomed center-crop (2x zoom: takes the center 50% of the image).
- * Only used for URL-based sources where we have the full bitmap.
+ * Reuses an already-fetched bitmap to avoid a redundant network request.
  */
-async function getZoomedImageData(source: NSFWImageInput): Promise<ImageData | null> {
-  if (source.kind !== 'url') return null;
-
-  const response = await fetch(source.imageUrl);
-  const blob = await response.blob();
-  const bitmap = await createImageBitmap(blob);
-
+function getZoomedImageDataFromBitmap(bitmap: ImageBitmap): ImageData {
   // Take the center 50% of the image (2x zoom)
   const cropW = Math.floor(bitmap.width / 2);
   const cropH = Math.floor(bitmap.height / 2);
@@ -169,17 +177,33 @@ async function classifyImageInOffscreen(
   sensitivity: string,
   customThreshold?: number | null,
 ): Promise<{ isNSFW: boolean; score: number }> {
-  const imageData = await getImageDataForSource(source);
+  // For URL sources, fetch the bitmap once and reuse for both passes
+  let bitmap: ImageBitmap | null = null;
+  let imageData: ImageData;
+
+  if (source.kind === 'url') {
+    const response = await fetch(source.imageUrl);
+    const blob = await response.blob();
+    bitmap = await createImageBitmap(blob);
+    const { sx, sy, sSize } = centerCropParams(bitmap.width, bitmap.height);
+    const canvas = new OffscreenCanvas(MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(bitmap, sx, sy, sSize, sSize, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
+    imageData = ctx.getImageData(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
+  } else {
+    imageData = await getImageDataForSource(source);
+  }
+
   let nsfwProb = await runInference(imageData);
 
   // Multi-crop: for ambiguous scores, run a second pass with 2x center zoom
-  if (nsfwProb >= AMBIGUOUS_LOW && nsfwProb <= AMBIGUOUS_HIGH) {
-    const zoomedData = await getZoomedImageData(source);
-    if (zoomedData) {
-      const zoomedProb = await runInference(zoomedData);
-      nsfwProb = Math.max(nsfwProb, zoomedProb);
-    }
+  if (nsfwProb >= AMBIGUOUS_LOW && nsfwProb <= AMBIGUOUS_HIGH && bitmap) {
+    const zoomedData = getZoomedImageDataFromBitmap(bitmap);
+    const zoomedProb = await runInference(zoomedData);
+    nsfwProb = Math.max(nsfwProb, zoomedProb);
   }
+
+  bitmap?.close();
 
   const threshold = customThreshold ?? NSFW_THRESHOLDS[sensitivity] ?? 0.60;
   return { isNSFW: nsfwProb >= threshold, score: nsfwProb };

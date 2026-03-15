@@ -155,14 +155,14 @@ describe('Preact migration — PerspectiveSetup', () => {
   it('PerspectiveSetup expands on click', () => {
     render(<PerspectiveSetup apiKey="" onSave={jest.fn()} />);
 
-    fireEvent.click(screen.getByText(/Advanced: Enhanced Detection/));
+    fireEvent.click(screen.getByText(/Enhanced Detection/));
     expect(screen.getByPlaceholderText('Enter API key')).toBeTruthy();
   });
 
   it('PerspectiveSetup shows active status when API key is set', () => {
     render(<PerspectiveSetup apiKey="test-key-123" onSave={jest.fn()} />);
 
-    fireEvent.click(screen.getByText(/Advanced: Enhanced Detection/));
+    fireEvent.click(screen.getByText(/Enhanced Detection/));
     expect(screen.getByText('Enhanced detection is active.')).toBeTruthy();
   });
 
@@ -170,7 +170,7 @@ describe('Preact migration — PerspectiveSetup', () => {
     const onSave = jest.fn();
     render(<PerspectiveSetup apiKey="" onSave={onSave} />);
 
-    fireEvent.click(screen.getByText(/Advanced: Enhanced Detection/));
+    fireEvent.click(screen.getByText(/Enhanced Detection/));
     const input = screen.getByPlaceholderText('Enter API key') as HTMLInputElement;
     input.value = 'my-api-key';
     fireEvent.input(input, { target: { value: 'my-api-key' } });

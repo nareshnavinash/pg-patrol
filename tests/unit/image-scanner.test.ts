@@ -17,6 +17,10 @@ import {
   collectBackgroundThumbnails,
   ensureNsfwStyleSheet,
   getNsfwStyleSheetCssText,
+  initImageCache,
+  imageCache,
+  setDeveloperMode,
+  onScanProgress,
 } from '../../src/content/image-scanner';
 
 // Mock nsfw-detector to avoid loading ONNX in tests
@@ -32,7 +36,23 @@ jest.mock('../../src/shared/nsfw-detector', () => ({
   classifyImageUrl: (...args: unknown[]) => mockClassifyImage(...args),
   isModelReady: jest.fn().mockReturnValue(true),
   loadModel: jest.fn().mockResolvedValue(undefined),
+  THRESHOLDS: { mild: 0.85, moderate: 0.60, strict: 0.30 },
 }));
+
+// Provide chrome.storage.local stub for cache
+if (!(globalThis as Record<string, unknown>).chrome) {
+  (globalThis as Record<string, unknown>).chrome = {
+    storage: {
+      local: {
+        get: jest.fn(async () => ({})),
+        set: jest.fn(async () => {}),
+        remove: jest.fn(async () => {}),
+      },
+    },
+  };
+}
+
+const OVERLAY_ROOT_ID = 'pg-patrol-media-overlay-root';
 
 describe('image-scanner', () => {
   function createScannableImage(src = 'https://example.com/photo.jpg'): HTMLImageElement {
@@ -132,6 +152,20 @@ describe('image-scanner', () => {
       expect(img.getAttribute('data-pg-patrol-img-processed')).toBe('safe');
     });
 
+    it('keeps placeholder-style images pending and blurred until a real src arrives', () => {
+      const img = document.createElement('img');
+      Object.defineProperty(img, 'complete', { value: true, configurable: true });
+      Object.defineProperty(img, 'naturalWidth', { value: 300, configurable: true });
+      Object.defineProperty(img, 'naturalHeight', { value: 300, configurable: true });
+      document.body.appendChild(img);
+
+      queueImages([img]);
+
+      expect(img.getAttribute('data-pg-patrol-img-processed')).toBe('pending');
+      expect(img.style.opacity).toBe('0');
+      expect(document.getElementById(OVERLAY_ROOT_ID)?.textContent).toContain('Checking image');
+    });
+
     it('reprocesses a finalized image when the src changes on the same node', async () => {
       const img = createScannableImage('https://example.com/first.jpg');
 
@@ -150,7 +184,7 @@ describe('image-scanner', () => {
       expect(img.getAttribute('data-pg-patrol-img-processed')).toBe('safe');
     });
 
-    it('keeps the original NSFW image src and mounts a banner overlay', async () => {
+    it('keeps the original NSFW image src hidden and mounts a blocked surface', async () => {
       mockClassifyImage.mockResolvedValueOnce({
         isNSFW: true,
         score: 0.95,
@@ -167,10 +201,14 @@ describe('image-scanner', () => {
       expect(img.getAttribute('data-pg-patrol-img-source')).toBe('https://example.com/nsfw.jpg');
       expect(img.getAttribute('data-pg-patrol-img-masked')).toBe('true');
       expect(img.src).toBe('https://example.com/nsfw.jpg');
-      expect(img.parentElement?.querySelector('[data-pg-patrol-img-banner="true"]')).not.toBeNull();
+      expect(img.style.opacity).toBe('0');
+      expect(img.style.visibility).toBe('hidden');
+      // Blocked surface shows professional text overlay
+      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
+      expect(overlayRoot!.textContent).toContain('Restricted image hidden');
     });
 
-    it('re-applies the banner when an NSFW image loses its overlay', async () => {
+    it('re-applies the blocked surface when an NSFW image loses its overlay', async () => {
       mockClassifyImage.mockResolvedValueOnce({
         isNSFW: true,
         score: 0.95,
@@ -182,17 +220,17 @@ describe('image-scanner', () => {
       document.body.appendChild(img);
       queueImages([img]);
       await flushAsyncWork();
-      const banner = img.parentElement?.querySelector('[data-pg-patrol-img-banner="true"]');
-      expect(banner).not.toBeNull();
-      banner?.remove();
+      document.getElementById(OVERLAY_ROOT_ID)?.replaceChildren();
 
       requeueImage(img);
 
       expect(img.getAttribute('data-pg-patrol-img-processed')).toBe('nsfw');
-      expect(img.parentElement?.querySelector('[data-pg-patrol-img-banner="true"]')).not.toBeNull();
+      // Blocked surface shows professional text overlay
+      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
+      expect(overlayRoot!.textContent).toContain('Restricted image hidden');
     });
 
-    it('removes orphaned banners when a parent gets a new safe image node', async () => {
+    it('swaps from a blocked surface back to the original safe image when a new node replaces it', async () => {
       mockClassifyImage
         .mockResolvedValueOnce({
           isNSFW: true,
@@ -215,7 +253,9 @@ describe('image-scanner', () => {
       queueImages([nsfwImg]);
       await flushAsyncWork();
 
-      expect(parent.querySelector('[data-pg-patrol-img-banner="true"]')).not.toBeNull();
+      // Blocked surface shows professional text overlay
+      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
+      expect(overlayRoot!.textContent).toContain('Restricted image hidden');
 
       nsfwImg.remove();
 
@@ -225,7 +265,8 @@ describe('image-scanner', () => {
       await flushAsyncWork();
 
       expect(safeImg.getAttribute('data-pg-patrol-img-processed')).toBe('safe');
-      expect(parent.querySelector('[data-pg-patrol-img-banner="true"]')).toBeNull();
+      expect(safeImg.style.opacity).toBe('');
+      expect(safeImg.style.visibility).toBe('');
     });
   });
 
@@ -468,17 +509,17 @@ describe('image-scanner', () => {
       ensureNsfwStyleSheet();
       const style = document.getElementById('pg-patrol-nsfw-styles');
       const css = style?.textContent || '';
-      // Should blur images that are not safe, skipped, or nsfw
-      expect(css).toContain('filter:blur(20px)!important');
+      expect(css).toContain('data-pg-patrol-overlay-owned="true"');
       expect(css).toContain('data-pg-patrol-img-processed="safe"');
       expect(css).toContain('data-pg-patrol-img-processed="skipped"');
-      expect(css).toContain('data-pg-patrol-img-processed="nsfw"');
+      expect(css).toContain('opacity:0!important');
     });
 
-    it('contains the NSFW hide rule for image banners', () => {
+    it('contains the raw image hide rule', () => {
       ensureNsfwStyleSheet();
       const style = document.getElementById('pg-patrol-nsfw-styles');
       const css = style?.textContent || '';
+      expect(css).toContain('img:not([data-pg-patrol-overlay-owned="true"]):not([data-pg-patrol-img-processed="safe"])');
       expect(css).toContain('visibility:hidden!important');
       expect(css).toContain('pointer-events:none!important');
     });
@@ -487,8 +528,8 @@ describe('image-scanner', () => {
       ensureNsfwStyleSheet();
       const style = document.getElementById('pg-patrol-nsfw-styles');
       const css = style?.textContent || '';
-      expect(css).toContain('data-pg-patrol-vid-processed="nsfw"');
-      expect(css).toContain('display:none!important');
+      expect(css).toContain('data-pg-patrol-vid-processed="safe"');
+      expect(css).toContain('opacity:0!important');
     });
 
     it('is idempotent — does not inject duplicate stylesheets', () => {
@@ -502,10 +543,148 @@ describe('image-scanner', () => {
   describe('getNsfwStyleSheetCssText', () => {
     it('returns CSS text matching the injected stylesheet content', () => {
       const cssText = getNsfwStyleSheetCssText();
-      expect(cssText).toContain('filter:blur(20px)!important');
+      expect(cssText).toContain('data-pg-patrol-overlay-owned="true"');
       expect(cssText).toContain('data-pg-patrol-img-processed="safe"');
-      expect(cssText).toContain('data-pg-patrol-img-processed="nsfw"');
+      expect(cssText).toContain('data-pg-patrol-img-processed="skipped"');
       expect(cssText).toContain('visibility:hidden!important');
+    });
+  });
+
+  // ---- Persistent cache integration ----
+
+  describe('cache integration', () => {
+    it('initImageCache is exported and callable', async () => {
+      expect(typeof initImageCache).toBe('function');
+      await expect(initImageCache()).resolves.not.toThrow();
+    });
+
+    it('imageCache is exported', () => {
+      expect(imageCache).toBeDefined();
+      expect(typeof imageCache.get).toBe('function');
+      expect(typeof imageCache.set).toBe('function');
+    });
+
+    it('cached safe image skips classification', async () => {
+      const img = createScannableImage('https://example.com/cached-safe.jpg');
+
+      // Pre-populate cache with a safe verdict
+      imageCache.setThreshold(0.60);
+      imageCache.set('https://example.com/cached-safe.jpg', 'safe', 0.05, 200, 'content');
+
+      queueImages([img]);
+      await flushAsyncWork();
+
+      // classifyImage should NOT have been called — cache hit
+      expect(mockClassifyImage).not.toHaveBeenCalled();
+      expect(img.getAttribute('data-pg-patrol-img-processed')).toBe('safe');
+    });
+
+    it('cached NSFW image is hidden immediately without classification', async () => {
+      const img = createScannableImage('https://example.com/cached-nsfw.jpg');
+      document.body.appendChild(img);
+
+      imageCache.setThreshold(0.60);
+      imageCache.set('https://example.com/cached-nsfw.jpg', 'nsfw', 0.90, 200, 'content');
+
+      queueImages([img]);
+      await flushAsyncWork();
+
+      expect(mockClassifyImage).not.toHaveBeenCalled();
+      expect(img.getAttribute('data-pg-patrol-img-processed')).toBe('nsfw');
+    });
+
+    it('cached NSFW video poster skips classification and shows blocked surface', async () => {
+      const video = document.createElement('video');
+      video.poster = 'https://example.com/cached-nsfw-poster.jpg';
+      document.body.appendChild(video);
+
+      imageCache.setThreshold(0.60);
+      imageCache.set('https://example.com/cached-nsfw-poster.jpg', 'nsfw', 0.92, 200, 'content');
+
+      queueVideoElements([video]);
+      await flushAsyncWork();
+
+      expect(mockClassifyImage).not.toHaveBeenCalled();
+      expect(video.getAttribute('data-pg-patrol-vid-processed')).toBe('nsfw');
+    });
+
+    it('cached safe background image skips classification', async () => {
+      const div = document.createElement('div');
+      div.style.backgroundImage = 'url("https://example.com/cached-safe-bg.jpg")';
+      jest.spyOn(div, 'getBoundingClientRect').mockReturnValue({
+        width: 200, height: 200, top: 0, left: 0, bottom: 200, right: 200, x: 0, y: 0, toJSON: () => {},
+      });
+      document.body.appendChild(div);
+
+      imageCache.setThreshold(0.60);
+      imageCache.set('https://example.com/cached-safe-bg.jpg', 'safe', 0.05, 200, 'content');
+
+      queueBackgroundImages([div]);
+      await flushAsyncWork();
+
+      expect(mockClassifyImage).not.toHaveBeenCalled();
+      expect(div.getAttribute('data-pg-patrol-bg-processed')).toBe('safe');
+    });
+
+    it('pageNsfwUrls dedup does not inflate replacedCount from persistent cache', async () => {
+      const countBefore = getReplacedImageCount();
+
+      // Two images with the same cached NSFW URL — only one should increment
+      const img1 = createScannableImage('https://example.com/dedup-nsfw.jpg');
+      const img2 = createScannableImage('https://example.com/dedup-nsfw.jpg');
+      document.body.appendChild(img1);
+      document.body.appendChild(img2);
+
+      imageCache.setThreshold(0.60);
+      imageCache.set('https://example.com/dedup-nsfw.jpg', 'nsfw', 0.90, 200, 'content');
+
+      queueImages([img1]);
+      await flushAsyncWork();
+      queueImages([img2]);
+      await flushAsyncWork();
+
+      // Only 1 increment despite 2 images with the same URL
+      expect(getReplacedImageCount()).toBe(countBefore + 1);
+    });
+
+    it('developer mode shows score overlay for cached safe images', async () => {
+      setDeveloperMode(true);
+
+      const img = createScannableImage('https://example.com/dev-cached-safe.jpg');
+      const parent = document.createElement('div');
+      parent.appendChild(img);
+      document.body.appendChild(parent);
+
+      imageCache.setThreshold(0.60);
+      imageCache.set('https://example.com/dev-cached-safe.jpg', 'safe', 0.10, 200, 'content');
+
+      queueImages([img]);
+      await flushAsyncWork();
+
+      expect(img.getAttribute('data-pg-patrol-img-processed')).toBe('safe');
+      // Developer mode badge should have been set
+      expect(img.getAttribute('data-pg-patrol-debug-badge')).toBe('true');
+      // Debug border for safe
+      expect(img.style.outline).toContain('#22c55e');
+
+      setDeveloperMode(false);
+    });
+  });
+
+  describe('onScanProgress callback', () => {
+    it('fires with correct processed and total counts', async () => {
+      const progressCallback = jest.fn();
+      onScanProgress(progressCallback);
+
+      const img = createScannableImage('https://example.com/progress-test.jpg');
+      queueImages([img]);
+      await flushAsyncWork();
+
+      expect(progressCallback).toHaveBeenCalled();
+      // Last call should have processed >= 1
+      const lastCall = progressCallback.mock.calls[progressCallback.mock.calls.length - 1];
+      expect(lastCall[0]).toBeGreaterThanOrEqual(1); // processed
+      expect(lastCall[1]).toBeGreaterThanOrEqual(1); // total
     });
   });
 });

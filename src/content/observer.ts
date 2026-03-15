@@ -15,8 +15,11 @@ let observer: MutationObserver | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let isProcessing = false;
 let pendingMutations: MutationRecord[] = [];
+let attrChangedImages = new Set<HTMLImageElement>();
+let attrFlushScheduled = false;
 
 const DEBOUNCE_MS = 100;
+const MAX_PENDING_MUTATIONS = 1000;
 
 /**
  * Start observing the DOM for changes.
@@ -39,20 +42,36 @@ export function startObserver(
     // Skip mutations caused by our own replacements
     if (isProcessing) return;
 
-    // Handle attribute mutations immediately (no debounce for lazy-load)
+    // Collect attribute-changed images and flush on next microtask
     if (onImageAttrChange) {
+      let hasAttrChanges = false;
       for (const mutation of mutations) {
         if (
           mutation.type === 'attributes' &&
           mutation.target instanceof HTMLImageElement &&
           (mutation.attributeName === 'src' || mutation.attributeName === 'srcset')
         ) {
-          onImageAttrChange(mutation.target);
+          attrChangedImages.add(mutation.target);
+          hasAttrChanges = true;
         }
+      }
+      if (hasAttrChanges && !attrFlushScheduled) {
+        attrFlushScheduled = true;
+        queueMicrotask(() => {
+          attrFlushScheduled = false;
+          for (const img of attrChangedImages) {
+            onImageAttrChange!(img);
+          }
+          attrChangedImages = new Set();
+        });
       }
     }
 
     // Accumulate mutations across debounce cycles so none are lost
+    if (pendingMutations.length + mutations.length > MAX_PENDING_MUTATIONS) {
+      // Keep only the most recent half to bound memory
+      pendingMutations = pendingMutations.slice(-Math.floor(MAX_PENDING_MUTATIONS / 2));
+    }
     pendingMutations.push(...mutations);
 
     if (debounceTimer) {

@@ -1,5 +1,8 @@
 // Mock chrome API for tests — runs before test framework is initialized
-const mockStorage: Record<string, unknown> = {};
+// Pre-populate with hasSeenOnboarding so popup tests render the main UI by default
+const mockStorage: Record<string, unknown> = {
+  settings: { hasSeenOnboarding: true },
+};
 
 const mockChrome = {
   storage: {

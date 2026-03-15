@@ -11,7 +11,16 @@ import {
   loadModel,
 } from '../shared/nsfw-detector';
 import type { Sensitivity } from '../shared/types';
-import { pauseObserver, resumeObserver } from './observer';
+import { imageCache } from '../shared/image-classification-cache';
+import {
+  isOverlayOwnedImage,
+  removeAllMediaSurfaces,
+  removeMediaSurface,
+  showBlockedSurface,
+  showErrorSurface,
+  showPendingSurface,
+  showSafeBackgroundSurface,
+} from './media-surfaces';
 
 const PROCESSED_ATTR = 'data-pg-patrol-img-processed';
 const VIDEO_PROCESSED_ATTR = 'data-pg-patrol-vid-processed';
@@ -19,14 +28,15 @@ const BG_PROCESSED_ATTR = 'data-pg-patrol-bg-processed';
 const DEBUG_BADGE_ATTR = 'data-pg-patrol-debug-badge';
 const SOURCE_ATTR = 'data-pg-patrol-img-source';
 const MASKED_ATTR = 'data-pg-patrol-img-masked';
-const IMAGE_ID_ATTR = 'data-pg-patrol-img-id';
-const IMAGE_BANNER_ATTR = 'data-pg-patrol-img-banner';
-const IMAGE_BANNER_OWNER_ATTR = 'data-pg-patrol-img-banner-owner';
 const PENDING_RETRY_ATTR = 'data-pg-patrol-pending-retry';
 const MIN_IMAGE_SIZE = 50; // Skip images smaller than 50px
 const MAX_CONCURRENT = 6; // Max concurrent classifications
 const LOAD_TIMEOUT_MS = 10_000; // Max time to wait for an image to load
 const FINAL_STATUSES = new Set(['safe', 'nsfw', 'error', 'skipped']);
+const RAW_BG_IMAGE_ATTR = 'data-pg-patrol-bg-original-image';
+const RAW_BG_COLOR_ATTR = 'data-pg-patrol-bg-original-color';
+
+const MAX_QUEUE_SIZE = 200;
 
 let activeScanCount = 0;
 const scanQueue: HTMLImageElement[] = [];
@@ -38,56 +48,52 @@ let sensitivity: Sensitivity = 'moderate';
 let replacedCount = 0;
 let developerMode = false;
 let customThreshold: number | null = null;
-let nextImageId = 1;
+const imageScanVersions = new WeakMap<HTMLImageElement, number>();
 
-interface ImageBannerState {
-  banner: HTMLDivElement;
-  parent: HTMLElement;
-  resizeObserver: ResizeObserver | null;
+// Per-page URL set: prevents double-counting replacedCount on React re-renders.
+// Separate from the persistent ImageClassificationCache which handles classification fast-path.
+const pageNsfwUrls = new Set<string>();
+
+/**
+ * Initialize the persistent image classification cache.
+ * Must be called before any image scanning begins.
+ */
+export async function initImageCache(): Promise<void> {
+  await imageCache.init();
 }
 
-const imageBannerStates = new WeakMap<HTMLImageElement, ImageBannerState>();
-const bannerParentCounts = new WeakMap<HTMLElement, number>();
-const repositionedBannerParents = new WeakSet<HTMLElement>();
-
-// URL-based NSFW cache: prevents double-counting on React re-renders
-// and enables fast-path re-hide without re-running ML classification.
-const nsfwUrlCache = new Set<string>();
+/**
+ * Expose the cache instance for threshold updates from index.ts.
+ */
+export { imageCache };
 
 // Persistent stylesheet for scan-first blur and final NSFW hiding.
 // CSS rules survive React/framework re-renders.
 let nsfwStyleEl: HTMLStyleElement | null = null;
 
 /**
- * Inject a persistent CSS stylesheet that blurs unclassified images and
- * fully hides NSFW images while an overlay banner occupies the same slot.
+ * Inject a persistent CSS stylesheet that keeps raw media hidden while
+ * extension-owned surfaces control what is visible to the user.
  */
 export function ensureNsfwStyleSheet(): void {
   if (nsfwStyleEl?.parentNode) return;
   nsfwStyleEl = document.createElement('style');
   nsfwStyleEl.id = 'pg-patrol-nsfw-styles';
   nsfwStyleEl.textContent =
-    // Scan-first: blur ALL images until classified safe/skipped
-    `img:not([${PROCESSED_ATTR}="safe"]):not([${PROCESSED_ATTR}="skipped"]):not([${PROCESSED_ATTR}="nsfw"]){` +
-    `filter:blur(20px)!important;transition:filter 0.3s ease;}` +
-    // NSFW: keep layout but fully hide the original pixels behind a banner overlay.
-    `img[${PROCESSED_ATTR}="nsfw"]{` +
-    `visibility:hidden!important;pointer-events:none!important;user-select:none!important;` +
-    `}` +
-    // Videos
-    `video[${VIDEO_PROCESSED_ATTR}="nsfw"]{display:none!important;}`;
+    `img:not([data-pg-patrol-overlay-owned="true"]):not([${PROCESSED_ATTR}="safe"]):not([${PROCESSED_ATTR}="skipped"]){` +
+    `opacity:0!important;visibility:hidden!important;pointer-events:none!important;user-select:none!important;}` +
+    `video:not([${VIDEO_PROCESSED_ATTR}="safe"]):not([${VIDEO_PROCESSED_ATTR}="skipped"]){` +
+    `opacity:0!important;visibility:hidden!important;pointer-events:none!important;user-select:none!important;}`;
   (document.head || document.documentElement).appendChild(nsfwStyleEl);
 }
 
 /** Returns the CSS text used by the scan-first stylesheet (for Shadow DOM injection). */
 export function getNsfwStyleSheetCssText(): string {
   return (
-    `img:not([${PROCESSED_ATTR}="safe"]):not([${PROCESSED_ATTR}="skipped"]):not([${PROCESSED_ATTR}="nsfw"]){` +
-    `filter:blur(20px)!important;transition:filter 0.3s ease;}` +
-    `img[${PROCESSED_ATTR}="nsfw"]{` +
-    `visibility:hidden!important;pointer-events:none!important;user-select:none!important;` +
-    `}` +
-    `video[${VIDEO_PROCESSED_ATTR}="nsfw"]{display:none!important;}`
+    `img:not([data-pg-patrol-overlay-owned="true"]):not([${PROCESSED_ATTR}="safe"]):not([${PROCESSED_ATTR}="skipped"]){` +
+    `opacity:0!important;visibility:hidden!important;pointer-events:none!important;user-select:none!important;}` +
+    `video:not([${VIDEO_PROCESSED_ATTR}="safe"]):not([${VIDEO_PROCESSED_ATTR}="skipped"]){` +
+    `opacity:0!important;visibility:hidden!important;pointer-events:none!important;user-select:none!important;}`
   );
 }
 
@@ -96,6 +102,7 @@ let totalQueued = 0;
 let totalProcessed = 0;
 let onAllProcessedCallback: (() => void) | null = null;
 let onImageHiddenCallback: ((count: number) => void) | null = null;
+let onScanProgressCallback: ((processed: number, total: number) => void) | null = null;
 
 /**
  * Register a callback to be invoked when all queued items have been processed.
@@ -113,7 +120,17 @@ export function onImageHidden(callback: (count: number) => void): void {
   onImageHiddenCallback = callback;
 }
 
+/**
+ * Register a callback invoked each time a queued item finishes processing.
+ * Receives the number of processed items and total queued items.
+ */
+export function onScanProgress(callback: (processed: number, total: number) => void): void {
+  onScanProgressCallback = callback;
+}
+
 function checkAllProcessed(): void {
+  onScanProgressCallback?.(totalProcessed, totalQueued);
+
   if (
     totalProcessed >= totalQueued &&
     totalQueued > 0 &&
@@ -275,14 +292,17 @@ function getPermanentSkipReason(img: HTMLImageElement): string | null {
     return 'small image';
   }
 
-  const src = getScannableSrc(img);
-  if (!src) {
-    return img.complete ? 'placeholder image' : null;
-  }
-
-  if (src.endsWith('.svg') || src.startsWith('data:image/svg')) {
+  const rawSrc =
+    img.currentSrc ||
+    img.src ||
+    img.srcset.split(',')[0]?.trim().split(' ')[0] ||
+    '';
+  if (rawSrc.endsWith('.svg') || rawSrc.startsWith('data:image/svg')) {
     return 'svg image';
   }
+
+  const src = getScannableSrc(img);
+  if (!src) return null;
 
   return null;
 }
@@ -305,208 +325,93 @@ function clearDebugState(img: HTMLImageElement): void {
   img.style.outline = '';
 }
 
-function isImageBannerApplied(img: HTMLImageElement): boolean {
-  return (
-    img.getAttribute(MASKED_ATTR) === 'true' &&
-    Boolean(imageBannerStates.get(img)?.banner?.isConnected)
-  );
+function getImageScanVersion(img: HTMLImageElement): number {
+  return imageScanVersions.get(img) || 0;
 }
 
-function getOrCreateImageId(img: HTMLImageElement): string {
-  const existingId = img.getAttribute(IMAGE_ID_ATTR);
-  if (existingId) return existingId;
-  const nextId = `pg-patrol-img-${nextImageId++}`;
-  img.setAttribute(IMAGE_ID_ATTR, nextId);
-  return nextId;
+function bumpImageScanVersion(img: HTMLImageElement): number {
+  const nextVersion = getImageScanVersion(img) + 1;
+  imageScanVersions.set(img, nextVersion);
+  return nextVersion;
 }
 
-function incrementBannerParent(parent: HTMLElement): void {
-  const currentCount = bannerParentCounts.get(parent) || 0;
-  if (currentCount === 0 && getComputedStyle(parent).position === 'static') {
-    parent.style.position = 'relative';
-    repositionedBannerParents.add(parent);
+function rememberBgStyle(element: HTMLElement): void {
+  if (!element.hasAttribute(RAW_BG_IMAGE_ATTR)) {
+    element.setAttribute(RAW_BG_IMAGE_ATTR, element.style.backgroundImage || '');
   }
-  bannerParentCounts.set(parent, currentCount + 1);
-}
-
-function decrementBannerParent(parent: HTMLElement): void {
-  const currentCount = bannerParentCounts.get(parent) || 0;
-  if (currentCount <= 1) {
-    bannerParentCounts.delete(parent);
-    if (repositionedBannerParents.has(parent)) {
-      parent.style.position = '';
-      repositionedBannerParents.delete(parent);
-    }
-    return;
-  }
-  bannerParentCounts.set(parent, currentCount - 1);
-}
-
-function destroyBannerElement(banner: HTMLElement): void {
-  if (!banner.isConnected) return;
-  const parent = banner.parentElement;
-  banner.remove();
-  if (parent instanceof HTMLElement) {
-    decrementBannerParent(parent);
+  if (!element.hasAttribute(RAW_BG_COLOR_ATTR)) {
+    element.setAttribute(RAW_BG_COLOR_ATTR, element.style.backgroundColor || '');
   }
 }
 
-function cleanupOrphanedBanners(parent: HTMLElement): void {
-  const banners = Array.from(parent.children).filter(
-    (child): child is HTMLElement =>
-      child instanceof HTMLElement && child.getAttribute(IMAGE_BANNER_ATTR) === 'true',
-  );
-  for (const banner of banners) {
-    const ownerId = banner.getAttribute(IMAGE_BANNER_OWNER_ATTR);
-    if (!ownerId) {
-      destroyBannerElement(banner);
-      continue;
-    }
+function hideRawBackground(element: HTMLElement): void {
+  rememberBgStyle(element);
+  element.style.setProperty('background-image', 'none', 'important');
+  element.style.setProperty('background-color', 'transparent', 'important');
+}
 
-    const owner = parent.querySelector(`img[${IMAGE_ID_ATTR}="${ownerId}"]`);
-    if (!(owner instanceof HTMLImageElement)) {
-      destroyBannerElement(banner);
-      continue;
-    }
+function restoreRawBackground(element: HTMLElement): void {
+  const originalImage = element.getAttribute(RAW_BG_IMAGE_ATTR);
+  const originalColor = element.getAttribute(RAW_BG_COLOR_ATTR);
 
-    if (
-      owner.getAttribute(PROCESSED_ATTR) !== 'nsfw' ||
-      owner.getAttribute(MASKED_ATTR) !== 'true'
-    ) {
-      removeImageBanner(owner);
+  if (originalImage !== null) {
+    if (originalImage) {
+      element.style.backgroundImage = originalImage;
+    } else {
+      element.style.removeProperty('background-image');
     }
+    element.removeAttribute(RAW_BG_IMAGE_ATTR);
+  } else {
+    element.style.removeProperty('background-image');
+  }
+
+  if (originalColor !== null) {
+    if (originalColor) {
+      element.style.backgroundColor = originalColor;
+    } else {
+      element.style.removeProperty('background-color');
+    }
+    element.removeAttribute(RAW_BG_COLOR_ATTR);
+  } else {
+    element.style.removeProperty('background-color');
   }
 }
 
-function buildImageBanner(ownerId: string): HTMLDivElement {
-  const banner = document.createElement('div');
-  banner.setAttribute(IMAGE_BANNER_ATTR, 'true');
-  banner.setAttribute(IMAGE_BANNER_OWNER_ATTR, ownerId);
-  banner.setAttribute('role', 'note');
-  banner.setAttribute('aria-label', 'PG Patrol blocked this image');
-
-  Object.assign(banner.style, {
-    position: 'absolute',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '6px',
-    padding: '16px',
-    background:
-      'linear-gradient(180deg, rgba(15,23,42,0.96), rgba(30,41,59,0.96))',
-    border: '1px solid rgba(148,163,184,0.26)',
-    boxShadow: '0 16px 40px rgba(15,23,42,0.32)',
-    color: '#e2e8f0',
-    fontFamily:
-      'system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
-    textAlign: 'center',
-    zIndex: '2147483640',
-    pointerEvents: 'auto',
-    boxSizing: 'border-box',
-    overflow: 'hidden',
-  });
-
-  banner.innerHTML =
-    '<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#93c5fd">PG Patrol</div>' +
-    '<div style="font-size:14px;font-weight:600;line-height:1.3;color:#f8fafc">Restricted image hidden</div>' +
-    '<div style="font-size:12px;line-height:1.4;color:#cbd5e1">Sensitive media was removed from view.</div>';
-
-  const consumeEvent = (event: Event) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-
-  banner.addEventListener('click', consumeEvent);
-  banner.addEventListener('mousedown', consumeEvent);
-  banner.addEventListener('mouseup', consumeEvent);
-
-  return banner;
+function revealSafeImage(img: HTMLImageElement): void {
+  removeMediaSurface(img);
+  clearImageMaskStyles(img);
+  removeBlur(img);
 }
 
-function positionImageBanner(img: HTMLImageElement): void {
-  const state = imageBannerStates.get(img);
-  if (!state) return;
-  if (!img.isConnected || !state.parent.isConnected) {
-    removeImageBanner(img);
+function restoreExistingImageSurface(img: HTMLImageElement): void {
+  const status = img.getAttribute(PROCESSED_ATTR);
+  if (!status) {
     return;
   }
 
-  const imgRect = img.getBoundingClientRect();
-  const parentRect = state.parent.getBoundingClientRect();
-  const fallbackWidth = img.clientWidth || img.width || Math.min(img.naturalWidth || 0, 400) || 160;
-  const fallbackHeight = img.clientHeight || img.height || Math.min(img.naturalHeight || 0, 400) || 96;
-  const width = Math.max(imgRect.width, fallbackWidth, 44);
-  const height = Math.max(imgRect.height, fallbackHeight, 44);
-  const top = Math.max(0, imgRect.top - parentRect.top + state.parent.scrollTop);
-  const left = Math.max(0, imgRect.left - parentRect.left + state.parent.scrollLeft);
-  const borderRadius = getComputedStyle(img).borderRadius || '8px';
-
-  Object.assign(state.banner.style, {
-    top: `${top}px`,
-    left: `${left}px`,
-    width: `${width}px`,
-    height: `${height}px`,
-    borderRadius,
-  });
-}
-
-function removeImageBanner(img: HTMLImageElement): void {
-  const state = imageBannerStates.get(img);
-  if (!state) return;
-
-  state.resizeObserver?.disconnect();
-  state.banner.remove();
-  decrementBannerParent(state.parent);
-  imageBannerStates.delete(img);
-}
-
-function mountImageBanner(img: HTMLImageElement): void {
-  const parent = img.parentElement;
-  if (!parent) return;
-  const ownerId = getOrCreateImageId(img);
-
-  const existingState = imageBannerStates.get(img);
-  if (existingState && (existingState.parent !== parent || !existingState.banner.isConnected)) {
-    removeImageBanner(img);
-  }
-
-  cleanupOrphanedBanners(parent);
-
-  const currentState = imageBannerStates.get(img);
-  if (currentState?.banner.isConnected) {
-    positionImageBanner(img);
+  if (status === 'pending') {
+    showPendingSurface(img);
     return;
   }
 
-  const banner = buildImageBanner(ownerId);
-  const resizeObserver =
-    typeof ResizeObserver !== 'undefined'
-      ? new ResizeObserver(() => {
-          positionImageBanner(img);
-        })
-      : null;
-
-  incrementBannerParent(parent);
-
-  pauseObserver();
-  try {
-    parent.appendChild(banner);
-  } finally {
-    resumeObserver();
+  if (status === 'safe') {
+    revealSafeImage(img);
+    return;
   }
 
-  imageBannerStates.set(img, { banner, parent, resizeObserver });
-  resizeObserver?.observe(img);
-  resizeObserver?.observe(parent);
-  positionImageBanner(img);
-  if (typeof requestAnimationFrame === 'function') {
-    requestAnimationFrame(() => positionImageBanner(img));
+  if (status === 'nsfw') {
+    showBlockedSurface(img);
+    return;
+  }
+
+  if (status === 'error') {
+    showErrorSurface(img);
   }
 }
 
 function markImageSkipped(img: HTMLImageElement, reason: string): void {
-  removeImageBanner(img);
+  removeMediaSurface(img);
+  clearImageMaskStyles(img);
   removeBlur(img);
   img.setAttribute(PROCESSED_ATTR, 'skipped');
   img.removeAttribute(MASKED_ATTR);
@@ -517,9 +422,10 @@ function markImageSkipped(img: HTMLImageElement, reason: string): void {
 }
 
 function markImagePending(img: HTMLImageElement, reason: string): void {
-  removeImageBanner(img);
+  applyImageMaskStyles(img);
   img.setAttribute(PROCESSED_ATTR, 'pending');
   img.removeAttribute(MASKED_ATTR);
+  showPendingSurface(img);
   observeImagesForViewport([img]);
   if (developerMode) {
     logDecision(getScannableSrc(img) || img.src || '(no src)', null, `pending (${reason})`);
@@ -541,6 +447,7 @@ function queuePendingRetryOnLoad(img: HTMLImageElement): void {
 }
 
 function shouldQueueImage(img: HTMLImageElement): boolean {
+  if (isOverlayOwnedImage(img)) return false;
   if (hasFinalStatus(img)) return false;
   if (queuedImages.has(img) || processingImages.has(img)) return false;
   if (getPermanentSkipReason(img)) return false;
@@ -548,18 +455,24 @@ function shouldQueueImage(img: HTMLImageElement): boolean {
 }
 
 /**
- * Apply blur to an element while it's being scanned.
- */
-function applyBlur(el: HTMLElement): void {
-  el.style.filter = 'blur(20px)';
-  el.style.transition = 'filter 0.3s ease';
-}
-
-/**
  * Remove blur from a safe element.
  */
 function removeBlur(el: HTMLElement): void {
-  el.style.filter = '';
+  el.style.removeProperty('filter');
+}
+
+function applyImageMaskStyles(img: HTMLImageElement): void {
+  img.style.setProperty('opacity', '0', 'important');
+  img.style.setProperty('visibility', 'hidden', 'important');
+  img.style.setProperty('pointer-events', 'none', 'important');
+  img.style.setProperty('user-select', 'none', 'important');
+}
+
+function clearImageMaskStyles(img: HTMLImageElement): void {
+  img.style.removeProperty('opacity');
+  img.style.removeProperty('visibility');
+  img.style.removeProperty('pointer-events');
+  img.style.removeProperty('user-select');
 }
 
 /**
@@ -569,32 +482,42 @@ function removeBlur(el: HTMLElement): void {
  */
 function hideImage(img: HTMLImageElement): void {
   const source = img.getAttribute(SOURCE_ATTR) || getScannableSrc(img) || img.src;
+  applyImageMaskStyles(img);
   img.setAttribute(PROCESSED_ATTR, 'nsfw');
   img.setAttribute(MASKED_ATTR, 'true');
   ensureNsfwStyleSheet();
 
-  // Dedup: only count each unique URL once
-  if (source && !nsfwUrlCache.has(source)) {
-    nsfwUrlCache.add(source);
+  // Dedup: only count each unique URL once per page navigation
+  if (source && !pageNsfwUrls.has(source)) {
+    pageNsfwUrls.add(source);
     replacedCount++;
     onImageHiddenCallback?.(replacedCount);
+    try {
+      chrome.runtime.sendMessage({
+        type: 'LOG_ACTIVITY',
+        data: {
+          type: 'image',
+          original: source.length > 100 ? source.slice(0, 97) + '...' : source,
+          timestamp: Date.now(),
+        },
+      }).catch(() => {});
+    } catch {
+      // chrome.runtime may be unavailable in tests
+    }
   }
 
-  if (!isImageBannerApplied(img)) {
-    mountImageBanner(img);
-  }
-
-  removeBlur(img);
+  showBlockedSurface(img);
 }
 
 /**
  * Process a single image: classify and handle result.
  */
 async function processImage(img: HTMLImageElement): Promise<void> {
-  if (hasFinalStatus(img)) {
+  if (isOverlayOwnedImage(img) || hasFinalStatus(img)) {
     return;
   }
 
+  const scanVersion = getImageScanVersion(img);
   const permanentSkipReason = getPermanentSkipReason(img);
   if (permanentSkipReason) {
     markImageSkipped(img, permanentSkipReason);
@@ -611,12 +534,26 @@ async function processImage(img: HTMLImageElement): Promise<void> {
 
   rememberImageSource(img, attemptSrc);
 
-  // Fast path: URL already known NSFW (e.g., React re-rendered element)
-  if (nsfwUrlCache.has(attemptSrc)) {
-    hideImage(img);
-    if (developerMode) {
-      logDecision(attemptSrc, null, 'nsfw (cached)');
+  // Fast path: persistent cache hit (both safe and NSFW)
+  const cached = imageCache.get(attemptSrc);
+  if (cached) {
+    if (cached.verdict === 'nsfw') {
+      hideImage(img);
+      if (developerMode) {
+        logDecision(attemptSrc, cached.score, 'nsfw (cached)');
+      }
+    } else {
+      // Safe — show image without running model
+      img.setAttribute(PROCESSED_ATTR, 'safe');
+      img.removeAttribute(MASKED_ATTR);
+      revealSafeImage(img);
+      if (developerMode) {
+        showScoreOverlay(img, cached.score, 'safe');
+        applyDebugBorder(img, 'safe');
+        logDecision(attemptSrc, cached.score, 'safe (cached)');
+      }
     }
+    rememberImageSource(img, attemptSrc);
     return;
   }
 
@@ -647,9 +584,10 @@ async function processImage(img: HTMLImageElement): Promise<void> {
     try {
       await img.decode();
     } catch {
-      removeImageBanner(img);
       img.setAttribute(PROCESSED_ATTR, 'error');
-      img.removeAttribute(MASKED_ATTR);
+      img.setAttribute(MASKED_ATTR, 'true');
+      applyImageMaskStyles(img);
+      showErrorSurface(img);
       rememberImageSource(img, attemptSrc);
       return;
     }
@@ -669,7 +607,6 @@ async function processImage(img: HTMLImageElement): Promise<void> {
 
     if (scannableSrc !== attemptSrc) {
       markImagePending(img, 'src changed during load');
-      processingImages.delete(img);
       queueMicrotask(() => requeueImage(img));
       return;
     }
@@ -677,12 +614,17 @@ async function processImage(img: HTMLImageElement): Promise<void> {
     const result = await classifyImage(img, sensitivity, customThreshold);
 
     const finalSrc = getScannableSrc(img);
-    if (!finalSrc || finalSrc !== attemptSrc) {
+    if (getImageScanVersion(img) !== scanVersion || !finalSrc || finalSrc !== attemptSrc) {
       markImagePending(img, 'src changed during classification');
-      processingImages.delete(img);
       queueMicrotask(() => requeueImage(img));
       return;
     }
+
+    // Store in persistent cache
+    const imgSize = Math.max(img.clientWidth || 0, img.clientHeight || 0);
+    const imgContext = imageCache.detectContext(finalSrc, img);
+    const verdict = result.isNSFW ? 'nsfw' as const : 'safe' as const;
+    imageCache.set(finalSrc, verdict, result.score, imgSize, imgContext);
 
     if (result.isNSFW) {
       hideImage(img);
@@ -690,10 +632,9 @@ async function processImage(img: HTMLImageElement): Promise<void> {
         logDecision(finalSrc, result.score, 'nsfw');
       }
     } else {
-      removeImageBanner(img);
-      removeBlur(img);
       img.setAttribute(PROCESSED_ATTR, 'safe');
       img.removeAttribute(MASKED_ATTR);
+      revealSafeImage(img);
       if (developerMode) {
         showScoreOverlay(img, result.score, 'safe');
         applyDebugBorder(img, 'safe');
@@ -702,16 +643,54 @@ async function processImage(img: HTMLImageElement): Promise<void> {
     }
     rememberImageSource(img, finalSrc);
   } catch {
-    // Fail-safe: keep blur on the image (we don't know if it's NSFW)
-    removeImageBanner(img);
+    // Fail-safe: keep the raw image hidden behind an error cover.
     img.setAttribute(PROCESSED_ATTR, 'error');
-    img.removeAttribute(MASKED_ATTR);
+    img.setAttribute(MASKED_ATTR, 'true');
+    applyImageMaskStyles(img);
+    showErrorSurface(img);
     rememberImageSource(img, attemptSrc);
     if (developerMode) {
       applyDebugBorder(img, 'error');
-      logDecision(img.src || '(unknown)', null, 'error (fail-safe blur)');
+      logDecision(img.src || '(unknown)', null, 'error (fail-safe cover)');
     }
   }
+}
+
+// ---- Shared NSFW handling helpers ----
+
+function handleNsfwVideo(video: HTMLVideoElement): void {
+  video.setAttribute(VIDEO_PROCESSED_ATTR, 'nsfw');
+  ensureNsfwStyleSheet();
+  showBlockedSurface(video);
+  if (video.poster && !pageNsfwUrls.has(video.poster)) {
+    pageNsfwUrls.add(video.poster);
+    replacedCount++;
+    onImageHiddenCallback?.(replacedCount);
+  }
+}
+
+function handleNsfwBg(element: HTMLElement, url: string): void {
+  element.setAttribute(BG_PROCESSED_ATTR, 'nsfw');
+  hideRawBackground(element);
+  showBlockedSurface(element);
+  if (!pageNsfwUrls.has(url)) {
+    pageNsfwUrls.add(url);
+    replacedCount++;
+    onImageHiddenCallback?.(replacedCount);
+  }
+}
+
+function handleSafeBg(element: HTMLElement, url: string): void {
+  hideRawBackground(element);
+  element.setAttribute(BG_PROCESSED_ATTR, 'safe');
+  const computed = getComputedStyle(element);
+  showSafeBackgroundSurface(element, {
+    imageUrl: url,
+    backgroundSize: computed.backgroundSize || 'cover',
+    backgroundPosition: computed.backgroundPosition || 'center center',
+    backgroundRepeat: computed.backgroundRepeat || 'no-repeat',
+    backgroundColor: computed.backgroundColor || 'transparent',
+  });
 }
 
 // ---- Video poster scanning ----
@@ -732,29 +711,40 @@ export function shouldScanVideo(video: HTMLVideoElement): boolean {
  */
 async function processVideoElement(video: HTMLVideoElement): Promise<void> {
   if (!shouldScanVideo(video)) {
+    removeMediaSurface(video);
     video.setAttribute(VIDEO_PROCESSED_ATTR, 'skipped');
     return;
   }
 
-  try {
-    // Blur already applied at queue time
+  // Fast path: persistent cache hit
+  const cached = imageCache.get(video.poster);
+  if (cached) {
+    if (cached.verdict === 'nsfw') {
+      handleNsfwVideo(video);
+    } else {
+      removeMediaSurface(video);
+      video.setAttribute(VIDEO_PROCESSED_ATTR, 'safe');
+    }
+    return;
+  }
 
+  try {
     const result = await classifyImageUrl(video.poster, sensitivity, customThreshold);
 
+    // Store in persistent cache — use video dimensions for size
+    const vidSize = Math.max(video.clientWidth || 0, video.clientHeight || 0);
+    const vidContext = imageCache.detectContext(video.poster, video as unknown as HTMLElement);
+    const verdict = result.isNSFW ? 'nsfw' as const : 'safe' as const;
+    imageCache.set(video.poster, verdict, result.score, vidSize, vidContext);
+
     if (result.isNSFW) {
-      video.setAttribute(VIDEO_PROCESSED_ATTR, 'nsfw');
-      ensureNsfwStyleSheet();
-      if (video.poster && !nsfwUrlCache.has(video.poster)) {
-        nsfwUrlCache.add(video.poster);
-        replacedCount++;
-        onImageHiddenCallback?.(replacedCount);
-      }
+      handleNsfwVideo(video);
     } else {
-      removeBlur(video);
+      removeMediaSurface(video);
       video.setAttribute(VIDEO_PROCESSED_ATTR, 'safe');
     }
   } catch {
-    // Fail-safe: keep blur on the video
+    showErrorSurface(video);
     video.setAttribute(VIDEO_PROCESSED_ATTR, 'error');
   }
 }
@@ -789,6 +779,7 @@ function getElementBgImageUrl(element: HTMLElement): string | null {
  * Scans any element with a meaningful image URL and minimum rendered size.
  */
 export function shouldScanBgImage(element: HTMLElement): boolean {
+  if (element.getAttribute('data-pg-patrol-overlay-owned') === 'true') return false;
   if (element.getAttribute(BG_PROCESSED_ATTR)) return false;
 
   const url = getElementBgImageUrl(element);
@@ -815,33 +806,48 @@ export const isVideoThumbnailBg = shouldScanBgImage;
 async function processBackgroundImage(element: HTMLElement): Promise<void> {
   if (element.getAttribute(BG_PROCESSED_ATTR)) return;
 
-  const url = getElementBgImageUrl(element);
+  // Try live inline/computed style first; fall back to the saved original
+  // (queueBackgroundImages calls hideRawBackground before queue processing)
+  let url = getElementBgImageUrl(element);
   if (!url) {
+    const saved = element.getAttribute(RAW_BG_IMAGE_ATTR);
+    if (saved) url = extractBgImageUrl(saved);
+  }
+  if (!url) {
+    restoreRawBackground(element);
+    removeMediaSurface(element);
     element.setAttribute(BG_PROCESSED_ATTR, 'skipped');
     return;
   }
 
-  try {
-    // Blur already applied at queue time
+  // Fast path: persistent cache hit
+  const cached = imageCache.get(url);
+  if (cached) {
+    if (cached.verdict === 'nsfw') {
+      handleNsfwBg(element, url);
+    } else {
+      handleSafeBg(element, url);
+    }
+    return;
+  }
 
+  try {
     const result = await classifyImageUrl(url, sensitivity, customThreshold);
 
+    // Store in persistent cache — use element dimensions for size
+    const elSize = Math.max(element.clientWidth || 0, element.clientHeight || 0);
+    const elContext = imageCache.detectContext(url, element);
+    const verdict = result.isNSFW ? 'nsfw' as const : 'safe' as const;
+    imageCache.set(url, verdict, result.score, elSize, elContext);
+
     if (result.isNSFW) {
-      element.setAttribute(BG_PROCESSED_ATTR, 'nsfw');
-      element.style.backgroundImage = 'none';
-      element.style.filter = '';
-      element.style.setProperty('display', 'none', 'important');
-      if (url && !nsfwUrlCache.has(url)) {
-        nsfwUrlCache.add(url);
-        replacedCount++;
-        onImageHiddenCallback?.(replacedCount);
-      }
+      handleNsfwBg(element, url);
     } else {
-      removeBlur(element);
-      element.setAttribute(BG_PROCESSED_ATTR, 'safe');
+      handleSafeBg(element, url);
     }
   } catch {
-    // Fail-safe: keep blur on the element
+    hideRawBackground(element);
+    showErrorSurface(element);
     element.setAttribute(BG_PROCESSED_ATTR, 'error');
   }
 }
@@ -892,11 +898,16 @@ async function processQueue(): Promise<void> {
  */
 export function queueImages(images: HTMLImageElement[]): void {
   for (const img of images) {
-    if (img.parentElement) {
-      cleanupOrphanedBanners(img.parentElement);
+    if (isOverlayOwnedImage(img)) {
+      continue;
     }
 
-    if (hasFinalStatus(img) || queuedImages.has(img) || processingImages.has(img)) {
+    if (hasFinalStatus(img)) {
+      restoreExistingImageSurface(img);
+      continue;
+    }
+
+    if (queuedImages.has(img) || processingImages.has(img)) {
       continue;
     }
 
@@ -917,9 +928,16 @@ export function queueImages(images: HTMLImageElement[]): void {
     }
 
     if (shouldQueueImage(img)) {
+      // Cap queue size: drop oldest entries on overflow
+      if (scanQueue.length >= MAX_QUEUE_SIZE) {
+        const dropped = scanQueue.shift()!;
+        queuedImages.delete(dropped);
+        removeMediaSurface(dropped);
+      }
       clearDebugState(img);
       rememberImageSource(img, scannableSrc);
-      applyBlur(img); // Blur immediately on queue (fail-safe)
+      applyImageMaskStyles(img);
+      showPendingSurface(img);
       scanQueue.push(img);
       queuedImages.add(img);
       totalQueued++;
@@ -934,7 +952,11 @@ export function queueImages(images: HTMLImageElement[]): void {
 export function queueVideoElements(videos: HTMLVideoElement[]): void {
   for (const video of videos) {
     if (shouldScanVideo(video)) {
-      applyBlur(video); // Blur immediately on queue (fail-safe)
+      if (videoQueue.length >= MAX_QUEUE_SIZE) {
+        const dropped = videoQueue.shift()!;
+        removeMediaSurface(dropped);
+      }
+      showPendingSurface(video);
       videoQueue.push(video);
       totalQueued++;
     } else if (!video.getAttribute(VIDEO_PROCESSED_ATTR)) {
@@ -950,7 +972,13 @@ export function queueVideoElements(videos: HTMLVideoElement[]): void {
 export function queueBackgroundImages(elements: HTMLElement[]): void {
   for (const el of elements) {
     if (shouldScanBgImage(el)) {
-      applyBlur(el); // Blur immediately on queue (fail-safe)
+      if (bgQueue.length >= MAX_QUEUE_SIZE) {
+        const dropped = bgQueue.shift()!;
+        restoreRawBackground(dropped);
+        removeMediaSurface(dropped);
+      }
+      hideRawBackground(el);
+      showPendingSurface(el);
       bgQueue.push(el);
       totalQueued++;
     } else if (!el.getAttribute(BG_PROCESSED_ATTR)) {
@@ -965,8 +993,8 @@ export function queueBackgroundImages(elements: HTMLElement[]): void {
  * Removes the 'skipped' status and queues for scanning.
  */
 export function requeueImage(img: HTMLImageElement): void {
-  if (img.parentElement) {
-    cleanupOrphanedBanners(img.parentElement);
+  if (isOverlayOwnedImage(img)) {
+    return;
   }
 
   const currentStatus = img.getAttribute(PROCESSED_ATTR);
@@ -974,26 +1002,29 @@ export function requeueImage(img: HTMLImageElement): void {
   const previousSrc = img.getAttribute(SOURCE_ATTR);
   const sourceChanged = nextSrc !== previousSrc;
 
-  if (processingImages.has(img) || queuedImages.has(img)) {
-    return;
-  }
-
-  if (currentStatus === 'nsfw' && !sourceChanged) {
-    if (!isImageBannerApplied(img)) {
-      hideImage(img);
-    }
-    return;
-  }
-
   if (!sourceChanged && currentStatus && FINAL_STATUSES.has(currentStatus)) {
+    restoreExistingImageSurface(img);
     return;
+  }
+
+  if (sourceChanged) {
+    bumpImageScanVersion(img);
   }
 
   clearDebugState(img);
   img.removeAttribute(PENDING_RETRY_ATTR);
-  img.removeAttribute(PROCESSED_ATTR);
   img.removeAttribute(MASKED_ATTR);
-  removeImageBanner(img);
+  removeMediaSurface(img);
+
+  if (processingImages.has(img) || queuedImages.has(img)) {
+    if (nextSrc) {
+      rememberImageSource(img, nextSrc);
+      markImagePending(img, 'src changed while queued');
+    }
+    return;
+  }
+
+  img.removeAttribute(PROCESSED_ATTR);
 
   const permanentSkipReason = getPermanentSkipReason(img);
   if (permanentSkipReason) {
@@ -1013,6 +1044,7 @@ export function requeueImage(img: HTMLImageElement): void {
   }
 
   rememberImageSource(img, nextSrc);
+  markImagePending(img, 'source changed');
   queueImages([img]);
   observeImagesForViewport([img]);
 }
@@ -1068,6 +1100,35 @@ export async function scanAllMedia(): Promise<void> {
   queueBackgroundImages(bgElements);
 }
 
+export function resetManagedMedia(): void {
+  removeAllMediaSurfaces();
+
+  for (const img of document.querySelectorAll<HTMLImageElement>('img')) {
+    if (isOverlayOwnedImage(img)) {
+      continue;
+    }
+    clearImageMaskStyles(img);
+    removeBlur(img);
+    img.removeAttribute(PROCESSED_ATTR);
+    img.removeAttribute(MASKED_ATTR);
+    img.removeAttribute(SOURCE_ATTR);
+    img.removeAttribute(PENDING_RETRY_ATTR);
+    clearDebugState(img);
+  }
+
+  for (const video of document.querySelectorAll<HTMLVideoElement>('video')) {
+    removeBlur(video);
+    video.removeAttribute(VIDEO_PROCESSED_ATTR);
+  }
+
+  const bgTargets = document.querySelectorAll<HTMLElement>(`[${BG_PROCESSED_ATTR}], [${RAW_BG_IMAGE_ATTR}]`);
+  for (const target of bgTargets) {
+    restoreRawBackground(target);
+    removeBlur(target);
+    target.removeAttribute(BG_PROCESSED_ATTR);
+  }
+}
+
 // ---- Viewport-based scanning (IntersectionObserver) ----
 // Catches images missed by the MutationObserver (container-level scrolling,
 // framework virtual DOM, etc.) and retries 'pending' images that timed out
@@ -1088,6 +1149,10 @@ export function startViewportScanner(): void {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
         if (!(entry.target instanceof HTMLImageElement)) continue;
+        if (isOverlayOwnedImage(entry.target)) {
+          viewportObserver?.unobserve(entry.target);
+          continue;
+        }
 
         const status = entry.target.getAttribute(PROCESSED_ATTR);
 
@@ -1130,6 +1195,9 @@ export function stopViewportScanner(): void {
 export function observeImagesForViewport(images: HTMLImageElement[]): void {
   if (!viewportObserver) return;
   for (const img of images) {
+    if (isOverlayOwnedImage(img)) {
+      continue;
+    }
     const status = img.getAttribute(PROCESSED_ATTR);
     if (!status || !FINAL_STATUSES.has(status)) {
       viewportObserver.observe(img);
@@ -1144,6 +1212,9 @@ function observeAllUnfinishedImages(): void {
   if (!viewportObserver) return;
   const imgs = document.querySelectorAll<HTMLImageElement>('img');
   for (const img of imgs) {
+    if (isOverlayOwnedImage(img)) {
+      continue;
+    }
     const status = img.getAttribute(PROCESSED_ATTR);
     if (!status || !FINAL_STATUSES.has(status)) {
       viewportObserver.observe(img);

@@ -37,6 +37,9 @@ const NEGATION_WINDOW = 3;
 // Safe n-grams per trigger word (loaded from JSON)
 const SAFE_NGRAM_MAP: Record<string, string[]> = safeNgrams;
 
+// Pre-sorted phrases (longest first) — computed once at module load
+let sortedPhrases = [...TRIGGER_PHRASES].sort((a, b) => b.length - a.length);
+
 /**
  * Strip URLs and code blocks from text before scoring.
  */
@@ -98,7 +101,6 @@ export function scoreText(text: string): NegativeContentResult {
   const matchedRanges: Array<{ start: number; end: number }> = [];
 
   // Phase 1: Match multi-word phrases first (longest match wins)
-  const sortedPhrases = [...TRIGGER_PHRASES].sort((a, b) => b.length - a.length);
   for (const phrase of sortedPhrases) {
     let searchFrom = 0;
     while (true) {

@@ -89,10 +89,19 @@ describe('filter-worker-proxy', () => {
       });
     });
 
-    it('sets worker to null on worker error', () => {
+    it('recovers from worker errors up to 3 times, then gives up', () => {
       initFilterWorker();
       expect(isWorkerActive()).toBe(true);
 
+      // First error: should reinitialize (crash recovery)
+      mockWorkerInstance!.simulateError();
+      expect(isWorkerActive()).toBe(true);
+
+      // Second error: should reinitialize again
+      mockWorkerInstance!.simulateError();
+      expect(isWorkerActive()).toBe(true);
+
+      // Third error: max retries reached, gives up permanently
       mockWorkerInstance!.simulateError();
       expect(isWorkerActive()).toBe(false);
     });

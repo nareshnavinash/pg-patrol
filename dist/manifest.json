@@ -43,7 +43,7 @@
     },
     {
       "js": [
-        "assets/index.ts-loader-BnB-uur3.js"
+        "assets/index.ts-loader-pCqC-5Zj.js"
       ],
       "matches": [
         "<all_urls>"
@@ -66,12 +66,12 @@
         "filter-worker.js",
         "assets/pre-blur.ts-DCAbtoWW.js",
         "assets/negative-news-words-CYoML0CM.js",
-        "assets/storage-BCEqwvk3.js",
+        "assets/storage-BqH49hLa.js",
         "assets/word-list-updater-DKeYspeL.js",
-        "assets/types-BAQNa_K3.js",
+        "assets/types-BYz9lFZ3.js",
         "assets/nsfw-preprocessing-CNcnUBRi.js",
-        "assets/negative-news-engine-Bjpui72q.js",
-        "assets/index.ts-Dz6UPj-z.js"
+        "assets/negative-news-engine-BvxgD6EN.js",
+        "assets/index.ts-DlqgchUT.js"
       ],
       "use_dynamic_url": false
     }

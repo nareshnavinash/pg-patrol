@@ -79,14 +79,27 @@ describe('showImageFilterBanner', () => {
     expect(banner.style.opacity).toBe('0');
   });
 
-  it('is styled as fixed position bottom-right with dark background', () => {
+  it('is styled as fixed position bottom-right with frosted glass background', () => {
     showImageFilterBanner(1);
     const banner = document.getElementById('pg-patrol-image-banner')!;
     expect(banner.style.position).toBe('fixed');
     expect(banner.style.bottom).toBe('16px');
     expect(banner.style.right).toBe('16px');
-    // jsdom normalizes hex to rgb
+    // rgba background with alpha for glassmorphism
     expect(banner.style.background).toContain('67, 56, 202');
+    expect(banner.style.background).toContain('0.65');
+  });
+
+  it('applies backdrop-filter blur for glassmorphism', () => {
+    showImageFilterBanner(1);
+    const banner = document.getElementById('pg-patrol-image-banner')!;
+    expect(banner.style.backdropFilter).toBe('blur(12px)');
+  });
+
+  it('uses white-alpha border for frosted edge shimmer', () => {
+    showImageFilterBanner(1);
+    const banner = document.getElementById('pg-patrol-image-banner')!;
+    expect(banner.style.border).toContain('rgba(255');
   });
 });
 

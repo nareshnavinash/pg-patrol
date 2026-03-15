@@ -22,21 +22,26 @@ import {
   getReplacedImageCount,
   onAllProcessed,
   onImageHidden,
+  onScanProgress,
   requeueImage,
   startViewportScanner,
   stopViewportScanner,
   observeImagesForViewport,
   ensureNsfwStyleSheet,
+  resetManagedMedia,
+  initImageCache,
+  imageCache,
 } from './image-scanner';
 import { startShadowDomScanner, stopShadowDomScanner } from './shadow-dom-scanner';
 import { isAdultDomain } from '../shared/adult-domain-keywords';
 import { isSafeSearchSite } from '../shared/safe-search-sites';
-import { loadModel } from '../shared/nsfw-detector';
+import { loadModel, THRESHOLDS } from '../shared/nsfw-detector';
 import { getFilterableBlocks } from './block-scanner';
 import { classifyToxicity } from '../shared/ml-text-classifier';
 import { classifyWithChromeAi } from '../shared/chrome-ai';
 import { applyOverlay, removeAllOverlays } from './block-overlay';
 import { showImageFilterBanner, removeImageFilterBanner } from './image-filter-banner';
+import { showScanProgress, hideScanProgress } from './scan-progress-indicator';
 import { MessageType } from '../shared/types';
 import {
   initFilterWorker,
@@ -82,6 +87,18 @@ let processedNodes = new WeakSet<Text>();
 const originalTexts = new Map<Node, string>();
 
 /**
+ * Remove entries for DOM nodes that are no longer connected to the document.
+ * Prevents unbounded growth on infinite-scroll pages.
+ */
+function pruneDetachedOriginals(): void {
+  for (const node of originalTexts.keys()) {
+    if (!node.isConnected) {
+      originalTexts.delete(node);
+    }
+  }
+}
+
+/**
  * Filter a set of text nodes using the profanity engine via the Web Worker.
  * Falls back to synchronous processing when worker is unavailable.
  */
@@ -103,6 +120,11 @@ async function filterTextNodes(nodes: Text[]): Promise<number> {
 
   if (textsToProcess.length === 0) return 0;
 
+  // Prune detached nodes to prevent unbounded growth on infinite-scroll pages
+  if (originalTexts.size > 500) {
+    pruneDetachedOriginals();
+  }
+
   // Batch process through worker (or sync fallback)
   const results = await filterTextBatch(textsToProcess, sensitivity);
 
@@ -117,6 +139,19 @@ async function filterTextNodes(nodes: Text[]): Promise<number> {
       // Store original before any modification
       if (!originalTexts.has(node)) {
         originalTexts.set(node, textsToProcess[i]);
+      }
+
+      // Log each replaced word for activity log
+      for (const match of result.replacements) {
+        chrome.runtime.sendMessage({
+          type: MessageType.LOG_ACTIVITY,
+          data: {
+            type: 'word',
+            original: match.original,
+            replacement: match.replacement,
+            timestamp: Date.now(),
+          },
+        }).catch(() => {});
       }
 
       if (result.profaneUrls.length > 0) {
@@ -256,6 +291,15 @@ async function blockScan(root?: Node): Promise<void> {
         // Tier 0: Clear negative — block immediately
         applyOverlay(element, { category: result.matches?.[0]?.category });
         hiddenBlockCount++;
+        chrome.runtime.sendMessage({
+          type: MessageType.LOG_ACTIVITY,
+          data: {
+            type: 'block',
+            original: text.slice(0, 100),
+            category: result.matches?.[0]?.category,
+            timestamp: Date.now(),
+          },
+        }).catch(() => {});
       } else if (result.score > 0.015) {
         // Tier 1: Borderline — async ML classification
         classifyToxicity(text).then(async (mlResult) => {
@@ -273,6 +317,15 @@ async function blockScan(root?: Node): Promise<void> {
           if (shouldBlock) {
             applyOverlay(element, { category: result.matches?.[0]?.category });
             hiddenBlockCount++;
+            chrome.runtime.sendMessage({
+              type: MessageType.LOG_ACTIVITY,
+              data: {
+                type: 'block',
+                original: text.slice(0, 100),
+                category: result.matches?.[0]?.category,
+                timestamp: Date.now(),
+              },
+            }).catch(() => {});
             updateBadge();
           }
         });
@@ -283,6 +336,15 @@ async function blockScan(root?: Node): Promise<void> {
       if (result.isNegative) {
         applyOverlay(element, { category: result.matches?.[0]?.category });
         hiddenBlockCount++;
+        chrome.runtime.sendMessage({
+          type: MessageType.LOG_ACTIVITY,
+          data: {
+            type: 'block',
+            original: text.slice(0, 100),
+            category: result.matches?.[0]?.category,
+            timestamp: Date.now(),
+          },
+        }).catch(() => {});
       }
     }
   }
@@ -337,6 +399,7 @@ function onMessage(
         stopViewportScanner();
         stopShadowDomScanner();
         revealOriginals();
+        resetManagedMedia();
         removeAllOverlays();
         terminateWorker();
       }
@@ -442,16 +505,18 @@ async function initImageFiltering(): Promise<void> {
   setDeveloperMode(settings.developerMode);
   setCustomThreshold(settings.customThreshold);
 
-  // Inject persistent scan-first stylesheet (blurs all unclassified images)
-  // Must be active before any images are queued so nothing shows unblurred
+  // Inject persistent media-hiding stylesheet before any queueing happens.
   ensureNsfwStyleSheet();
 
-  // Pre-load ONNX model before any queuing
-  await loadModel();
+  // Show scan progress while images are being classified
+  onScanProgress((processed, total) => {
+    showScanProgress(processed, total);
+  });
 
   // Register callback to remove pre-blur only after all images are classified
   onAllProcessed(() => {
     removePreBlurStylesheet();
+    hideScanProgress();
   });
 
   // Show/update banner each time an image is hidden
@@ -476,6 +541,9 @@ async function initImageFiltering(): Promise<void> {
   if (images.length === 0 && videos.length === 0 && bgElements.length === 0) {
     removePreBlurStylesheet();
   }
+
+  // Warm the model in the background; queueing already mounted neutral covers.
+  void loadModel();
 
   // Safety timeout: don't leave page blurred forever if classification stalls
   setTimeout(() => {
@@ -537,6 +605,7 @@ async function init(): Promise<void> {
       customSafeWords: [],
       customNegativeTriggers: [],
       customSafeContext: [],
+      hasSeenOnboarding: true,
       stats: { totalWordsReplaced: 0, totalImagesReplaced: 0 },
     };
   }
@@ -577,15 +646,20 @@ async function init(): Promise<void> {
     await fullScan();
   }
 
-  // Reveal body now that text scan is done (pre-blur hid it at document_start).
-  // Must run even if text filtering is disabled so the page becomes visible.
-  revealBody();
+  // Hydrate the persistent image classification cache before any scanning begins.
+  await initImageCache();
+  const effectiveThreshold = settings.customThreshold ?? THRESHOLDS[settings.sensitivity];
+  imageCache.setThreshold(effectiveThreshold);
 
-  // Image filtering (async, lazy model load)
-  initImageFiltering();
+  // Start image filtering before the page becomes visible so initial media
+  // gets its neutral cover or safe surface without a raw-pixel flash.
+  await initImageFiltering();
 
-  // Start observing for dynamic content
+  // Start observing for dynamic content before reveal for the same reason.
   startObserverIfEnabled();
+
+  // Reveal body now that initial text and media setup has completed.
+  revealBody();
 
   // Delayed re-scans to catch SPA content injected after document_idle
   if (settings.textFilterEnabled) {
@@ -610,12 +684,20 @@ async function init(): Promise<void> {
 
     // If image filtering was just enabled, do an initial scan
     if (settings.imageFilterEnabled && !prevImageEnabled && !isSafeSite) {
-      initImageFiltering();
+      void initImageFiltering();
     }
 
-    // Sync developer mode and custom threshold
+    if (!settings.imageFilterEnabled && prevImageEnabled) {
+      stopViewportScanner();
+      stopShadowDomScanner();
+      resetManagedMedia();
+      removeImageFilterBanner();
+    }
+
+    // Sync developer mode, custom threshold, and cache threshold
     setDeveloperMode(settings.developerMode);
     setCustomThreshold(settings.customThreshold);
+    imageCache.setThreshold(settings.customThreshold ?? THRESHOLDS[settings.sensitivity]);
 
     startObserverIfEnabled();
 
@@ -623,6 +705,7 @@ async function init(): Promise<void> {
       stopObserver();
       stopViewportScanner();
       stopShadowDomScanner();
+      resetManagedMedia();
       terminateWorker();
     }
   });

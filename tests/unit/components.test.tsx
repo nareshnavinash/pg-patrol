@@ -48,4 +48,63 @@ describe('Header', () => {
     render(<Header enabled={true} onToggle={jest.fn()} />);
     expect(screen.getByText('Family-friendly filter')).toBeInTheDocument();
   });
+
+  it('shows feature badges when enabled', () => {
+    const { container } = render(
+      <Header
+        enabled={true}
+        onToggle={jest.fn()}
+        textFilterEnabled={true}
+        imageFilterEnabled={true}
+        positiveModeEnabled={false}
+        mlClassifierEnabled={true}
+      />,
+    );
+
+    const badges = container.querySelector('[data-testid="feature-badges"]');
+    expect(badges).not.toBeNull();
+    expect(screen.getByText('Text')).toBeInTheDocument();
+    expect(screen.getByText('Images')).toBeInTheDocument();
+    expect(screen.getByText('Vibes')).toBeInTheDocument();
+    expect(screen.getByText('AI')).toBeInTheDocument();
+  });
+
+  it('applies active style to enabled features', () => {
+    render(
+      <Header
+        enabled={true}
+        onToggle={jest.fn()}
+        textFilterEnabled={true}
+        imageFilterEnabled={false}
+        positiveModeEnabled={true}
+        mlClassifierEnabled={false}
+      />,
+    );
+
+    const textBadge = screen.getByText('Text');
+    expect(textBadge.className).toContain('bg-green-100');
+
+    const imagesBadge = screen.getByText('Images');
+    expect(imagesBadge.className).toContain('bg-gray-100');
+
+    const vibesBadge = screen.getByText('Vibes');
+    expect(vibesBadge.className).toContain('bg-green-100');
+
+    const aiBadge = screen.getByText('AI');
+    expect(aiBadge.className).toContain('bg-gray-100');
+  });
+
+  it('hides feature badges when extension is disabled', () => {
+    const { container } = render(
+      <Header
+        enabled={false}
+        onToggle={jest.fn()}
+        textFilterEnabled={true}
+        imageFilterEnabled={true}
+      />,
+    );
+
+    const badges = container.querySelector('[data-testid="feature-badges"]');
+    expect(badges).toBeNull();
+  });
 });
