@@ -10,9 +10,9 @@ describe('createBannerDataUri', () => {
     expect(uri).toMatch(/^data:image\/svg\+xml;charset=utf-8,/);
   });
 
-  it('contains "PG Patrol" text', () => {
+  it('contains "PG PATROL" eyebrow text', () => {
     const uri = decodeURIComponent(createBannerDataUri());
-    expect(uri).toContain('PG Patrol');
+    expect(uri).toContain('PG PATROL');
   });
 
   it('contains "Restricted image hidden" text', () => {

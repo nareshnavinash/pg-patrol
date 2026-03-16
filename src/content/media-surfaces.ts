@@ -124,6 +124,9 @@ function createShell(): HTMLDivElement {
     display: 'none',
     zIndex: '2147483646',
   });
+  // Prevent page CSS from making the shell transparent
+  shell.style.setProperty('background', '#1e1b4b', 'important');
+  shell.style.setProperty('opacity', '1', 'important');
   return shell;
 }
 
@@ -254,13 +257,13 @@ function fillMessageSurface(
   }
   record.shell.appendChild(record.content);
   Object.assign(record.shell.style, {
-    background,
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
-    border: '1px solid rgba(255, 255, 255, 0.12)',
-    boxShadow:
-      'inset 0 1px 0 rgba(255,255,255,0.08), 0 16px 40px rgba(15,23,42,0.35), 0 2px 4px rgba(0,0,0,0.15)',
+    border: '1px solid rgba(99, 102, 241, 0.25)',
+    boxShadow: '0 4px 24px rgba(15, 23, 42, 0.5), 0 1px 3px rgba(0,0,0,0.2)',
   });
+  record.shell.style.setProperty('background', background, 'important');
+  record.shell.style.setProperty('opacity', '1', 'important');
+  record.shell.style.setProperty('backdrop-filter', 'none', 'important');
+  record.shell.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
   record.content.innerHTML =
     `<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#93c5fd">${options.eyebrow || 'PG Patrol'}</div>` +
     `<div style="font-size:14px;font-weight:600;line-height:1.3;color:#f8fafc">${options.title}</div>` +
@@ -280,7 +283,7 @@ export function showPendingSurface(target: HTMLElement): void {
       title: 'Checking image',
       body: 'PG Patrol is reviewing this media before it appears.',
     },
-    'rgba(15, 23, 42, 0.75)',
+    '#1e1b4b',
   );
 }
 
@@ -293,15 +296,21 @@ export function showBlockedSurface(target: HTMLElement): void {
   }
   record.shell.appendChild(record.content);
   Object.assign(record.shell.style, {
-    background: '#EEF2FF',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
-    boxShadow:
-      'inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 16px rgba(67,56,202,0.15), 0 1px 3px rgba(0,0,0,0.08)',
+    border: '1px solid rgba(99, 102, 241, 0.25)',
+    boxShadow: '0 4px 24px rgba(15, 23, 42, 0.5), 0 1px 3px rgba(0,0,0,0.2)',
   });
+  record.shell.style.setProperty('background', '#1e1b4b', 'important');
+  record.shell.style.setProperty('opacity', '1', 'important');
+  const shieldSvg =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 230" width="60" height="46" fill="none">' +
+    '<path d="M150 30 C150 30 100 45 70 50 C70 95 75 155 150 195 C225 155 230 95 230 50 C200 45 150 30 150 30Z" fill="#6366F1"/>' +
+    '<text x="150" y="135" text-anchor="middle" font-family="system-ui,sans-serif" font-size="52" font-weight="800" fill="white">PG</text>' +
+    '</svg>';
   record.content.innerHTML =
-    `<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#6366f1">PG Patrol</div>` +
-    `<div style="font-size:14px;font-weight:600;line-height:1.3;color:#1e1b4b">Restricted image hidden</div>` +
-    `<div style="font-size:12px;line-height:1.4;color:#4338ca">Sensitive media was removed from view.</div>`;
+    `<div style="margin-bottom:2px">${shieldSvg}</div>` +
+    `<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#818cf8">PG Patrol</div>` +
+    `<div style="font-size:14px;font-weight:600;line-height:1.3;color:#f8fafc">Restricted image hidden</div>` +
+    `<div style="font-size:12px;line-height:1.4;color:#a5b4fc">Sensitive media was removed from view.</div>`;
   positionSurface(record);
 }
 
@@ -313,7 +322,7 @@ export function showErrorSurface(target: HTMLElement): void {
       title: 'Unable to verify image',
       body: 'PG Patrol kept this media covered because it could not be checked safely.',
     },
-    'rgba(15, 23, 42, 0.75)',
+    '#1e1b4b',
   );
 }
 
@@ -322,10 +331,11 @@ export function showSafeImageSurface(target: HTMLElement, options: SafeImageSurf
   record.mode = 'safe-image';
   record.shell.innerHTML = '';
   Object.assign(record.shell.style, {
-    background: options.backgroundColor,
     border: 'none',
     boxShadow: 'none',
   });
+  record.shell.style.setProperty('background', options.backgroundColor, 'important');
+  record.shell.style.setProperty('opacity', '1', 'important');
 
   const safeImage = ensureChild(record.shell, `img[${OVERLAY_OWNED_ATTR}="true"]`, () => {
     const img = document.createElement('img');
@@ -355,7 +365,6 @@ export function showSafeBackgroundSurface(
   record.mode = 'safe-background';
   record.shell.innerHTML = '';
   Object.assign(record.shell.style, {
-    backgroundColor: options.backgroundColor,
     backgroundImage: `url("${options.imageUrl.replace(/"/g, '\\"')}")`,
     backgroundSize: options.backgroundSize,
     backgroundPosition: options.backgroundPosition,
@@ -363,6 +372,8 @@ export function showSafeBackgroundSurface(
     border: 'none',
     boxShadow: 'none',
   });
+  record.shell.style.setProperty('background-color', options.backgroundColor, 'important');
+  record.shell.style.setProperty('opacity', '1', 'important');
   positionSurface(record);
 }
 

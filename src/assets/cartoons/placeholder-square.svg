@@ -1,11 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" fill="none">
-  <rect width="300" height="300" fill="#EEF2FF"/>
-  <circle cx="150" cy="110" r="55" fill="#818CF8"/>
-  <circle cx="132" cy="95" r="9" fill="white"/>
-  <circle cx="168" cy="95" r="9" fill="white"/>
-  <circle cx="132" cy="95" r="4" fill="#1E1B4B"/>
-  <circle cx="168" cy="95" r="4" fill="#1E1B4B"/>
-  <path d="M130 130 Q150 155 170 130" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/>
-  <text x="150" y="200" text-anchor="middle" font-family="system-ui,sans-serif" font-size="16" fill="#6366F1" font-weight="bold">PG Patrol</text>
-  <text x="150" y="225" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#A5B4FC">Image filtered</text>
+  <rect width="300" height="300" fill="#1e1b4b"/>
+  <path d="M150 30 C150 30 100 45 70 50 C70 95 75 155 150 195 C225 155 230 95 230 50 C200 45 150 30 150 30Z" fill="#6366F1"/>
+  <text x="150" y="135" text-anchor="middle" font-family="system-ui,sans-serif" font-size="52" font-weight="800" fill="white">PG</text>
+  <text x="150" y="222" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#818cf8">PG PATROL</text>
+  <text x="150" y="245" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#a5b4fc">Image filtered</text>
 </svg>

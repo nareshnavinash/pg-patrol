@@ -59,15 +59,18 @@ describe('media-surfaces', () => {
       expect(overlayRoot!.textContent).toContain('PG Patrol');
     });
 
-    it('uses opaque #EEF2FF background with glass border and shadow', () => {
+    it('uses opaque #1e1b4b background with !important, indigo border and shadow', () => {
       const target = createTarget(400, 400);
       showBlockedSurface(target);
 
       const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
       const shell = overlayRoot!.firstElementChild as HTMLElement;
-      // jsdom normalizes hex to rgb
-      expect(shell.style.background).toContain('238, 242, 255');
-      expect(shell.style.border).toContain('rgba(255');
+      // setProperty stores values accessible via getPropertyValue
+      const bg = shell.style.getPropertyValue('background');
+      expect(bg).toContain('30, 27, 75');
+      expect(shell.style.getPropertyPriority('background')).toBe('important');
+      expect(shell.style.getPropertyPriority('opacity')).toBe('important');
+      expect(shell.style.border).toContain('rgba(99');
       expect(shell.style.boxShadow).toBeTruthy();
     });
 
@@ -90,13 +93,18 @@ describe('media-surfaces', () => {
       expect(overlayRoot!.textContent).toContain('Checking image');
     });
 
-    it('applies backdrop-filter blur for glassmorphism', () => {
+    it('uses opaque background with !important and no backdrop-filter', () => {
       const target = createTarget(400, 400);
       showPendingSurface(target);
 
       const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
       const shell = overlayRoot!.firstElementChild as HTMLElement;
-      expect(shell.style.backdropFilter).toBe('blur(8px)');
+      expect(shell.style.getPropertyValue('background')).toContain('30, 27, 75');
+      expect(shell.style.getPropertyPriority('background')).toBe('important');
+      expect(shell.style.getPropertyPriority('opacity')).toBe('important');
+      // backdrop-filter is not recognized by jsdom, so setProperty is silently ignored;
+      // verify it's at least not set to a blur/translucent value
+      expect(shell.style.getPropertyValue('backdrop-filter')).toBeFalsy();
     });
   });
 
@@ -109,13 +117,18 @@ describe('media-surfaces', () => {
       expect(overlayRoot!.textContent).toContain('Unable to verify image');
     });
 
-    it('applies backdrop-filter blur for glassmorphism', () => {
+    it('uses opaque background with !important and no backdrop-filter', () => {
       const target = createTarget(400, 400);
       showErrorSurface(target);
 
       const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
       const shell = overlayRoot!.firstElementChild as HTMLElement;
-      expect(shell.style.backdropFilter).toBe('blur(8px)');
+      expect(shell.style.getPropertyValue('background')).toContain('30, 27, 75');
+      expect(shell.style.getPropertyPriority('background')).toBe('important');
+      expect(shell.style.getPropertyPriority('opacity')).toBe('important');
+      // backdrop-filter is not recognized by jsdom, so setProperty is silently ignored;
+      // verify it's at least not set to a blur/translucent value
+      expect(shell.style.getPropertyValue('backdrop-filter')).toBeFalsy();
     });
   });
 
