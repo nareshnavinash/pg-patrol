@@ -1,1 +1,1 @@
-Family-friendly web filter — replaces profanity with funny words and hides NSFW images. All AI runs locally.
+Free parental control filter — replaces profanity with funny words, blocks NSFW images with on-device AI. Works on all websites.

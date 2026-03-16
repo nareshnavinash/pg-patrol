@@ -6,3 +6,6 @@ node_modules/
 .playwright-mcp/
 test-results/
 playwright-report/
+dist/
+dist-firefox/
+coverage/

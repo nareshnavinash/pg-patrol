@@ -1,6 +1,6 @@
-PG Patrol: Protect Your Family from Accidental Exposure to 18+ Content
+PG Patrol: Free Parental Control Extension — Profanity Filter & NSFW Image Blocker
 
-PG Patrol is a privacy-first browser extension that helps families browse the web more safely. It works in real time — filtering profanity, hiding NSFW images, and softening distress-heavy content as pages load and scroll.
+PG Patrol is a free, open-source parental control browser extension and web content filter that makes the internet safer for families. It works as a profanity filter, NSFW image blocker, and safe browsing tool — all powered by on-device AI. Available for Chrome, Firefox, Edge, Brave, Opera, and Arc.
 
 ALL FILTERING HAPPENS LOCALLY ON YOUR DEVICE. No data is ever sent to external servers.
 
@@ -51,9 +51,14 @@ Optional: Connect your own Google Perspective API key for enhanced text analysis
 • Schools and classrooms
 • Anyone wanting a calmer browsing experience
 • Adults who want to reduce surprise explicit content on social media and news sites
+• Works on Chrome, Firefox, Edge, Brave, Opera, and Arc
 
 ━━━ IMPORTANT NOTE ━━━
 
 No filter is perfect. PG Patrol significantly reduces unwanted exposure but some content may occasionally slip through or be over-filtered. Adjust sensitivity and custom word lists for the best experience.
 
 Open source and community-driven.
+
+━━━ ALSO KNOWN AS ━━━
+
+parental control extension, web content filter, profanity blocker, swear word filter, NSFW filter, safe browsing extension, family filter, child-safe browser, internet safety tool, content blocker, bad word replacer, explicit image blocker, kid-friendly browser extension

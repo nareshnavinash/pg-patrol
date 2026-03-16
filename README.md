@@ -1,11 +1,12 @@
-# PG Patrol
+# PG Patrol — Parental Control Browser Extension
 
 **Family-friendly web filter — replaces profanity with funny words, hides NSFW images, and softens distress-heavy content. All AI runs locally on your device.**
 
-<!-- TODO: Add badges once published -->
-<!-- ![Chrome Web Store](https://img.shields.io/chrome-web-store/v/EXTENSION_ID) -->
-<!-- ![Mozilla Add-on](https://img.shields.io/amo/v/pg-patrol) -->
-<!-- ![License](https://img.shields.io/github/license/nareshnavinash/pg-patrol) -->
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![Tests](https://img.shields.io/badge/tests-750%2B-brightgreen.svg)](./tests)
+[![Chrome MV3](https://img.shields.io/badge/Chrome-MV3-4285F4.svg?logo=googlechrome&logoColor=white)](#browser-compatibility)
+[![Firefox MV3](https://img.shields.io/badge/Firefox-MV3-FF7139.svg?logo=firefox&logoColor=white)](#browser-compatibility)
+[![Privacy](https://img.shields.io/badge/privacy-100%25_local-8B5CF6.svg)](#privacy)
 
 <!-- TODO: Add screenshot -->
 <!-- ![PG Patrol Screenshot](./store-assets/screenshot-popup.png) -->
@@ -45,16 +46,28 @@
 
 ---
 
+## Why PG Patrol?
+
+| Feature            | PG Patrol         | Typical Web Filters    |
+| ------------------ | ----------------- | ---------------------- |
+| Data privacy       | 100% on-device    | Cloud-based scanning   |
+| Profanity handling | Funny words       | Asterisks or blanks    |
+| NSFW detection     | Local AI model    | Cloud API or blocklist |
+| Cost               | Free, open source | $3-10/month            |
+| Browsers           | 6 browsers        | Usually Chrome only    |
+
+---
+
 ## Browser Compatibility
 
-| Browser | Install From | Status |
-|---------|-------------|--------|
-| Google Chrome | Chrome Web Store | <!-- [Install](link) --> Coming soon |
-| Microsoft Edge | Edge Add-ons | <!-- [Install](link) --> Coming soon |
+| Browser         | Install From          | Status                               |
+| --------------- | --------------------- | ------------------------------------ |
+| Google Chrome   | Chrome Web Store      | <!-- [Install](link) --> Coming soon |
+| Microsoft Edge  | Edge Add-ons          | <!-- [Install](link) --> Coming soon |
 | Mozilla Firefox | Firefox Add-ons (AMO) | <!-- [Install](link) --> Coming soon |
-| Brave | Chrome Web Store | Supported |
-| Opera | Chrome Web Store | Supported |
-| Arc | Chrome Web Store | Supported |
+| Brave           | Chrome Web Store      | Supported                            |
+| Opera           | Chrome Web Store      | Supported                            |
+| Arc             | Chrome Web Store      | Supported                            |
 
 Chrome, Edge, Brave, Opera, and Arc use the same Chromium MV3 package. Firefox uses a dedicated build with a different background architecture (background page instead of offscreen document).
 
@@ -84,7 +97,7 @@ Once published, install directly from your browser's extension store using the l
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/user/pg-patrol.git
+git clone https://github.com/nareshnavinash/pg-patrol.git
 cd pg-patrol
 
 # 2. Install dependencies
@@ -96,6 +109,7 @@ npm run build:firefox   # Firefox
 ```
 
 Build output:
+
 - Chrome: `dist/`
 - Firefox: `dist-firefox/`
 
@@ -155,17 +169,17 @@ After loading, pin PG Patrol to your browser toolbar for easy access.
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| UI Framework | [Preact](https://preactjs.com/) |
-| Styling | [Tailwind CSS](https://tailwindcss.com/) v4 |
-| Language | TypeScript (strict mode) |
-| Build Tool | [Vite](https://vitejs.dev/) + [@crxjs/vite-plugin](https://crxjs.dev/vite-plugin) (Chrome) |
-| NSFW Detection | [ONNX Runtime Web](https://onnxruntime.ai/) (ViT-Tiny, WASM backend) |
-| Text Toxicity | [Transformers.js](https://huggingface.co/docs/transformers.js) (MiniLMv2-toxic-jigsaw) |
-| Profanity Engine | [@2toad/profanity](https://github.com/2toad/Profanity) + custom n-gram/Bayes scoring |
-| Testing | [Jest](https://jestjs.io/) (unit) + [Playwright](https://playwright.dev/) (E2E) |
-| Extension Manifest | Manifest V3 |
+| Layer              | Technology                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------ |
+| UI Framework       | [Preact](https://preactjs.com/)                                                            |
+| Styling            | [Tailwind CSS](https://tailwindcss.com/) v4                                                |
+| Language           | TypeScript (strict mode)                                                                   |
+| Build Tool         | [Vite](https://vitejs.dev/) + [@crxjs/vite-plugin](https://crxjs.dev/vite-plugin) (Chrome) |
+| NSFW Detection     | [ONNX Runtime Web](https://onnxruntime.ai/) (ViT-Tiny, WASM backend)                       |
+| Text Toxicity      | [Transformers.js](https://huggingface.co/docs/transformers.js) (MiniLMv2-toxic-jigsaw)     |
+| Profanity Engine   | [@2toad/profanity](https://github.com/2toad/Profanity) + custom n-gram/Bayes scoring       |
+| Testing            | [Jest](https://jestjs.io/) (unit) + [Playwright](https://playwright.dev/) (E2E)            |
+| Extension Manifest | Manifest V3                                                                                |
 
 ---
 
@@ -298,13 +312,13 @@ PG Patrol is designed with a privacy-first approach:
 
 ### Permissions Explained
 
-| Permission | Why |
-|-----------|-----|
-| `storage` | Save your settings and preferences |
-| `activeTab` | Access the current tab for filtering |
-| `alarms` | Schedule periodic word list updates (every 24h) |
-| `offscreen` (Chrome only) | Run AI models in an isolated background context |
-| `<all_urls>` | Inject content scripts to filter pages you visit |
+| Permission                | Why                                              |
+| ------------------------- | ------------------------------------------------ |
+| `storage`                 | Save your settings and preferences               |
+| `activeTab`               | Access the current tab for filtering             |
+| `alarms`                  | Schedule periodic word list updates (every 24h)  |
+| `offscreen` (Chrome only) | Run AI models in an isolated background context  |
+| `<all_urls>`              | Inject content scripts to filter pages you visit |
 
 For full details, see [PRIVACY.md](./PRIVACY.md).
 
@@ -349,5 +363,4 @@ For build details, see [BUILD.md](./BUILD.md).
 
 ## License
 
-<!-- TODO: Add license -->
-This project is not yet licensed. A license will be added before public distribution.
+This project is licensed under the [MIT License](./LICENSE).

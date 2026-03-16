@@ -18,14 +18,7 @@ import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'path';
-import {
-  writeFileSync,
-  copyFileSync,
-  mkdirSync,
-  existsSync,
-  readdirSync,
-  cpSync,
-} from 'fs';
+import { writeFileSync, copyFileSync, mkdirSync, existsSync, readdirSync, cpSync } from 'fs';
 
 // ---- Firefox manifest (inline — no crx defineManifest needed) ----
 
@@ -34,7 +27,7 @@ const firefoxManifest = {
   name: 'PG Patrol',
   version: '1.0.0',
   description:
-    'Family-friendly web filter — replaces swear words with funny alternatives and detects NSFW images',
+    'Free parental control web filter — replaces profanity with funny words, blocks NSFW images using on-device AI',
   permissions: ['storage', 'activeTab', 'alarms'],
   host_permissions: ['<all_urls>'],
   browser_specific_settings: {
@@ -79,12 +72,7 @@ const firefoxManifest = {
   },
   web_accessible_resources: [
     {
-      resources: [
-        'content.js',
-        'chunks/*',
-        'filter-worker.js',
-        'cartoons/*',
-      ],
+      resources: ['content.js', 'chunks/*', 'filter-worker.js', 'cartoons/*'],
       matches: ['<all_urls>'],
     },
     {
@@ -128,10 +116,7 @@ function firefoxPostBuildPlugin() {
       );
 
       // 2. Write manifest.json
-      writeFileSync(
-        resolve(outDir, 'manifest.json'),
-        JSON.stringify(firefoxManifest, null, 2),
-      );
+      writeFileSync(resolve(outDir, 'manifest.json'), JSON.stringify(firefoxManifest, null, 2));
 
       // 3. Copy icons
       const iconsDir = resolve(outDir, 'icons');
@@ -190,21 +175,12 @@ function firefoxPostBuildPlugin() {
       // Transformers.js WASM files
       const wasmOutDir = resolve(mlModelsDir, 'wasm');
       if (!existsSync(wasmOutDir)) mkdirSync(wasmOutDir, { recursive: true });
-      const transformersOrtDir = resolve(
-        __dirname,
-        'node_modules/@huggingface/transformers/dist',
-      );
-      const neededWasm = new Set([
-        'ort-wasm-simd-threaded.wasm',
-        'ort-wasm-simd.wasm',
-      ]);
+      const transformersOrtDir = resolve(__dirname, 'node_modules/@huggingface/transformers/dist');
+      const neededWasm = new Set(['ort-wasm-simd-threaded.wasm', 'ort-wasm-simd.wasm']);
       if (existsSync(transformersOrtDir)) {
         for (const f of readdirSync(transformersOrtDir)) {
           if (f.endsWith('.wasm') && neededWasm.has(f)) {
-            copyFileSync(
-              resolve(transformersOrtDir, f),
-              resolve(wasmOutDir, f),
-            );
+            copyFileSync(resolve(transformersOrtDir, f), resolve(wasmOutDir, f));
           }
         }
       }
@@ -221,7 +197,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
-      'react': 'preact/compat',
+      react: 'preact/compat',
       'react-dom': 'preact/compat',
       'react-dom/client': 'preact/compat',
       'react/jsx-runtime': 'preact/jsx-runtime',
