@@ -3,7 +3,7 @@
 **Family-friendly web filter — replaces profanity with funny words, hides NSFW images, and softens distress-heavy content. All AI runs locally on your device.**
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Tests](https://img.shields.io/badge/tests-750%2B-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-875%2B-brightgreen.svg)](./tests)
 [![Chrome MV3](https://img.shields.io/badge/Chrome-MV3-4285F4.svg?logo=googlechrome&logoColor=white)](#browser-compatibility)
 [![Firefox MV3](https://img.shields.io/badge/Firefox-MV3-FF7139.svg?logo=firefox&logoColor=white)](#browser-compatibility)
 [![Privacy](https://img.shields.io/badge/privacy-100%25_local-8B5CF6.svg)](#privacy)
@@ -60,14 +60,14 @@
 
 ## Browser Compatibility
 
-| Browser         | Install From          | Status                               |
-| --------------- | --------------------- | ------------------------------------ |
-| Google Chrome   | Chrome Web Store      | <!-- [Install](link) --> Coming soon |
-| Microsoft Edge  | Edge Add-ons          | <!-- [Install](link) --> Coming soon |
-| Mozilla Firefox | Firefox Add-ons (AMO) | <!-- [Install](link) --> Coming soon |
-| Brave           | Chrome Web Store      | Supported                            |
-| Opera           | Chrome Web Store      | Supported                            |
-| Arc             | Chrome Web Store      | Supported                            |
+| Browser         | Install From                                                            | Status    |
+| --------------- | ----------------------------------------------------------------------- | --------- |
+| Google Chrome   | [GitHub Releases](https://github.com/nareshnavinash/pg-patrol/releases) | Supported |
+| Microsoft Edge  | [GitHub Releases](https://github.com/nareshnavinash/pg-patrol/releases) | Supported |
+| Mozilla Firefox | [GitHub Releases](https://github.com/nareshnavinash/pg-patrol/releases) | Supported |
+| Brave           | [GitHub Releases](https://github.com/nareshnavinash/pg-patrol/releases) | Supported |
+| Opera           | [GitHub Releases](https://github.com/nareshnavinash/pg-patrol/releases) | Supported |
+| Arc             | [GitHub Releases](https://github.com/nareshnavinash/pg-patrol/releases) | Supported |
 
 Chrome, Edge, Brave, Opera, and Arc use the same Chromium MV3 package. Firefox uses a dedicated build with a different background architecture (background page instead of offscreen document).
 
@@ -75,18 +75,14 @@ Chrome, Edge, Brave, Opera, and Arc use the same Chromium MV3 package. Firefox u
 
 ## Installation
 
-### Option 1: From Browser Stores (Recommended)
-
-Once published, install directly from your browser's extension store using the links above.
-
-### Option 2: Load Unpacked from a Release
+### Option 1: From GitHub Releases (Recommended)
 
 1. Go to the [Releases](../../releases) page
 2. Download the `.zip` for your browser (`pg-patrol-chrome.zip` or `pg-patrol-firefox.zip`)
 3. Unzip the file
 4. Load it in your browser (see [Loading the Extension](#loading-the-extension) below)
 
-### Option 3: Build from Source
+### Option 2: Build from Source
 
 #### Prerequisites
 
@@ -289,7 +285,7 @@ store-assets/                 # Store listing descriptions
 ### Running Tests
 
 ```bash
-# Unit tests (746 tests across 37 suites)
+# Unit tests (879 tests across 44 suites)
 npm test
 
 # With coverage

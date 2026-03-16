@@ -1,6 +1,6 @@
 # Build Instructions
 
-These instructions are provided for browser extension store reviewers (AMO, Chrome Web Store, Edge Add-ons) who need to reproduce the build from source.
+These instructions explain how to build PG Patrol from source for development, testing, or sideloading.
 
 ## Prerequisites
 
@@ -71,9 +71,9 @@ npm run firefox:dev
 
 ## Architecture Differences
 
-| | Chrome / Edge | Firefox |
-|---|---|---|
-| Background context | Service Worker | Background Page |
-| ML inference | Offscreen document (message-passing) | Direct call in background page |
-| Offscreen API | Required (`chrome.offscreen`) | Not available; not needed |
-| Content scripts | Classic scripts (bundled by @crxjs/vite-plugin) | Classic script loader + ES module |
+|                    | Chrome / Edge                                   | Firefox                           |
+| ------------------ | ----------------------------------------------- | --------------------------------- |
+| Background context | Service Worker                                  | Background Page                   |
+| ML inference       | Offscreen document (message-passing)            | Direct call in background page    |
+| Offscreen API      | Required (`chrome.offscreen`)                   | Not available; not needed         |
+| Content scripts    | Classic scripts (bundled by @crxjs/vite-plugin) | Classic script loader + ES module |

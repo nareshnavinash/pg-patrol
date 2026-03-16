@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Chrome MV3 build with offscreen document for ML inference
 - Firefox MV3 build with background page for ML inference
 - Cross-browser support: Chrome, Firefox, Edge, Brave, Opera, Arc
-- 750+ unit tests (Jest) and E2E tests (Playwright)
+- 875+ unit tests (Jest) and E2E tests (Playwright)
 - Automated release workflow via GitHub Actions
 - Privacy-first design: all core filtering runs on-device
 
