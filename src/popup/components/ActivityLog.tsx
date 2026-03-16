@@ -15,21 +15,39 @@ function formatTimeAgo(timestamp: number): string {
 function TypeIcon({ type }: { type: ActivityEntry['type'] }) {
   if (type === 'word') {
     return (
-      <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" className="text-indigo-500 shrink-0">
+      <svg
+        viewBox="0 0 16 16"
+        width="14"
+        height="14"
+        fill="currentColor"
+        className="text-indigo-500 shrink-0"
+      >
         <path d="M2 4a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm3 2a.75.75 0 000 1.5h6a.75.75 0 000-1.5H5zm0 3a.75.75 0 000 1.5h4a.75.75 0 000-1.5H5z" />
       </svg>
     );
   }
   if (type === 'image') {
     return (
-      <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" className="text-rose-500 shrink-0">
+      <svg
+        viewBox="0 0 16 16"
+        width="14"
+        height="14"
+        fill="currentColor"
+        className="text-rose-500 shrink-0"
+      >
         <path d="M2 4a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm2 5.5V12h8v-1.5l-2-2-1.5 1.5L6 7.5l-2 2zM10.5 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
       </svg>
     );
   }
   // block
   return (
-    <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" className="text-amber-500 shrink-0">
+    <svg
+      viewBox="0 0 16 16"
+      width="14"
+      height="14"
+      fill="currentColor"
+      className="text-amber-500 shrink-0"
+    >
       <path d="M8 1l2.09 4.26L15 6.27l-3.5 3.42L12.18 15 8 12.77 3.82 15l.68-5.31L1 6.27l4.91-.71z" />
     </svg>
   );
@@ -55,11 +73,7 @@ export default function ActivityLog() {
   }, []);
 
   return (
-    <CollapsibleSection
-      title="Activity Log"
-      defaultOpen={false}
-      badge={entries.length}
-    >
+    <CollapsibleSection title="Activity Log" defaultOpen={false} badge={entries.length}>
       {entries.length === 0 ? (
         <p className="text-xs text-gray-400 dark:text-gray-500 py-2 text-center">
           No activity on this page yet
@@ -79,14 +93,10 @@ export default function ActivityLog() {
                     : entry.original}
                 </span>
                 {entry.replacement && (
-                  <span className="text-green-600 dark:text-green-400">
-                    {' '}→ {entry.replacement}
-                  </span>
+                  <span className="text-green-600 dark:text-green-400"> → {entry.replacement}</span>
                 )}
                 {entry.category && (
-                  <span className="text-gray-400 dark:text-gray-500">
-                    {' '}({entry.category})
-                  </span>
+                  <span className="text-gray-400 dark:text-gray-500"> ({entry.category})</span>
                 )}
               </div>
               <span className="text-gray-400 dark:text-gray-600 whitespace-nowrap shrink-0">

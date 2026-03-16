@@ -8,11 +8,7 @@
 
 import type { Sensitivity, NSFWImageInput } from './types';
 import { MessageType } from './types';
-import {
-  MODEL_INPUT_SIZE,
-  preprocessImageData,
-  centerCropParams,
-} from './nsfw-preprocessing';
+import { MODEL_INPUT_SIZE, preprocessImageData, centerCropParams } from './nsfw-preprocessing';
 
 export { MODEL_INPUT_SIZE, softmax } from './nsfw-preprocessing';
 
@@ -39,8 +35,8 @@ export interface ClassificationResult {
 
 export const THRESHOLDS: Record<Sensitivity, number> = {
   mild: 0.85,
-  moderate: 0.60,
-  strict: 0.30,
+  moderate: 0.6,
+  strict: 0.3,
 };
 
 let modelReady = false;
@@ -115,11 +111,10 @@ export function isModelLoading(): boolean {
  * Preprocess an image into a 384x384 RGB tensor-friendly image array.
  * Used for blob/file inputs that the offscreen document cannot fetch by URL.
  */
-export function preprocessImage(
-  imgElement: HTMLImageElement | HTMLCanvasElement,
-): Float32Array {
+export function preprocessImage(imgElement: HTMLImageElement | HTMLCanvasElement): Float32Array {
   const srcW = imgElement instanceof HTMLImageElement ? imgElement.naturalWidth : imgElement.width;
-  const srcH = imgElement instanceof HTMLImageElement ? imgElement.naturalHeight : imgElement.height;
+  const srcH =
+    imgElement instanceof HTMLImageElement ? imgElement.naturalHeight : imgElement.height;
   const { sx, sy, sSize } = centerCropParams(srcW, srcH);
 
   const { ctx } = getSharedCanvas();
@@ -198,11 +193,7 @@ export async function classifyImageUrl(
   sensitivity: Sensitivity = 'moderate',
   customThreshold?: number | null,
 ): Promise<ClassificationResult> {
-  return classifyViaOffscreen(
-    { kind: 'url', imageUrl },
-    sensitivity,
-    customThreshold,
-  );
+  return classifyViaOffscreen({ kind: 'url', imageUrl }, sensitivity, customThreshold);
 }
 
 /**

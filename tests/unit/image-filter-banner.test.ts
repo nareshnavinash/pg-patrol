@@ -1,4 +1,7 @@
-import { showImageFilterBanner, removeImageFilterBanner } from '../../src/content/image-filter-banner';
+import {
+  showImageFilterBanner,
+  removeImageFilterBanner,
+} from '../../src/content/image-filter-banner';
 
 describe('showImageFilterBanner', () => {
   beforeEach(() => {

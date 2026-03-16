@@ -11,12 +11,14 @@ export function useStorage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getSettings().then((s) => {
-      setSettings(s);
-      setLoading(false);
-    }).catch(() => {
-      setLoading(false);
-    });
+    getSettings()
+      .then((s) => {
+        setSettings(s);
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });
 
     const unsubscribe = onSettingsChanged((newSettings) => {
       setSettings(newSettings);
@@ -25,31 +27,31 @@ export function useStorage() {
     return unsubscribe;
   }, []);
 
-  const updateSettings = useCallback(
-    async (partial: Partial<PGPatrolSettings>) => {
-      const updated = await saveSettings(partial);
-      setSettings(updated);
+  const updateSettings = useCallback(async (partial: Partial<PGPatrolSettings>) => {
+    const updated = await saveSettings(partial);
+    setSettings(updated);
 
-      // Notify content scripts
-      chrome.runtime.sendMessage({
+    // Notify content scripts
+    chrome.runtime
+      .sendMessage({
         type: 'SETTINGS_CHANGED',
         data: partial,
-      }).catch(() => {
+      })
+      .catch(() => {
         // Popup might not have background ready
       });
 
-      // Reload active tab on structural changes that affect filtering
-      const needsReload = 'enabled' in partial
-        || 'imageFilterEnabled' in partial
-        || 'sensitivity' in partial
-        || 'customThreshold' in partial;
-      if (needsReload) {
-        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tabs[0]?.id) chrome.tabs.reload(tabs[0].id);
-      }
-    },
-    [],
-  );
+    // Reload active tab on structural changes that affect filtering
+    const needsReload =
+      'enabled' in partial ||
+      'imageFilterEnabled' in partial ||
+      'sensitivity' in partial ||
+      'customThreshold' in partial;
+    if (needsReload) {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tabs[0]?.id) chrome.tabs.reload(tabs[0].id);
+    }
+  }, []);
 
   return { settings, loading, updateSettings };
 }

@@ -7,7 +7,6 @@ import {
 } from '../../src/shared/chrome-ai';
 
 describe('chrome-ai', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let originalAi: any;
 
   const mockPrompt = jest.fn();

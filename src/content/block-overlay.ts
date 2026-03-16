@@ -153,16 +153,20 @@ export function applyOverlay(element: HTMLElement, options?: ApplyOverlayOptions
       <span style="font-size:11px;color:${subtextColor}">Click to reveal</span>
     `;
 
-  overlay.addEventListener('click', () => {
-    // Mark this element and all descendant blocks as revealed
-    // so the observer doesn't re-overlay them
-    element.setAttribute(REVEALED_ATTR, 'true');
-    const childBlocks = element.querySelectorAll('article,p,li,h1,h2,h3,h4,h5,h6,blockquote');
-    for (const child of childBlocks) {
-      child.setAttribute(REVEALED_ATTR, 'true');
-    }
-    animateReveal(element);
-  }, { once: true });
+  overlay.addEventListener(
+    'click',
+    () => {
+      // Mark this element and all descendant blocks as revealed
+      // so the observer doesn't re-overlay them
+      element.setAttribute(REVEALED_ATTR, 'true');
+      const childBlocks = element.querySelectorAll('article,p,li,h1,h2,h3,h4,h5,h6,blockquote');
+      for (const child of childBlocks) {
+        child.setAttribute(REVEALED_ATTR, 'true');
+      }
+      animateReveal(element);
+    },
+    { once: true },
+  );
 
   element.appendChild(overlay);
 

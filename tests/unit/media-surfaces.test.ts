@@ -6,6 +6,7 @@ import {
   showBlockedSurface,
   showPendingSurface,
   showErrorSurface,
+  showSafeImageSurface,
   removeMediaSurface,
   removeAllMediaSurfaces,
   refreshAllMediaSurfaces,
@@ -134,8 +135,15 @@ describe('media-surfaces', () => {
       const target = document.createElement('div');
       wrapper.appendChild(target);
       jest.spyOn(target, 'getBoundingClientRect').mockReturnValue({
-        width: 400, height: 400, top: 0, left: 0,
-        bottom: 400, right: 400, x: 0, y: 0, toJSON: () => {},
+        width: 400,
+        height: 400,
+        top: 0,
+        left: 0,
+        bottom: 400,
+        right: 400,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
       });
 
       showBlockedSurface(target);
@@ -157,8 +165,15 @@ describe('media-surfaces', () => {
       const target = document.createElement('div');
       wrapper.appendChild(target);
       jest.spyOn(target, 'getBoundingClientRect').mockReturnValue({
-        width: 400, height: 400, top: 0, left: 0,
-        bottom: 400, right: 400, x: 0, y: 0, toJSON: () => {},
+        width: 400,
+        height: 400,
+        top: 0,
+        left: 0,
+        bottom: 400,
+        right: 400,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
       });
 
       showPendingSurface(target);
@@ -193,8 +208,15 @@ describe('media-surfaces', () => {
       const target = document.createElement('div');
       wrapper.appendChild(target);
       jest.spyOn(target, 'getBoundingClientRect').mockReturnValue({
-        width: 400, height: 400, top: 0, left: 0,
-        bottom: 400, right: 400, x: 0, y: 0, toJSON: () => {},
+        width: 400,
+        height: 400,
+        top: 0,
+        left: 0,
+        bottom: 400,
+        right: 400,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
       });
 
       showBlockedSurface(target);
@@ -212,6 +234,45 @@ describe('media-surfaces', () => {
       refreshAllMediaSurfaces();
       jest.runAllTimers();
       expect(shell.style.display).not.toBe('none');
+    });
+  });
+
+  describe('showSafeImageSurface', () => {
+    it('creates a safe image overlay with the given URL', () => {
+      const target = createTarget(400, 400);
+      showSafeImageSurface(target, {
+        imageUrl: 'https://example.com/safe.jpg',
+        backgroundColor: '#f0f0f0',
+        objectFit: 'cover',
+        objectPosition: 'center',
+      });
+
+      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
+      expect(overlayRoot).not.toBeNull();
+      const shell = overlayRoot!.firstElementChild as HTMLElement;
+      const img = shell.querySelector('img');
+      expect(img).not.toBeNull();
+      expect(img!.src).toBe('https://example.com/safe.jpg');
+      expect(img!.style.objectFit).toBe('cover');
+      expect(img!.style.objectPosition).toBe('center');
+    });
+
+    it('replaces previous surface mode on same target', () => {
+      const target = createTarget(400, 400);
+      showPendingSurface(target);
+      showSafeImageSurface(target, {
+        imageUrl: 'https://example.com/safe.jpg',
+        backgroundColor: '#fff',
+        objectFit: 'contain',
+        objectPosition: 'top',
+      });
+
+      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
+      // Should no longer contain "Checking image" text
+      expect(overlayRoot!.textContent).not.toContain('Checking image');
+      // Should contain the safe image
+      const img = overlayRoot!.querySelector('img');
+      expect(img).not.toBeNull();
     });
   });
 

@@ -55,7 +55,9 @@ test.describe('Infinite Scroll Image Scanning', () => {
     console.log(`Safe visible: ${safeImages.length}`);
     if (safeImages.length > 0) {
       const visibleSafeImages = await page.evaluate(() => {
-        const imgs = document.querySelectorAll<HTMLImageElement>('img[data-pg-patrol-img-processed="safe"]');
+        const imgs = document.querySelectorAll<HTMLImageElement>(
+          'img[data-pg-patrol-img-processed="safe"]',
+        );
         let count = 0;
         for (const img of imgs) {
           const style = window.getComputedStyle(img);
@@ -158,9 +160,7 @@ test.describe('Infinite Scroll Image Scanning', () => {
 
     // Check for unprocessed images that are visible and large enough to matter
     const unprocessedVisible = await page.evaluate(() => {
-      const imgs = document.querySelectorAll(
-        'img:not([data-pg-patrol-img-processed])',
-      );
+      const imgs = document.querySelectorAll('img:not([data-pg-patrol-img-processed])');
       let count = 0;
       for (const img of imgs) {
         if (img.getAttribute('data-pg-patrol-overlay-owned') === 'true') {
@@ -204,9 +204,9 @@ test.describe('Infinite Scroll Image Scanning', () => {
     console.log(`Batch 3 cards: ${batch3Cards}`);
     expect(batch3Cards).toBeGreaterThan(0);
 
-    const batch3Processed = await page.locator(
-      `.card[data-batch="3"] img[${PROCESSED_ATTR}]`,
-    ).count();
+    const batch3Processed = await page
+      .locator(`.card[data-batch="3"] img[${PROCESSED_ATTR}]`)
+      .count();
     console.log(`Batch 3 processed: ${batch3Processed}`);
     expect(batch3Processed).toBe(batch3Cards);
 
@@ -215,6 +215,8 @@ test.describe('Infinite Scroll Image Scanning', () => {
     const totalProcessed = await page.locator(`img[${PROCESSED_ATTR}]`).count();
     const totalNsfw = await page.locator(`img[${PROCESSED_ATTR}="nsfw"]`).count();
     const totalSafe = await page.locator(`img[${PROCESSED_ATTR}="safe"]`).count();
-    console.log(`Final: ${totalProcessed}/${totalImages} processed (${totalNsfw} NSFW, ${totalSafe} safe)`);
+    console.log(
+      `Final: ${totalProcessed}/${totalImages} processed (${totalNsfw} NSFW, ${totalSafe} safe)`,
+    );
   });
 });

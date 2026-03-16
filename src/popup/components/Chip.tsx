@@ -12,7 +12,9 @@ const colorClasses = {
 
 export default function Chip({ label, color, onRemove }: ChipProps) {
   return (
-    <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${colorClasses[color]}`}>
+    <span
+      className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${colorClasses[color]}`}
+    >
       {label}
       <button
         onClick={onRemove}

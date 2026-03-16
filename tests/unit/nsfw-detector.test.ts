@@ -9,9 +9,9 @@ const mockCanvasContext = {
   getImageData: jest.fn().mockReturnValue({ data: mockPixelData }),
 };
 
-HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(
-  mockCanvasContext,
-) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+HTMLCanvasElement.prototype.getContext = jest
+  .fn()
+  .mockReturnValue(mockCanvasContext) as unknown as typeof HTMLCanvasElement.prototype.getContext;
 
 import {
   classifyImage,
@@ -53,30 +53,31 @@ describe('nsfw-detector', () => {
   });
 
   it('warms the offscreen model once', async () => {
-    sendMessage.mockImplementation((message: any, callback: (response: { ok: boolean }) => void) => {
-      if (message.type === 'NSFW_WARMUP') {
-        callback({ ok: true });
-      }
-    });
+    sendMessage.mockImplementation(
+      (message: any, callback: (response: { ok: boolean }) => void) => {
+        if (message.type === 'NSFW_WARMUP') {
+          callback({ ok: true });
+        }
+      },
+    );
 
     await loadModel();
     await loadModel();
 
     expect(sendMessage).toHaveBeenCalledTimes(1);
-    expect(sendMessage).toHaveBeenCalledWith(
-      { type: 'NSFW_WARMUP' },
-      expect.any(Function),
-    );
+    expect(sendMessage).toHaveBeenCalledWith({ type: 'NSFW_WARMUP' }, expect.any(Function));
     expect(isModelReady()).toBe(true);
   });
 
   it('tracks loading state during warmup', async () => {
     let resolveWarmup: ((value: { ok: boolean }) => void) | null = null;
-    sendMessage.mockImplementation((message: any, callback: (response: { ok: boolean }) => void) => {
-      if (message.type === 'NSFW_WARMUP') {
-        resolveWarmup = callback;
-      }
-    });
+    sendMessage.mockImplementation(
+      (message: any, callback: (response: { ok: boolean }) => void) => {
+        if (message.type === 'NSFW_WARMUP') {
+          resolveWarmup = callback;
+        }
+      },
+    );
 
     const loadPromise = loadModel();
     expect(isModelLoading()).toBe(true);
@@ -96,7 +97,10 @@ describe('nsfw-detector', () => {
       }
     });
 
-    const result = await classifyImage(createMockImage('https://example.com/photo.jpg'), 'moderate');
+    const result = await classifyImage(
+      createMockImage('https://example.com/photo.jpg'),
+      'moderate',
+    );
 
     expect(sendMessage).toHaveBeenCalledWith(
       {
@@ -178,23 +182,92 @@ describe('nsfw-detector', () => {
       }
     });
 
-    const result = await classifyImage(createMockImage('https://example.com/error.jpg'), 'moderate');
+    const result = await classifyImage(
+      createMockImage('https://example.com/error.jpg'),
+      'moderate',
+    );
 
     expect(result.isNSFW).toBe(true);
     expect(result.score).toBe(1);
   });
 
   it('resetting the detector clears readiness state', async () => {
-    sendMessage.mockImplementation((message: any, callback: (response: { ok: boolean }) => void) => {
-      if (message.type === 'NSFW_WARMUP') {
-        callback({ ok: true });
-      }
-    });
+    sendMessage.mockImplementation(
+      (message: any, callback: (response: { ok: boolean }) => void) => {
+        if (message.type === 'NSFW_WARMUP') {
+          callback({ ok: true });
+        }
+      },
+    );
 
     await loadModel();
     expect(isModelReady()).toBe(true);
     unloadModel();
     expect(isModelReady()).toBe(false);
+  });
+
+  it('loadModel rejects when warmup response has no ok field', async () => {
+    sendMessage.mockImplementation((message: any, callback: (response: any) => void) => {
+      if (message.type === 'NSFW_WARMUP') {
+        callback(null);
+      }
+    });
+
+    await expect(loadModel()).rejects.toThrow('NSFW offscreen warmup failed');
+    expect(isModelReady()).toBe(false);
+    // After failure, modelLoadPromise should be cleared so a retry is possible
+    unloadModel();
+  });
+
+  it('loadModel rejects when chrome.runtime.lastError is set', async () => {
+    sendMessage.mockImplementation((message: any, callback: (response: any) => void) => {
+      if (message.type === 'NSFW_WARMUP') {
+        (chrome.runtime as any).lastError = { message: 'Extension context invalidated' };
+        callback(undefined);
+      }
+    });
+
+    await expect(loadModel()).rejects.toThrow('Extension context invalidated');
+    (chrome.runtime as any).lastError = null;
+    unloadModel();
+  });
+
+  it('classifyImage falls back to max score on SecurityError for cross-origin images', async () => {
+    sendMessage.mockImplementation((message: any, callback: (response: any) => void) => {
+      if (message.type === 'NSFW_WARMUP') {
+        callback({ ok: true });
+        return;
+      }
+      if (message.type === 'NSFW_CLASSIFY_IMAGE') {
+        callback({ isNSFW: false, score: 0.05 });
+      }
+    });
+
+    // Create an image that causes SecurityError when trying to get pixel data
+    const img = document.createElement('img');
+    Object.defineProperty(img, 'src', {
+      value: 'https://other-domain.com/photo.jpg',
+      configurable: true,
+    });
+    Object.defineProperty(img, 'currentSrc', {
+      value: 'https://other-domain.com/photo.jpg',
+      configurable: true,
+    });
+    Object.defineProperty(img, 'naturalWidth', { value: 100, configurable: true });
+    Object.defineProperty(img, 'naturalHeight', { value: 100, configurable: true });
+
+    // Make getImageData throw a SecurityError
+    mockCanvasContext.getImageData.mockImplementation(() => {
+      const err = new DOMException('cross-origin', 'SecurityError');
+      throw err;
+    });
+
+    const result = await classifyImage(img, 'moderate');
+
+    // Should have fallen back to URL classification
+    const classifyCall = sendMessage.mock.calls.find(([msg]) => msg.type === 'NSFW_CLASSIFY_IMAGE');
+    expect(classifyCall?.[0].data.source.kind).toBe('url');
+    expect(result.isNSFW).toBe(false);
   });
 
   it('preprocessImage returns normalized Float32 input', () => {
@@ -242,12 +315,12 @@ describe('nsfw-detector', () => {
     const args = mockCanvasContext.drawImage.mock.calls[0];
     // 9-arg form: drawImage(src, sx, sy, sSize, sSize, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE)
     expect(args).toHaveLength(9);
-    expect(args[1]).toBe(420);  // sx = (1920 - 1080) / 2
-    expect(args[2]).toBe(0);    // sy
+    expect(args[1]).toBe(420); // sx = (1920 - 1080) / 2
+    expect(args[2]).toBe(0); // sy
     expect(args[3]).toBe(1080); // sSize
     expect(args[4]).toBe(1080); // sSize
-    expect(args[5]).toBe(0);    // dx
-    expect(args[6]).toBe(0);    // dy
+    expect(args[5]).toBe(0); // dx
+    expect(args[6]).toBe(0); // dy
     expect(args[7]).toBe(MODEL_INPUT_SIZE); // dw
     expect(args[8]).toBe(MODEL_INPUT_SIZE); // dh
   });

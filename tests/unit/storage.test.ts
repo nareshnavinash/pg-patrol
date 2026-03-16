@@ -1,15 +1,17 @@
-import { getSettings, saveSettings, isSiteWhitelisted, incrementStats } from '../../src/shared/storage';
+import {
+  getSettings,
+  saveSettings,
+  isSiteWhitelisted,
+  incrementStats,
+  onSettingsChanged,
+} from '../../src/shared/storage';
 import { DEFAULT_SETTINGS } from '../../src/shared/types';
 
 describe('storage', () => {
   beforeEach(() => {
     // Reset mock storage
-    (chrome.storage.sync.get as jest.Mock).mockImplementation(() =>
-      Promise.resolve({}),
-    );
-    (chrome.storage.sync.set as jest.Mock).mockImplementation(() =>
-      Promise.resolve(),
-    );
+    (chrome.storage.sync.get as jest.Mock).mockImplementation(() => Promise.resolve({}));
+    (chrome.storage.sync.set as jest.Mock).mockImplementation(() => Promise.resolve());
   });
 
   describe('getSettings', () => {
@@ -54,6 +56,64 @@ describe('storage', () => {
     it('increments word and image counts', async () => {
       await incrementStats(5, 2);
       expect(chrome.storage.sync.set).toHaveBeenCalled();
+    });
+  });
+
+  describe('onSettingsChanged', () => {
+    let capturedListener: (
+      changes: { [key: string]: chrome.storage.StorageChange },
+      area: string,
+    ) => void;
+
+    beforeEach(() => {
+      (chrome.storage.onChanged.addListener as jest.Mock).mockImplementation(
+        (fn: typeof capturedListener) => {
+          capturedListener = fn;
+        },
+      );
+    });
+
+    it('calls callback when sync area settings change', () => {
+      const callback = jest.fn();
+      onSettingsChanged(callback);
+
+      const newValue = { enabled: false };
+      capturedListener({ settings: { newValue, oldValue: {} } }, 'sync');
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith({
+        ...DEFAULT_SETTINGS,
+        ...newValue,
+      });
+    });
+
+    it('ignores changes from non-sync areas', () => {
+      const callback = jest.fn();
+      onSettingsChanged(callback);
+
+      capturedListener({ settings: { newValue: { enabled: false }, oldValue: {} } }, 'local');
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('ignores changes without settings key', () => {
+      const callback = jest.fn();
+      onSettingsChanged(callback);
+
+      capturedListener({ someOtherKey: { newValue: 'foo', oldValue: 'bar' } }, 'sync');
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('returns unsubscribe function that calls removeListener', () => {
+      const callback = jest.fn();
+      const unsubscribe = onSettingsChanged(callback);
+
+      expect(chrome.storage.onChanged.addListener).toHaveBeenCalledWith(capturedListener);
+
+      unsubscribe();
+
+      expect(chrome.storage.onChanged.removeListener).toHaveBeenCalledWith(capturedListener);
     });
   });
 });

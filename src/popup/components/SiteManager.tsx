@@ -35,20 +35,23 @@ export default function SiteManager({ hostname, settings, onUpdate, showToast }:
       <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
         {hostname ? (
           <div className="flex items-center justify-between">
-            <span className={`inline-flex items-center text-xs px-3 py-1 rounded-full font-medium ${
-              isWhitelisted
-                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-            }`}>
+            <span
+              className={`inline-flex items-center text-xs px-3 py-1 rounded-full font-medium ${
+                isWhitelisted
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                  : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+              }`}
+            >
               {hostname}
             </span>
             <button
               onClick={toggleWhitelist}
               className={`
                 text-xs px-2.5 py-1 rounded-md transition-colors
-                ${isWhitelisted
-                  ? 'bg-amber-500 text-white hover:bg-amber-600'
-                  : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
+                ${
+                  isWhitelisted
+                    ? 'bg-amber-500 text-white hover:bg-amber-600'
+                    : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
                 }
               `}
             >
@@ -64,12 +67,7 @@ export default function SiteManager({ hostname, settings, onUpdate, showToast }:
             <h3 className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">Whitelisted Sites</h3>
             <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
               {settings.whitelistedSites.map((site) => (
-                <Chip
-                  key={site}
-                  label={site}
-                  color="amber"
-                  onRemove={() => removeSite(site)}
-                />
+                <Chip key={site} label={site} color="amber" onRemove={() => removeSite(site)} />
               ))}
             </div>
           </div>

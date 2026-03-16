@@ -12,9 +12,7 @@ export async function getSettings(): Promise<PGPatrolSettings> {
 /**
  * Save partial settings update.
  */
-export async function saveSettings(
-  partial: Partial<PGPatrolSettings>,
-): Promise<PGPatrolSettings> {
+export async function saveSettings(partial: Partial<PGPatrolSettings>): Promise<PGPatrolSettings> {
   const current = await getSettings();
   const updated = { ...current, ...partial };
   await chrome.storage.sync.set({ settings: updated });
@@ -24,13 +22,8 @@ export async function saveSettings(
 /**
  * Listen for settings changes.
  */
-export function onSettingsChanged(
-  callback: (settings: PGPatrolSettings) => void,
-): () => void {
-  const listener = (
-    changes: { [key: string]: chrome.storage.StorageChange },
-    area: string,
-  ) => {
+export function onSettingsChanged(callback: (settings: PGPatrolSettings) => void): () => void {
+  const listener = (changes: { [key: string]: chrome.storage.StorageChange }, area: string) => {
     if (area === 'sync' && changes.settings) {
       callback({ ...DEFAULT_SETTINGS, ...changes.settings.newValue });
     }
@@ -50,10 +43,7 @@ export async function isSiteWhitelisted(hostname: string): Promise<boolean> {
 /**
  * Update cumulative stats.
  */
-export async function incrementStats(
-  wordsReplaced: number,
-  imagesReplaced: number,
-): Promise<void> {
+export async function incrementStats(wordsReplaced: number, imagesReplaced: number): Promise<void> {
   const settings = await getSettings();
   await saveSettings({
     stats: {

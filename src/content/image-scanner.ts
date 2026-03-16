@@ -4,12 +4,7 @@
  * elements that are likely video thumbnails.
  */
 
-import {
-  classifyImage,
-  classifyImageUrl,
-  isModelReady,
-  loadModel,
-} from '../shared/nsfw-detector';
+import { classifyImage, classifyImageUrl, isModelReady, loadModel } from '../shared/nsfw-detector';
 import type { Sensitivity } from '../shared/types';
 import { imageCache } from '../shared/image-classification-cache';
 import {
@@ -247,7 +242,9 @@ function applyDebugBorder(el: HTMLElement, verdict: string): void {
 function logDecision(src: string, score: number | null, verdict: string): void {
   const thresholdStr = customThreshold != null ? customThreshold : `preset(${sensitivity})`;
   if (score !== null) {
-    console.log(`[PG Patrol] IMG: ${src} → score=${score.toFixed(3)}, threshold=${thresholdStr}, verdict=${verdict.toUpperCase()}`);
+    console.log(
+      `[PG Patrol] IMG: ${src} → score=${score.toFixed(3)}, threshold=${thresholdStr}, verdict=${verdict.toUpperCase()}`,
+    );
   } else {
     console.log(`[PG Patrol] IMG: ${src} → ${verdict.toUpperCase()}`);
   }
@@ -282,7 +279,8 @@ function getScannableSrc(img: HTMLImageElement): string | null {
  */
 function isPlaceholderUrl(url: string): boolean {
   if (!url) return true;
-  if (url.endsWith('blank.gif') || url.endsWith('placeholder.gif') || url.endsWith('spacer.gif')) return true;
+  if (url.endsWith('blank.gif') || url.endsWith('placeholder.gif') || url.endsWith('spacer.gif'))
+    return true;
   if (url.startsWith('data:') && url.length < 1000) return true;
   if (url.startsWith('data:image/gif;base64,R0lGOD')) return true; // 1x1 transparent GIF
   return false;
@@ -291,17 +289,13 @@ function isPlaceholderUrl(url: string): boolean {
 // ---- Image scanning ----
 
 function getPermanentSkipReason(img: HTMLImageElement): string | null {
-  const w = img.complete ? img.naturalWidth : (img.width || img.naturalWidth);
-  const h = img.complete ? img.naturalHeight : (img.height || img.naturalHeight);
+  const w = img.complete ? img.naturalWidth : img.width || img.naturalWidth;
+  const h = img.complete ? img.naturalHeight : img.height || img.naturalHeight;
   if (w > 0 && w < MIN_IMAGE_SIZE && h > 0 && h < MIN_IMAGE_SIZE) {
     return 'small image';
   }
 
-  const rawSrc =
-    img.currentSrc ||
-    img.src ||
-    img.srcset.split(',')[0]?.trim().split(' ')[0] ||
-    '';
+  const rawSrc = img.currentSrc || img.src || img.srcset.split(',')[0]?.trim().split(' ')[0] || '';
   if (rawSrc.endsWith('.svg') || rawSrc.startsWith('data:image/svg')) {
     return 'svg image';
   }
@@ -496,14 +490,16 @@ function hideImage(img: HTMLImageElement): void {
     replacedCount++;
     onImageHiddenCallback?.(replacedCount);
     try {
-      chrome.runtime.sendMessage({
-        type: 'LOG_ACTIVITY',
-        data: {
-          type: 'image',
-          original: source.length > 100 ? source.slice(0, 97) + '...' : source,
-          timestamp: Date.now(),
-        },
-      }).catch(() => {});
+      chrome.runtime
+        .sendMessage({
+          type: 'LOG_ACTIVITY',
+          data: {
+            type: 'image',
+            original: source.length > 100 ? source.slice(0, 97) + '...' : source,
+            timestamp: Date.now(),
+          },
+        })
+        .catch(() => {});
     } catch {
       // chrome.runtime may be unavailable in tests
     }
@@ -595,9 +591,7 @@ async function processImage(img: HTMLImageElement): Promise<void> {
           img.addEventListener('load', () => resolve('loaded'), { once: true });
           img.addEventListener('error', () => resolve('error'), { once: true });
         }),
-        new Promise<'timeout'>((resolve) =>
-          setTimeout(() => resolve('timeout'), LOAD_TIMEOUT_MS),
-        ),
+        new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), LOAD_TIMEOUT_MS)),
       ]);
 
       if (loadResult === 'timeout') {
@@ -653,7 +647,7 @@ async function processImage(img: HTMLImageElement): Promise<void> {
     // Store in persistent cache
     const imgSize = Math.max(img.clientWidth || 0, img.clientHeight || 0);
     const imgContext = imageCache.detectContext(finalSrc, img);
-    const verdict = result.isNSFW ? 'nsfw' as const : 'safe' as const;
+    const verdict = result.isNSFW ? ('nsfw' as const) : ('safe' as const);
     imageCache.set(finalSrc, verdict, result.score, imgSize, imgContext);
 
     if (result.isNSFW) {
@@ -764,7 +758,7 @@ async function processVideoElement(video: HTMLVideoElement): Promise<void> {
     // Store in persistent cache — use video dimensions for size
     const vidSize = Math.max(video.clientWidth || 0, video.clientHeight || 0);
     const vidContext = imageCache.detectContext(video.poster, video as unknown as HTMLElement);
-    const verdict = result.isNSFW ? 'nsfw' as const : 'safe' as const;
+    const verdict = result.isNSFW ? ('nsfw' as const) : ('safe' as const);
     imageCache.set(video.poster, verdict, result.score, vidSize, vidContext);
 
     if (result.isNSFW) {
@@ -867,7 +861,7 @@ async function processBackgroundImage(element: HTMLElement): Promise<void> {
     // Store in persistent cache — use element dimensions for size
     const elSize = Math.max(element.clientWidth || 0, element.clientHeight || 0);
     const elContext = imageCache.detectContext(url, element);
-    const verdict = result.isNSFW ? 'nsfw' as const : 'safe' as const;
+    const verdict = result.isNSFW ? ('nsfw' as const) : ('safe' as const);
     imageCache.set(url, verdict, result.score, elSize, elContext);
 
     if (result.isNSFW) {
@@ -1086,8 +1080,8 @@ export function requeueImage(img: HTMLImageElement): void {
  */
 export function collectVideoThumbnails(root?: Node): HTMLVideoElement[] {
   const container = root instanceof HTMLElement ? root : document;
-  return Array.from(container.querySelectorAll('video[poster]')).filter(
-    (v) => shouldScanVideo(v as HTMLVideoElement),
+  return Array.from(container.querySelectorAll('video[poster]')).filter((v) =>
+    shouldScanVideo(v as HTMLVideoElement),
   ) as HTMLVideoElement[];
 }
 
@@ -1096,7 +1090,9 @@ export function collectVideoThumbnails(root?: Node): HTMLVideoElement[] {
  */
 export function collectBackgroundThumbnails(root?: Node): HTMLElement[] {
   const container = root instanceof HTMLElement ? root : document;
-  const candidates = Array.from(container.querySelectorAll('div, span, a, figure, section, article, header, li'));
+  const candidates = Array.from(
+    container.querySelectorAll('div, span, a, figure, section, article, header, li'),
+  );
   return candidates.filter((el) => shouldScanBgImage(el as HTMLElement)) as HTMLElement[];
 }
 
@@ -1151,7 +1147,9 @@ export function resetManagedMedia(): void {
     video.removeAttribute(VIDEO_PROCESSED_ATTR);
   }
 
-  const bgTargets = document.querySelectorAll<HTMLElement>(`[${BG_PROCESSED_ATTR}], [${RAW_BG_IMAGE_ATTR}]`);
+  const bgTargets = document.querySelectorAll<HTMLElement>(
+    `[${BG_PROCESSED_ATTR}], [${RAW_BG_IMAGE_ATTR}]`,
+  );
   for (const target of bgTargets) {
     restoreRawBackground(target);
     removeBlur(target);

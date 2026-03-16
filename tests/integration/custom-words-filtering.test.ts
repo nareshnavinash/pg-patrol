@@ -2,7 +2,11 @@
  * @jest-environment jsdom
  */
 
-import { replaceProfanity, addCustomProfanity, addCustomSafeWords } from '../../src/shared/profanity-engine';
+import {
+  replaceProfanity,
+  addCustomProfanity,
+  addCustomSafeWords,
+} from '../../src/shared/profanity-engine';
 import { scoreText } from '../../src/shared/negative-news-engine';
 import { addCustomTriggers, addCustomSafeContext } from '../../src/shared/negative-news-words';
 
@@ -42,9 +46,7 @@ describe('custom words filtering integration', () => {
 
       const result = replaceProfanity(textNode.textContent!, 'strict');
       // "blarfoo" has been marked safe, so it should not be profane
-      const match = result.replacements.find(
-        (m) => m.original.toLowerCase() === 'blarfoo',
-      );
+      const match = result.replacements.find((m) => m.original.toLowerCase() === 'blarfoo');
       expect(match).toBeUndefined();
     });
   });

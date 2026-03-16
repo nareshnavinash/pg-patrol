@@ -8,7 +8,12 @@ import {
 } from '../../src/shared/profanity-engine';
 import { addCustomFunnyWords } from '../../src/shared/funny-words';
 import { scoreText } from '../../src/shared/negative-news-engine';
-import { addCustomTriggers, addCustomSafeContext, setCustomTriggers, setCustomSafeContext } from '../../src/shared/negative-news-words';
+import {
+  addCustomTriggers,
+  addCustomSafeContext,
+  setCustomTriggers,
+  setCustomSafeContext,
+} from '../../src/shared/negative-news-words';
 
 describe('custom words', () => {
   describe('addCustomProfanity', () => {

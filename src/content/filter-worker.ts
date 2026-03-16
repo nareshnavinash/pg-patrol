@@ -3,9 +3,20 @@
  * Runs profanity replacement and negative news scoring without blocking the UI.
  */
 
-import { replaceProfanity, setCustomProfanity, setCustomSafeWords, addCustomProfanity, addCustomSafeWords } from '../shared/profanity-engine';
+import {
+  replaceProfanity,
+  setCustomProfanity,
+  setCustomSafeWords,
+  addCustomProfanity,
+  addCustomSafeWords,
+} from '../shared/profanity-engine';
 import { scoreText } from '../shared/negative-news-engine';
-import { setCustomTriggers, setCustomSafeContext, addCustomTriggers, addCustomSafeContext } from '../shared/negative-news-words';
+import {
+  setCustomTriggers,
+  setCustomSafeContext,
+  addCustomTriggers,
+  addCustomSafeContext,
+} from '../shared/negative-news-words';
 import { addCustomFunnyWords } from '../shared/funny-words';
 import type { FilterResult, NegativeContentResult, Sensitivity } from '../shared/types';
 import type { RemoteWordListDelta } from '../shared/word-list-updater';
@@ -14,7 +25,13 @@ import type { RemoteWordListDelta } from '../shared/word-list-updater';
 export type WorkerRequest =
   | { type: 'FILTER_TEXT'; id: number; texts: string[]; sensitivity: Sensitivity }
   | { type: 'SCORE_TEXT'; id: number; texts: string[] }
-  | { type: 'SET_CUSTOM_WORDS'; customBlockedWords: string[]; customSafeWords: string[]; customNegativeTriggers: string[]; customSafeContext: string[] }
+  | {
+      type: 'SET_CUSTOM_WORDS';
+      customBlockedWords: string[];
+      customSafeWords: string[];
+      customNegativeTriggers: string[];
+      customSafeContext: string[];
+    }
   | { type: 'APPLY_WORD_DELTA'; delta: RemoteWordListDelta };
 
 export type WorkerResponse =
@@ -51,8 +68,10 @@ export function handleWorkerMessage(msg: WorkerRequest): WorkerResponse | undefi
         if (delta.profanity.addSafe?.length) addCustomSafeWords(delta.profanity.addSafe);
       }
       if (delta.negativeNews) {
-        if (delta.negativeNews.addTriggers?.length) addCustomTriggers(delta.negativeNews.addTriggers);
-        if (delta.negativeNews.addSafeContext?.length) addCustomSafeContext(delta.negativeNews.addSafeContext);
+        if (delta.negativeNews.addTriggers?.length)
+          addCustomTriggers(delta.negativeNews.addTriggers);
+        if (delta.negativeNews.addSafeContext?.length)
+          addCustomSafeContext(delta.negativeNews.addSafeContext);
       }
       if (delta.funnyWords?.add) {
         addCustomFunnyWords(delta.funnyWords.add);

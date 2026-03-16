@@ -58,8 +58,7 @@ export function scoreBayes(text: string): BayesResult {
   // Log-sum-exp to convert to probability: P(toxic|text) = exp(logToxic) / (exp(logToxic) + exp(logSafe))
   const maxLog = Math.max(logToxic, logSafe);
   const toxicityProb =
-    Math.exp(logToxic - maxLog) /
-    (Math.exp(logToxic - maxLog) + Math.exp(logSafe - maxLog));
+    Math.exp(logToxic - maxLog) / (Math.exp(logToxic - maxLog) + Math.exp(logSafe - maxLog));
 
   return {
     toxicityProb,

@@ -29,181 +29,182 @@ const inferenceEngine = createInferenceEngine({
   },
 });
 
-chrome.runtime.onMessage.addListener(
-  (message: Message, sender, sendResponse) => {
-    const tabId = sender.tab?.id;
+chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
+  const tabId = sender.tab?.id;
 
-    switch (message.type) {
-      case MessageType.UPDATE_STATS: {
-        if (tabId != null) {
-          tabStats.set(tabId, {
-            wordsReplaced: message.data.wordsReplaced,
-            imagesReplaced: message.data.imagesReplaced,
-          });
-          // Update badge with word count
-          const count = message.data.wordsReplaced;
-          if (count > 0) {
-            chrome.action.setBadgeText({ text: String(count), tabId });
-            chrome.action.setBadgeBackgroundColor({ color: '#6366f1', tabId });
-          }
-        }
-        break;
-      }
-
-      case MessageType.GET_TAB_STATS: {
-        const resolvedTabId = message.tabId ?? tabId;
-        const stats = resolvedTabId ? tabStats.get(resolvedTabId) : undefined;
-        const response: StatsResponse = {
-          wordsReplaced: stats?.wordsReplaced ?? 0,
-          imagesReplaced: stats?.imagesReplaced ?? 0,
-        };
-        sendResponse(response);
-        return true; // async response
-      }
-
-      case MessageType.SETTINGS_CHANGED: {
-        // Relay settings change to all content scripts
-        chrome.tabs.query({}, (tabs) => {
-          for (const tab of tabs) {
-            if (tab.id) {
-              chrome.tabs.sendMessage(tab.id, message).catch(() => {
-                // Tab might not have content script loaded
-              });
-            }
-          }
+  switch (message.type) {
+    case MessageType.UPDATE_STATS: {
+      if (tabId != null) {
+        tabStats.set(tabId, {
+          wordsReplaced: message.data.wordsReplaced,
+          imagesReplaced: message.data.imagesReplaced,
         });
-        break;
+        // Update badge with word count
+        const count = message.data.wordsReplaced;
+        if (count > 0) {
+          chrome.action.setBadgeText({ text: String(count), tabId });
+          chrome.action.setBadgeBackgroundColor({ color: '#6366f1', tabId });
+        }
       }
+      break;
+    }
 
-      case MessageType.LOG_ACTIVITY: {
-        if (tabId != null) {
-          let entries = tabActivityLog.get(tabId);
-          if (!entries) {
-            entries = [];
-            tabActivityLog.set(tabId, entries);
-          }
-          entries.push(message.data);
-          // Ring buffer: drop oldest on overflow
-          if (entries.length > MAX_ACTIVITY_ENTRIES) {
-            entries.shift();
+    case MessageType.GET_TAB_STATS: {
+      const resolvedTabId = message.tabId ?? tabId;
+      const stats = resolvedTabId ? tabStats.get(resolvedTabId) : undefined;
+      const response: StatsResponse = {
+        wordsReplaced: stats?.wordsReplaced ?? 0,
+        imagesReplaced: stats?.imagesReplaced ?? 0,
+      };
+      sendResponse(response);
+      return true; // async response
+    }
+
+    case MessageType.SETTINGS_CHANGED: {
+      // Relay settings change to all content scripts
+      chrome.tabs.query({}, (tabs) => {
+        for (const tab of tabs) {
+          if (tab.id) {
+            chrome.tabs.sendMessage(tab.id, message).catch(() => {
+              // Tab might not have content script loaded
+            });
           }
         }
-        break;
+      });
+      break;
+    }
+
+    case MessageType.LOG_ACTIVITY: {
+      if (tabId != null) {
+        let entries = tabActivityLog.get(tabId);
+        if (!entries) {
+          entries = [];
+          tabActivityLog.set(tabId, entries);
+        }
+        entries.push(message.data);
+        // Ring buffer: drop oldest on overflow
+        if (entries.length > MAX_ACTIVITY_ENTRIES) {
+          entries.shift();
+        }
       }
+      break;
+    }
 
-      case MessageType.GET_ACTIVITY_LOG: {
-        const logTabId = message.tabId ?? tabId;
-        const entries = logTabId ? tabActivityLog.get(logTabId) ?? [] : [];
-        sendResponse(entries);
-        return true; // async response
-      }
+    case MessageType.GET_ACTIVITY_LOG: {
+      const logTabId = message.tabId ?? tabId;
+      const entries = logTabId ? (tabActivityLog.get(logTabId) ?? []) : [];
+      sendResponse(entries);
+      return true; // async response
+    }
 
-      // ---- ML classification — direct call (no offscreen document) ----
+    // ---- ML classification — direct call (no offscreen document) ----
 
-      case MessageType.ML_CLASSIFY_REQUEST: {
-        const text = message.data.text;
-        let responded = false;
+    case MessageType.ML_CLASSIFY_REQUEST: {
+      const text = message.data.text;
+      let responded = false;
 
-        // Timeout after 15 seconds
-        const timeoutId = setTimeout(() => {
+      // Timeout after 15 seconds
+      const timeoutId = setTimeout(() => {
+        if (!responded) {
+          responded = true;
+          sendResponse({ isToxic: false, confidence: 0 });
+        }
+      }, 15000);
+
+      inferenceEngine
+        .classifyText(text)
+        .then((result) => {
           if (!responded) {
             responded = true;
+            clearTimeout(timeoutId);
+            sendResponse(result);
+          }
+        })
+        .catch(() => {
+          if (!responded) {
+            responded = true;
+            clearTimeout(timeoutId);
             sendResponse({ isToxic: false, confidence: 0 });
           }
-        }, 15000);
+        });
 
-        inferenceEngine.classifyText(text)
-          .then((result) => {
-            if (!responded) {
-              responded = true;
-              clearTimeout(timeoutId);
-              sendResponse(result);
-            }
-          })
-          .catch(() => {
-            if (!responded) {
-              responded = true;
-              clearTimeout(timeoutId);
-              sendResponse({ isToxic: false, confidence: 0 });
-            }
-          });
+      return true; // async response
+    }
 
-        return true; // async response
-      }
+    // ---- NSFW warmup — direct call ----
 
-      // ---- NSFW warmup — direct call ----
+    case MessageType.NSFW_WARMUP: {
+      let warmupResponded = false;
 
-      case MessageType.NSFW_WARMUP: {
-        let warmupResponded = false;
+      const warmupTimeoutId = setTimeout(() => {
+        if (!warmupResponded) {
+          warmupResponded = true;
+          sendResponse({ ok: false });
+        }
+      }, 15000);
 
-        const warmupTimeoutId = setTimeout(() => {
+      inferenceEngine
+        .warmupNSFW()
+        .then(() => {
           if (!warmupResponded) {
             warmupResponded = true;
+            clearTimeout(warmupTimeoutId);
+            sendResponse({ ok: true });
+          }
+        })
+        .catch(() => {
+          if (!warmupResponded) {
+            warmupResponded = true;
+            clearTimeout(warmupTimeoutId);
             sendResponse({ ok: false });
           }
-        }, 15000);
+        });
 
-        inferenceEngine.warmupNSFW()
-          .then(() => {
-            if (!warmupResponded) {
-              warmupResponded = true;
-              clearTimeout(warmupTimeoutId);
-              sendResponse({ ok: true });
-            }
-          })
-          .catch(() => {
-            if (!warmupResponded) {
-              warmupResponded = true;
-              clearTimeout(warmupTimeoutId);
-              sendResponse({ ok: false });
-            }
-          });
+      return true;
+    }
 
-        return true;
-      }
+    // ---- NSFW image classify — direct call ----
 
-      // ---- NSFW image classify — direct call ----
+    case MessageType.NSFW_CLASSIFY_IMAGE: {
+      const { source, sensitivity, customThreshold } = message.data;
+      let nsfwResponded = false;
 
-      case MessageType.NSFW_CLASSIFY_IMAGE: {
-        const { source, sensitivity, customThreshold } = message.data;
-        let nsfwResponded = false;
+      // Timeout after 30 seconds (image fetch + model inference)
+      const nsfwTimeoutId = setTimeout(() => {
+        if (!nsfwResponded) {
+          nsfwResponded = true;
+          sendResponse({ isNSFW: true, score: 1 }); // Fail-safe
+        }
+      }, 30000);
 
-        // Timeout after 30 seconds (image fetch + model inference)
-        const nsfwTimeoutId = setTimeout(() => {
+      inferenceEngine
+        .classifyImage(source, sensitivity, customThreshold)
+        .then((result) => {
           if (!nsfwResponded) {
             nsfwResponded = true;
+            clearTimeout(nsfwTimeoutId);
+            sendResponse(result);
+          }
+        })
+        .catch(() => {
+          if (!nsfwResponded) {
+            nsfwResponded = true;
+            clearTimeout(nsfwTimeoutId);
             sendResponse({ isNSFW: true, score: 1 }); // Fail-safe
           }
-        }, 30000);
+        });
 
-        inferenceEngine.classifyImage(source, sensitivity, customThreshold)
-          .then((result) => {
-            if (!nsfwResponded) {
-              nsfwResponded = true;
-              clearTimeout(nsfwTimeoutId);
-              sendResponse(result);
-            }
-          })
-          .catch(() => {
-            if (!nsfwResponded) {
-              nsfwResponded = true;
-              clearTimeout(nsfwTimeoutId);
-              sendResponse({ isNSFW: true, score: 1 }); // Fail-safe
-            }
-          });
-
-        return true; // async response
-      }
-
-      // Chrome-offscreen-specific messages — ignored in Firefox
-      case MessageType.ML_CLASSIFY_RESPONSE:
-      case MessageType.NSFW_WARMUP_RESPONSE:
-      case MessageType.NSFW_CLASSIFY_RESPONSE:
-      case MessageType.OFFSCREEN_IDLE:
-        break;
+      return true; // async response
     }
-  },
-);
+
+    // Chrome-offscreen-specific messages — ignored in Firefox
+    case MessageType.ML_CLASSIFY_RESPONSE:
+    case MessageType.NSFW_WARMUP_RESPONSE:
+    case MessageType.NSFW_CLASSIFY_RESPONSE:
+    case MessageType.OFFSCREEN_IDLE:
+      break;
+  }
+});
 
 // Clean up tab stats and activity log when tab is closed
 chrome.tabs.onRemoved.addListener((tabId) => {
@@ -229,12 +230,15 @@ chrome.runtime.onInstalled.addListener((details) => {
 
   // Existing users upgrading should skip the onboarding flow
   if (details.reason === 'update') {
-    chrome.storage.sync.get('settings').then((result) => {
-      const current = result.settings || {};
-      chrome.storage.sync.set({
-        settings: { ...current, hasSeenOnboarding: true },
-      });
-    }).catch(() => {});
+    chrome.storage.sync
+      .get('settings')
+      .then((result) => {
+        const current = result.settings || {};
+        chrome.storage.sync.set({
+          settings: { ...current, hasSeenOnboarding: true },
+        });
+      })
+      .catch(() => {});
   }
 });
 

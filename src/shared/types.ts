@@ -32,7 +32,7 @@ export const DEFAULT_SETTINGS: PGPatrolSettings = {
   mlClassifierEnabled: true,
   sensitivity: 'strict',
   developerMode: false,
-  customThreshold: 0.10,
+  customThreshold: 0.1,
   whitelistedSites: [],
   perspectiveApiKey: '',
   customBlockedWords: [],

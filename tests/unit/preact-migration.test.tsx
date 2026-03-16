@@ -3,7 +3,7 @@
  * Ensures all components render correctly with Preact's compat layer,
  * hooks work properly, and event handling is functional.
  */
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/preact';
+import { render, screen, fireEvent, waitFor } from '@testing-library/preact';
 import Toggle from '../../src/popup/components/Toggle';
 import Header from '../../src/popup/components/Header';
 import Settings from '../../src/popup/components/Settings';
@@ -30,12 +30,7 @@ describe('Preact migration — component rendering', () => {
 
   it('Toggle shows description text', () => {
     render(
-      <Toggle
-        enabled={true}
-        onChange={jest.fn()}
-        label="Label"
-        description="Some description"
-      />,
+      <Toggle enabled={true} onChange={jest.fn()} label="Label" description="Some description" />,
     );
     expect(screen.getByText('Some description')).toBeTruthy();
   });
@@ -69,24 +64,12 @@ describe('Preact migration — component rendering', () => {
   });
 
   it('SiteManager renders hostname', () => {
-    render(
-      <SiteManager
-        hostname="example.com"
-        settings={DEFAULT_SETTINGS}
-        onUpdate={jest.fn()}
-      />,
-    );
+    render(<SiteManager hostname="example.com" settings={DEFAULT_SETTINGS} onUpdate={jest.fn()} />);
     expect(screen.getByText('example.com')).toBeTruthy();
   });
 
   it('SiteManager shows "No active site" when hostname is empty', () => {
-    render(
-      <SiteManager
-        hostname=""
-        settings={DEFAULT_SETTINGS}
-        onUpdate={jest.fn()}
-      />,
-    );
+    render(<SiteManager hostname="" settings={DEFAULT_SETTINGS} onUpdate={jest.fn()} />);
     expect(screen.getByText('No active site')).toBeTruthy();
   });
 
@@ -183,13 +166,7 @@ describe('Preact migration — PerspectiveSetup', () => {
 describe('Preact migration — SiteManager whitelist', () => {
   it('whitelist button adds site', () => {
     const onUpdate = jest.fn();
-    render(
-      <SiteManager
-        hostname="example.com"
-        settings={DEFAULT_SETTINGS}
-        onUpdate={onUpdate}
-      />,
-    );
+    render(<SiteManager hostname="example.com" settings={DEFAULT_SETTINGS} onUpdate={onUpdate} />);
 
     fireEvent.click(screen.getByText('Whitelist'));
     expect(onUpdate).toHaveBeenCalledWith({
@@ -203,9 +180,7 @@ describe('Preact migration — SiteManager whitelist', () => {
       whitelistedSites: ['test.com'],
     };
     const onUpdate = jest.fn();
-    render(
-      <SiteManager hostname="other.com" settings={settings} onUpdate={onUpdate} />,
-    );
+    render(<SiteManager hostname="other.com" settings={settings} onUpdate={onUpdate} />);
 
     expect(screen.getByText('test.com')).toBeTruthy();
     fireEvent.click(screen.getByLabelText('Remove test.com'));

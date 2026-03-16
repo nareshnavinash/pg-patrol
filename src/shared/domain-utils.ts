@@ -13,10 +13,20 @@ export function getRegistrableDomain(hostname: string): string {
 
   // Common two-part TLDs
   const twoPartTlds = new Set([
-    'co.uk', 'org.uk', 'ac.uk', 'gov.uk',
-    'com.au', 'gov.au', 'wa.gov.au',
-    'co.nz', 'co.jp', 'co.kr', 'co.in',
-    'com.br', 'com.mx', 'com.ar',
+    'co.uk',
+    'org.uk',
+    'ac.uk',
+    'gov.uk',
+    'com.au',
+    'gov.au',
+    'wa.gov.au',
+    'co.nz',
+    'co.jp',
+    'co.kr',
+    'co.in',
+    'com.br',
+    'com.mx',
+    'com.ar',
   ]);
 
   const lastTwo = parts.slice(-2).join('.');

@@ -37,4 +37,23 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!(@2toad/profanity|preact|@testing-library/preact)/)',
   ],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/content/index.ts',
+    '!src/background/index.ts',
+    '!src/background/index.firefox.ts',
+    '!src/popup/main.tsx',
+    '!src/content/pre-blur.ts',
+    '!src/ml-inference/inference-engine.ts',
+    '!src/content/image-scanner.ts',
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 82,
+      functions: 88,
+      lines: 92,
+      statements: 92,
+    },
+  },
 };

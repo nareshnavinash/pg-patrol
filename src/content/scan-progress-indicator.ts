@@ -50,7 +50,8 @@ export function showScanProgress(processed: number, total: number): void {
     WebkitBackdropFilter: 'blur(12px)',
     border: '1px solid rgba(255, 255, 255, 0.18)',
     borderRadius: '9999px',
-    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 16px rgba(67,56,202,0.35), 0 1px 3px rgba(0,0,0,0.12)',
+    boxShadow:
+      'inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 16px rgba(67,56,202,0.35), 0 1px 3px rgba(0,0,0,0.12)',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     fontSize: '12px',
     color: '#e0e7ff',

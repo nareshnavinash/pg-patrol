@@ -37,8 +37,7 @@ export default function App() {
     );
   }
 
-  const customWordsCount =
-    settings.customBlockedWords.length + settings.customSafeWords.length;
+  const customWordsCount = settings.customBlockedWords.length + settings.customSafeWords.length;
 
   return (
     <div className="w-[360px] min-h-[480px] bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 relative">
@@ -74,11 +73,7 @@ export default function App() {
         <Settings settings={settings} onUpdate={updateSettings} showToast={showToast} />
       </CollapsibleSection>
 
-      <CollapsibleSection
-        title="Custom Words"
-        defaultOpen={false}
-        badge={customWordsCount}
-      >
+      <CollapsibleSection title="Custom Words" defaultOpen={false} badge={customWordsCount}>
         <CustomWords settings={settings} onUpdate={updateSettings} showToast={showToast} />
       </CollapsibleSection>
 

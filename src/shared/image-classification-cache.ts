@@ -27,8 +27,21 @@ const PERSIST_DEBOUNCE_MS = 500;
 
 // Query params that are safe to strip for cache normalization
 const STRIP_PARAMS = new Set([
-  'w', 'h', 'width', 'height', 'size', 'v', '_', 't', 'cb',
-  'quality', 'q', 'auto', 'format', 'fit', 'dpr',
+  'w',
+  'h',
+  'width',
+  'height',
+  'size',
+  'v',
+  '_',
+  't',
+  'cb',
+  'quality',
+  'q',
+  'auto',
+  'format',
+  'fit',
+  'dpr',
 ]);
 
 /**
@@ -68,13 +81,24 @@ const TTL_LARGE = 1 * DAY;
 
 // Avatar detection patterns
 const AVATAR_URL_PATTERNS = [
-  '/avatar/', '/avatars/', '/profile/', '/profile-pic/',
-  '/icon/', '/favicon', '/user-photo/', '/pfp/',
+  '/avatar/',
+  '/avatars/',
+  '/profile/',
+  '/profile-pic/',
+  '/icon/',
+  '/favicon',
+  '/user-photo/',
+  '/pfp/',
   'gravatar.com',
 ];
 const AVATAR_CLASS_PATTERNS = [
-  'avatar', 'profile-pic', 'profile-img', 'user-photo',
-  'user-image', 'pfp', 'icon',
+  'avatar',
+  'profile-pic',
+  'profile-img',
+  'user-photo',
+  'user-image',
+  'pfp',
+  'icon',
 ];
 
 export interface CacheStats {
@@ -86,7 +110,7 @@ export interface CacheStats {
 
 export class ImageClassificationCache {
   private cache = new Map<string, CacheEntry>();
-  private currentThreshold = 0.60;
+  private currentThreshold = 0.6;
   private persistTimer: ReturnType<typeof setTimeout> | null = null;
   private dirty = false;
   private hits = 0;
@@ -258,26 +282,22 @@ export class ImageClassificationCache {
     return TTL_LARGE;
   }
 
-  private confidenceMultiplier(
-    score: number,
-    verdict: CacheVerdict,
-    threshold: number,
-  ): number {
+  private confidenceMultiplier(score: number, verdict: CacheVerdict, threshold: number): number {
     // Clamp threshold to avoid division by zero
     const t = Math.max(0.01, Math.min(0.99, threshold));
 
     if (verdict === 'safe') {
       const ratio = score / t;
-      if (ratio < 0.20) return 2;
-      if (ratio < 0.50) return 1.5;
+      if (ratio < 0.2) return 2;
+      if (ratio < 0.5) return 1.5;
       if (ratio < 0.75) return 1;
       return 0.5;
     }
 
     // NSFW
     const ratio = (score - t) / (1 - t);
-    if (ratio > 0.80) return 2;
-    if (ratio > 0.30) return 1;
+    if (ratio > 0.8) return 2;
+    if (ratio > 0.3) return 1;
     return 0.5;
   }
 
@@ -285,9 +305,7 @@ export class ImageClassificationCache {
     if (this.cache.size <= MAX_SIZE) return;
 
     // Sort by cachedAt descending, keep newest
-    const sorted = [...this.cache.entries()].sort(
-      (a, b) => b[1].cachedAt - a[1].cachedAt,
-    );
+    const sorted = [...this.cache.entries()].sort((a, b) => b[1].cachedAt - a[1].cachedAt);
     this.cache.clear();
     for (let i = 0; i < MAX_SIZE && i < sorted.length; i++) {
       this.cache.set(sorted[i][0], sorted[i][1]);
@@ -350,7 +368,7 @@ export class ImageClassificationCache {
       if (message.includes('QUOTA') || message.includes('quota')) {
         console.warn(
           `[PG Patrol] Storage quota exceeded (${this.cache.size} in-memory entries). ` +
-          'Trimming cache and retrying.',
+            'Trimming cache and retrying.',
         );
         // Aggressively trim and retry once
         this.trimToMaxSize();

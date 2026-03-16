@@ -24,6 +24,7 @@ const MAX_CRASH_RETRIES = 3;
 
 const pendingRequests = new Map<
   number,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   { resolve: (value: any) => void; timer: ReturnType<typeof setTimeout> }
 >();
 

@@ -25,7 +25,7 @@ function getCacheKey(text: string): string {
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
     const char = text.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash |= 0;
   }
   return String(hash);
@@ -44,10 +44,7 @@ async function waitForRateLimit(): Promise<void> {
  * Analyze text using the Perspective API.
  * Returns toxicity scores for the given text.
  */
-export async function analyzeText(
-  text: string,
-  apiKey: string,
-): Promise<PerspectiveResult> {
+export async function analyzeText(text: string, apiKey: string): Promise<PerspectiveResult> {
   // Check cache first
   const cacheKey = getCacheKey(text);
   const cached = cache.get(cacheKey);
@@ -83,10 +80,7 @@ export async function analyzeText(
   };
 
   // Consider toxic if any score exceeds threshold
-  result.isToxic =
-    result.toxicity > 0.7 ||
-    result.profanity > 0.7 ||
-    result.insult > 0.8;
+  result.isToxic = result.toxicity > 0.7 || result.profanity > 0.7 || result.insult > 0.8;
 
   // Store in cache (evict oldest if full)
   if (cache.size >= MAX_CACHE_SIZE) {

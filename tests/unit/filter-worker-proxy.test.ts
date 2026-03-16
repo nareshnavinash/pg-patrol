@@ -63,10 +63,9 @@ describe('filter-worker-proxy', () => {
       const result = initFilterWorker();
 
       expect(result).toBe(true);
-      expect(global.Worker).toHaveBeenCalledWith(
-        'chrome-extension://fake/filter-worker.js',
-        { type: 'module' },
-      );
+      expect(global.Worker).toHaveBeenCalledWith('chrome-extension://fake/filter-worker.js', {
+        type: 'module',
+      });
     });
 
     it('returns true when worker is created successfully', () => {
@@ -128,8 +127,20 @@ describe('filter-worker-proxy', () => {
         type: 'FILTER_TEXT_RESULT',
         id,
         results: [
-          { original: 'hello', filtered: 'hello', replacements: [], profaneUrls: [], hasProfanity: false },
-          { original: 'world', filtered: 'world', replacements: [], profaneUrls: [], hasProfanity: false },
+          {
+            original: 'hello',
+            filtered: 'hello',
+            replacements: [],
+            profaneUrls: [],
+            hasProfanity: false,
+          },
+          {
+            original: 'world',
+            filtered: 'world',
+            replacements: [],
+            profaneUrls: [],
+            hasProfanity: false,
+          },
         ],
       });
 
@@ -176,12 +187,28 @@ describe('filter-worker-proxy', () => {
       mockWorkerInstance!.simulateResponse({
         type: 'FILTER_TEXT_RESULT',
         id: id2,
-        results: [{ original: 'text2', filtered: 'text2', replacements: [], profaneUrls: [], hasProfanity: false }],
+        results: [
+          {
+            original: 'text2',
+            filtered: 'text2',
+            replacements: [],
+            profaneUrls: [],
+            hasProfanity: false,
+          },
+        ],
       });
       mockWorkerInstance!.simulateResponse({
         type: 'FILTER_TEXT_RESULT',
         id: id1,
-        results: [{ original: 'text1', filtered: 'text1', replacements: [], profaneUrls: [], hasProfanity: false }],
+        results: [
+          {
+            original: 'text1',
+            filtered: 'text1',
+            replacements: [],
+            profaneUrls: [],
+            hasProfanity: false,
+          },
+        ],
       });
 
       const [results1, results2] = await Promise.all([promise1, promise2]);

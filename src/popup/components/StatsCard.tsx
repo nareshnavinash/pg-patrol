@@ -54,7 +54,13 @@ const ImageIcon = () => (
   <svg viewBox="0 0 16 16" width="14" height="14" fill="none" className="inline-block mr-1 -mt-0.5">
     <rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
     <circle cx="5.5" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-    <path d="M1 12l4-4 3 3 2-2 5 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <path
+      d="M1 12l4-4 3 3 2-2 5 3"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
@@ -63,20 +69,23 @@ export default function StatsCard({ totalWordsReplaced, totalImagesReplaced }: S
   const [pageImages, setPageImages] = useState(0);
 
   useEffect(() => {
-    chrome.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-      const tabId = tabs[0]?.id;
-      if (tabId) {
-        chrome.runtime
-          .sendMessage({ type: MessageType.GET_TAB_STATS, tabId })
-          .then((response) => {
-            if (response) {
-              setPageWords(response.wordsReplaced ?? 0);
-              setPageImages(response.imagesReplaced ?? 0);
-            }
-          })
-          .catch(() => {});
-      }
-    }).catch(() => {});
+    chrome.tabs
+      .query({ active: true, currentWindow: true })
+      .then((tabs) => {
+        const tabId = tabs[0]?.id;
+        if (tabId) {
+          chrome.runtime
+            .sendMessage({ type: MessageType.GET_TAB_STATS, tabId })
+            .then((response) => {
+              if (response) {
+                setPageWords(response.wordsReplaced ?? 0);
+                setPageImages(response.imagesReplaced ?? 0);
+              }
+            })
+            .catch(() => {});
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const animPageWords = useCountUp(pageWords);
@@ -84,7 +93,8 @@ export default function StatsCard({ totalWordsReplaced, totalImagesReplaced }: S
   const animTotalWords = useCountUp(totalWordsReplaced);
   const animTotalImages = useCountUp(totalImagesReplaced);
 
-  const allZero = pageWords === 0 && pageImages === 0 && totalWordsReplaced === 0 && totalImagesReplaced === 0;
+  const allZero =
+    pageWords === 0 && pageImages === 0 && totalWordsReplaced === 0 && totalImagesReplaced === 0;
 
   return (
     <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-3 mt-3 shadow-sm dark:ring-1 dark:ring-indigo-500/20">
@@ -94,40 +104,36 @@ export default function StatsCard({ totalWordsReplaced, totalImagesReplaced }: S
       {allZero ? (
         <EmptyState type="stats" />
       ) : (
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {animPageWords}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            <WordIcon />Words (this page)
-          </p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{animPageWords}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              <WordIcon />
+              Words (this page)
+            </p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{animTotalWords}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              <WordIcon />
+              Words (all time)
+            </p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{animPageImages}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              <ImageIcon />
+              Images (this page)
+            </p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{animTotalImages}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              <ImageIcon />
+              Images (all time)
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {animTotalWords}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            <WordIcon />Words (all time)
-          </p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {animPageImages}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            <ImageIcon />Images (this page)
-          </p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {animTotalImages}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            <ImageIcon />Images (all time)
-          </p>
-        </div>
-      </div>
       )}
     </div>
   );

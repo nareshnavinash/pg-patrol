@@ -3,7 +3,7 @@
  */
 
 import { ImageClassificationCache } from '../../src/shared/image-classification-cache';
-import type { CacheEntry, CacheStats } from '../../src/shared/image-classification-cache';
+import type { CacheEntry } from '../../src/shared/image-classification-cache';
 
 // ---- chrome.storage.local mock ----
 
@@ -37,7 +37,7 @@ describe('ImageClassificationCache', () => {
     mockSet.mockClear();
     mockRemove.mockClear();
     cache = new ImageClassificationCache();
-    cache.setThreshold(0.60);
+    cache.setThreshold(0.6);
   });
 
   afterEach(() => {
@@ -53,14 +53,14 @@ describe('ImageClassificationCache', () => {
         'https://example.com/fresh.jpg': {
           verdict: 'safe',
           score: 0.1,
-          threshold: 0.60,
+          threshold: 0.6,
           cachedAt: now - 1000,
           ttl: DAY,
         },
         'https://example.com/expired.jpg': {
           verdict: 'nsfw',
           score: 0.9,
-          threshold: 0.60,
+          threshold: 0.6,
           cachedAt: now - 2 * DAY,
           ttl: DAY,
         },
@@ -80,7 +80,7 @@ describe('ImageClassificationCache', () => {
         entries[`https://example.com/img${i}.jpg`] = {
           verdict: 'safe',
           score: 0.1,
-          threshold: 0.60,
+          threshold: 0.6,
           cachedAt: now - i * 1000, // Newer entries have higher cachedAt
           ttl: 30 * DAY,
         };
@@ -119,13 +119,13 @@ describe('ImageClassificationCache', () => {
       cache.set('https://example.com/img.jpg', 'safe', 0.05, 200, 'content');
       expect(cache.get('https://example.com/img.jpg')).not.toBeNull();
 
-      cache.setThreshold(0.30);
+      cache.setThreshold(0.3);
       expect(cache.get('https://example.com/img.jpg')).toBeNull();
     });
 
     it('caches both safe and NSFW verdicts', () => {
       cache.set('https://example.com/safe.jpg', 'safe', 0.05, 200, 'content');
-      cache.set('https://example.com/nsfw.jpg', 'nsfw', 0.90, 200, 'content');
+      cache.set('https://example.com/nsfw.jpg', 'nsfw', 0.9, 200, 'content');
 
       expect(cache.get('https://example.com/safe.jpg')!.verdict).toBe('safe');
       expect(cache.get('https://example.com/nsfw.jpg')!.verdict).toBe('nsfw');
@@ -210,19 +210,19 @@ describe('ImageClassificationCache', () => {
 
     it('ratio 0.20–0.49 → 1.5× multiplier', () => {
       // score=0.20, ratio = 0.20/0.60 ≈ 0.333
-      cache.set('https://example.com/img.jpg', 'safe', 0.20, 500, 'content');
+      cache.set('https://example.com/img.jpg', 'safe', 0.2, 500, 'content');
       expect(cache.get('https://example.com/img.jpg')!.ttl).toBe(Math.round(3 * DAY * 1.5));
     });
 
     it('ratio 0.50–0.74 → 1× multiplier', () => {
       // score=0.40, ratio = 0.40/0.60 ≈ 0.667
-      cache.set('https://example.com/img.jpg', 'safe', 0.40, 500, 'content');
+      cache.set('https://example.com/img.jpg', 'safe', 0.4, 500, 'content');
       expect(cache.get('https://example.com/img.jpg')!.ttl).toBe(3 * DAY);
     });
 
     it('ratio ≥ 0.75 → 0.5× multiplier', () => {
       // score=0.50, ratio = 0.50/0.60 ≈ 0.833
-      cache.set('https://example.com/img.jpg', 'safe', 0.50, 500, 'content');
+      cache.set('https://example.com/img.jpg', 'safe', 0.5, 500, 'content');
       expect(cache.get('https://example.com/img.jpg')!.ttl).toBe(Math.round(3 * DAY * 0.5));
     });
   });
@@ -240,7 +240,7 @@ describe('ImageClassificationCache', () => {
 
     it('ratio 0.31–0.80 → 1× multiplier', () => {
       // score=0.80, ratio = (0.80-0.60)/(1-0.60) = 0.50
-      cache.set('https://example.com/img.jpg', 'nsfw', 0.80, 500, 'content');
+      cache.set('https://example.com/img.jpg', 'nsfw', 0.8, 500, 'content');
       expect(cache.get('https://example.com/img.jpg')!.ttl).toBe(3 * DAY);
     });
 
@@ -268,7 +268,7 @@ describe('ImageClassificationCache', () => {
 
     it('thumbnail (14d) + safe clearly (1.5×) = 21 days', () => {
       // score=0.20, ratio=0.20/0.60≈0.333 → 1.5×
-      cache.set('https://example.com/thumb.jpg', 'safe', 0.20, 120, 'content');
+      cache.set('https://example.com/thumb.jpg', 'safe', 0.2, 120, 'content');
       expect(cache.get('https://example.com/thumb.jpg')!.ttl).toBe(Math.round(14 * DAY * 1.5));
     });
   });
@@ -279,14 +279,14 @@ describe('ImageClassificationCache', () => {
     it('updates the active threshold used for cache validation', () => {
       cache.set('https://example.com/img.jpg', 'safe', 0.05, 200, 'content');
 
-      cache.setThreshold(0.30);
+      cache.setThreshold(0.3);
       // Entry was cached at threshold 0.60, now threshold is 0.30 → invalidated
       expect(cache.get('https://example.com/img.jpg')).toBeNull();
     });
 
     it('entry cached at threshold 0.60 returns null when current threshold is 0.30', () => {
-      cache.set('https://example.com/img.jpg', 'nsfw', 0.50, 200, 'content');
-      cache.setThreshold(0.30);
+      cache.set('https://example.com/img.jpg', 'nsfw', 0.5, 200, 'content');
+      cache.setThreshold(0.3);
       expect(cache.get('https://example.com/img.jpg')).toBeNull();
     });
   });
@@ -340,7 +340,6 @@ describe('ImageClassificationCache', () => {
   describe('cache trimming', () => {
     it('trims to maxSize when exceeding limit (keeps newest by cachedAt)', () => {
       // Fill beyond maxSize
-      const now = Date.now();
       for (let i = 0; i < 2100; i++) {
         cache.set(`https://example.com/img${i}.jpg`, 'safe', 0.1, 200, 'content');
         // Manually advance time slightly so each has distinct cachedAt
@@ -361,7 +360,7 @@ describe('ImageClassificationCache', () => {
       mockGet.mockRejectedValueOnce(new Error('Storage unavailable'));
 
       const errCache = new ImageClassificationCache();
-      errCache.setThreshold(0.60);
+      errCache.setThreshold(0.6);
       await errCache.init();
 
       // Should work as in-memory only
@@ -381,7 +380,7 @@ describe('ImageClassificationCache', () => {
         'https://other-tab.com/img.jpg': {
           verdict: 'nsfw',
           score: 0.9,
-          threshold: 0.60,
+          threshold: 0.6,
           cachedAt: now,
           ttl: 3 * DAY,
         },
@@ -496,7 +495,7 @@ describe('ImageClassificationCache', () => {
       cache.get('https://example.com/expired.jpg'); // miss (expired)
 
       cache.set('https://example.com/threshold.jpg', 'safe', 0.1, 200, 'content');
-      cache.setThreshold(0.30);
+      cache.setThreshold(0.3);
       cache.get('https://example.com/threshold.jpg'); // miss (threshold changed)
 
       const stats = cache.getStats();
@@ -539,9 +538,7 @@ describe('ImageClassificationCache', () => {
       jest.advanceTimersByTime(600);
       await jest.runAllTimersAsync();
 
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Storage quota exceeded'),
-      );
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Storage quota exceeded'));
       // Should have retried after trimming
       expect(mockSet).toHaveBeenCalledTimes(2);
 

@@ -31,15 +31,10 @@ profanity.addWords(SUPPLEMENTARY_WORDS);
 profanity.removeWords(SAFE_WORDS);
 
 // Mild-only word list (most offensive — always filtered)
-const MILD_WORDS = new Set([
-  ...sensitivityData.mild,
-]);
+const MILD_WORDS = new Set([...sensitivityData.mild]);
 
 // Moderate additions (standard profanity)
-const MODERATE_WORDS = new Set([
-  ...MILD_WORDS,
-  ...sensitivityData.moderate,
-]);
+const MODERATE_WORDS = new Set([...MILD_WORDS, ...sensitivityData.moderate]);
 
 // Custom words bypass the sensitivity gate — always filtered at any level
 const CUSTOM_BLOCKED_WORDS = new Set<string>();
@@ -202,9 +197,7 @@ export function detectProfanity(
     const index = wordMatch.index;
 
     // Skip if inside a URL or code block
-    const inSkipRange = skipRanges.some(
-      (range) => index >= range.start && index < range.end,
-    );
+    const inSkipRange = skipRanges.some((range) => index >= range.start && index < range.end);
     if (inSkipRange) continue;
 
     if (isProfaneAtSensitivity(word, sensitivity)) {
@@ -231,9 +224,12 @@ export function detectProfanity(
  */
 function segmentContainsProfanity(segment: string, sensitivity: Sensitivity): boolean {
   const lower = normalize(segment).toLowerCase();
-  const wordSet = sensitivity === 'strict' ? MODERATE_WORDS
-    : sensitivity === 'mild' ? MILD_WORDS
-    : MODERATE_WORDS;
+  const wordSet =
+    sensitivity === 'strict'
+      ? MODERATE_WORDS
+      : sensitivity === 'mild'
+        ? MILD_WORDS
+        : MODERATE_WORDS;
 
   for (const profaneWord of wordSet) {
     if (lower.includes(profaneWord)) return true;
@@ -244,10 +240,7 @@ function segmentContainsProfanity(segment: string, sensitivity: Sensitivity): bo
 /**
  * Check URLs in text for profanity. Returns profane URLs found.
  */
-function detectProfaneUrls(
-  text: string,
-  sensitivity: Sensitivity,
-): ProfaneUrl[] {
+function detectProfaneUrls(text: string, sensitivity: Sensitivity): ProfaneUrl[] {
   const profaneUrls: ProfaneUrl[] = [];
   URL_PATTERN.lastIndex = 0;
   let match;
@@ -305,10 +298,7 @@ export function replaceProfanity(
 
   let filtered = text;
   for (const r of allReplacements) {
-    filtered =
-      filtered.slice(0, r.index) +
-      r.replacement +
-      filtered.slice(r.index + r.length);
+    filtered = filtered.slice(0, r.index) + r.replacement + filtered.slice(r.index + r.length);
   }
 
   return {
@@ -323,9 +313,6 @@ export function replaceProfanity(
 /**
  * Quick check if text contains any profanity.
  */
-export function containsProfanity(
-  text: string,
-  sensitivity: Sensitivity = 'moderate',
-): boolean {
+export function containsProfanity(text: string, sensitivity: Sensitivity = 'moderate'): boolean {
   return detectProfanity(text, sensitivity).length > 0;
 }

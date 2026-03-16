@@ -64,8 +64,7 @@ test.describe('Good Vibes Mode — N-gram & Negation', () => {
     const el = page.locator('#ngram-negative');
     const overlay = el.locator('[data-pg-patrol-overlay-inner]');
     const hasOverlay =
-      (await overlay.count()) > 0 ||
-      (await el.locator('[data-pg-patrol-overlay]').count()) > 0;
+      (await overlay.count()) > 0 || (await el.locator('[data-pg-patrol-overlay]').count()) > 0;
     expect(hasOverlay).toBe(true);
   });
 
@@ -99,9 +98,7 @@ test.describe('Good Vibes Mode — N-gram & Negation', () => {
     expect(await overlay.count()).toBe(0);
   });
 
-  test('negation negative: actual violence is blocked', async ({
-    context,
-  }) => {
+  test('negation negative: actual violence is blocked', async ({ context }) => {
     const page = await context.newPage();
     await page.goto(TEST_PAGE);
     await waitForContentScript(page, 1500);
@@ -109,8 +106,7 @@ test.describe('Good Vibes Mode — N-gram & Negation', () => {
     const el = page.locator('#negation-negative');
     const overlay = el.locator('[data-pg-patrol-overlay-inner]');
     const hasOverlay =
-      (await overlay.count()) > 0 ||
-      (await el.locator('[data-pg-patrol-overlay]').count()) > 0;
+      (await overlay.count()) > 0 || (await el.locator('[data-pg-patrol-overlay]').count()) > 0;
     expect(hasOverlay).toBe(true);
   });
 

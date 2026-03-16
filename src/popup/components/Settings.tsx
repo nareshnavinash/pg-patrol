@@ -15,9 +15,9 @@ const SENSITIVITY_OPTIONS: Array<{ value: Sensitivity; label: string; descriptio
 ];
 
 const SENSITIVITY_BAR: Record<Sensitivity, [string, string, string]> = {
-  mild:     ['bg-green-500', 'bg-gray-200 dark:bg-gray-700', 'bg-gray-200 dark:bg-gray-700'],
-  moderate: ['bg-green-500', 'bg-yellow-500',                'bg-gray-200 dark:bg-gray-700'],
-  strict:   ['bg-green-500', 'bg-yellow-500',                'bg-red-500'],
+  mild: ['bg-green-500', 'bg-gray-200 dark:bg-gray-700', 'bg-gray-200 dark:bg-gray-700'],
+  moderate: ['bg-green-500', 'bg-yellow-500', 'bg-gray-200 dark:bg-gray-700'],
+  strict: ['bg-green-500', 'bg-yellow-500', 'bg-red-500'],
 };
 
 export default function Settings({ settings, onUpdate, showToast }: SettingsProps) {
@@ -71,9 +71,7 @@ export default function Settings({ settings, onUpdate, showToast }: SettingsProp
       />
 
       <div className="pt-2">
-        <label className="text-sm font-medium text-gray-900 dark:text-gray-100">
-          Sensitivity
-        </label>
+        <label className="text-sm font-medium text-gray-900 dark:text-gray-100">Sensitivity</label>
         <div className="mt-1 grid grid-cols-3 gap-1">
           {SENSITIVITY_OPTIONS.map((option) => (
             <button
@@ -81,15 +79,16 @@ export default function Settings({ settings, onUpdate, showToast }: SettingsProp
               onClick={() => {
                 onUpdate({ sensitivity: option.value, customThreshold: null });
                 setSliderValue(
-                  option.value === 'strict' ? 0.30 : option.value === 'moderate' ? 0.60 : 0.85,
+                  option.value === 'strict' ? 0.3 : option.value === 'moderate' ? 0.6 : 0.85,
                 );
                 showToast?.(`Sensitivity set to ${option.label}`);
               }}
               className={`
                 px-2 py-1.5 text-xs rounded-md border transition-colors
-                ${settings.sensitivity === option.value && settings.customThreshold == null
-                  ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400'
+                ${
+                  settings.sensitivity === option.value && settings.customThreshold == null
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-indigo-400'
                 }
               `}
               title={option.description}

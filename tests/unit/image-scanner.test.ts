@@ -36,7 +36,7 @@ jest.mock('../../src/shared/nsfw-detector', () => ({
   classifyImageUrl: (...args: unknown[]) => mockClassifyImage(...args),
   isModelReady: jest.fn().mockReturnValue(true),
   loadModel: jest.fn().mockResolvedValue(undefined),
-  THRESHOLDS: { mild: 0.85, moderate: 0.60, strict: 0.30 },
+  THRESHOLDS: { mild: 0.85, moderate: 0.6, strict: 0.3 },
 }));
 
 // Mock observer to avoid importing the full observer module
@@ -213,7 +213,9 @@ describe('image-scanner', () => {
       expect(banner).not.toBeNull();
       expect(banner!.getAttribute('data-pg-patrol-overlay-owned')).toBe('true');
       expect(banner!.getAttribute('data-pg-patrol-img-processed')).toBe('nsfw');
-      expect(banner!.getAttribute('data-pg-patrol-original-src')).toBe('https://example.com/nsfw.jpg');
+      expect(banner!.getAttribute('data-pg-patrol-original-src')).toBe(
+        'https://example.com/nsfw.jpg',
+      );
       expect((banner as HTMLImageElement).src).toMatch(/^data:image\/svg\+xml/);
     });
 
@@ -231,7 +233,9 @@ describe('image-scanner', () => {
       await flushAsyncWork();
 
       // The banner is now in the DOM
-      const banner = document.body.querySelector('img[data-pg-patrol-replaced="true"]') as HTMLImageElement;
+      const banner = document.body.querySelector(
+        'img[data-pg-patrol-replaced="true"]',
+      ) as HTMLImageElement;
       expect(banner).not.toBeNull();
 
       // requeueImage should be a no-op on the banner
@@ -402,15 +406,21 @@ describe('image-scanner', () => {
 
   describe('extractBgImageUrl', () => {
     it('extracts URL from url("...")', () => {
-      expect(extractBgImageUrl('url("https://example.com/img.jpg")')).toBe('https://example.com/img.jpg');
+      expect(extractBgImageUrl('url("https://example.com/img.jpg")')).toBe(
+        'https://example.com/img.jpg',
+      );
     });
 
     it("extracts URL from url('...')", () => {
-      expect(extractBgImageUrl("url('https://example.com/img.jpg')")).toBe('https://example.com/img.jpg');
+      expect(extractBgImageUrl("url('https://example.com/img.jpg')")).toBe(
+        'https://example.com/img.jpg',
+      );
     });
 
     it('extracts URL from url(...) without quotes', () => {
-      expect(extractBgImageUrl('url(https://example.com/img.jpg)')).toBe('https://example.com/img.jpg');
+      expect(extractBgImageUrl('url(https://example.com/img.jpg)')).toBe(
+        'https://example.com/img.jpg',
+      );
     });
 
     it('returns null for empty string', () => {
@@ -430,7 +440,15 @@ describe('image-scanner', () => {
     function createSizedDiv(width = 200, height = 200): HTMLDivElement {
       const div = document.createElement('div');
       jest.spyOn(div, 'getBoundingClientRect').mockReturnValue({
-        width, height, top: 0, left: 0, bottom: height, right: width, x: 0, y: 0, toJSON: () => {},
+        width,
+        height,
+        top: 0,
+        left: 0,
+        bottom: height,
+        right: width,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
       });
       return div;
     }
@@ -485,7 +503,8 @@ describe('image-scanner', () => {
 
     it('returns false for small data URIs', () => {
       const div = createSizedDiv();
-      div.style.backgroundImage = 'url("data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=")';
+      div.style.backgroundImage =
+        'url("data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=")';
       expect(shouldScanBgImage(div)).toBe(false);
     });
 
@@ -511,7 +530,15 @@ describe('image-scanner', () => {
       const div = document.createElement('div');
       div.style.backgroundImage = 'url("https://example.com/thumb.jpg")';
       jest.spyOn(div, 'getBoundingClientRect').mockReturnValue({
-        width: 200, height: 200, top: 0, left: 0, bottom: 200, right: 200, x: 0, y: 0, toJSON: () => {},
+        width: 200,
+        height: 200,
+        top: 0,
+        left: 0,
+        bottom: 200,
+        right: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
       });
 
       // Should not throw
@@ -549,7 +576,9 @@ describe('image-scanner', () => {
       const style = document.getElementById('pg-patrol-nsfw-styles');
       const css = style?.textContent || '';
       expect(css).toContain('data-pg-patrol-replaced="true"');
-      expect(css).toContain('img:not([data-pg-patrol-overlay-owned="true"]):not([data-pg-patrol-replaced="true"])');
+      expect(css).toContain(
+        'img:not([data-pg-patrol-overlay-owned="true"]):not([data-pg-patrol-replaced="true"])',
+      );
       expect(css).toContain('visibility:hidden!important');
       expect(css).toContain('pointer-events:none!important');
     });
@@ -599,7 +628,7 @@ describe('image-scanner', () => {
       const img = createScannableImage('https://example.com/cached-safe.jpg');
 
       // Pre-populate cache with a safe verdict
-      imageCache.setThreshold(0.60);
+      imageCache.setThreshold(0.6);
       imageCache.set('https://example.com/cached-safe.jpg', 'safe', 0.05, 200, 'content');
 
       queueImages([img]);
@@ -614,8 +643,8 @@ describe('image-scanner', () => {
       const img = createScannableImage('https://example.com/cached-nsfw.jpg');
       document.body.appendChild(img);
 
-      imageCache.setThreshold(0.60);
-      imageCache.set('https://example.com/cached-nsfw.jpg', 'nsfw', 0.90, 200, 'content');
+      imageCache.setThreshold(0.6);
+      imageCache.set('https://example.com/cached-nsfw.jpg', 'nsfw', 0.9, 200, 'content');
 
       queueImages([img]);
       await flushAsyncWork();
@@ -634,7 +663,7 @@ describe('image-scanner', () => {
       video.poster = 'https://example.com/cached-nsfw-poster.jpg';
       document.body.appendChild(video);
 
-      imageCache.setThreshold(0.60);
+      imageCache.setThreshold(0.6);
       imageCache.set('https://example.com/cached-nsfw-poster.jpg', 'nsfw', 0.92, 200, 'content');
 
       queueVideoElements([video]);
@@ -648,11 +677,19 @@ describe('image-scanner', () => {
       const div = document.createElement('div');
       div.style.backgroundImage = 'url("https://example.com/cached-safe-bg.jpg")';
       jest.spyOn(div, 'getBoundingClientRect').mockReturnValue({
-        width: 200, height: 200, top: 0, left: 0, bottom: 200, right: 200, x: 0, y: 0, toJSON: () => {},
+        width: 200,
+        height: 200,
+        top: 0,
+        left: 0,
+        bottom: 200,
+        right: 200,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
       });
       document.body.appendChild(div);
 
-      imageCache.setThreshold(0.60);
+      imageCache.setThreshold(0.6);
       imageCache.set('https://example.com/cached-safe-bg.jpg', 'safe', 0.05, 200, 'content');
 
       queueBackgroundImages([div]);
@@ -671,8 +708,8 @@ describe('image-scanner', () => {
       document.body.appendChild(img1);
       document.body.appendChild(img2);
 
-      imageCache.setThreshold(0.60);
-      imageCache.set('https://example.com/dedup-nsfw.jpg', 'nsfw', 0.90, 200, 'content');
+      imageCache.setThreshold(0.6);
+      imageCache.set('https://example.com/dedup-nsfw.jpg', 'nsfw', 0.9, 200, 'content');
 
       queueImages([img1]);
       await flushAsyncWork();
@@ -691,8 +728,8 @@ describe('image-scanner', () => {
       parent.appendChild(img);
       document.body.appendChild(parent);
 
-      imageCache.setThreshold(0.60);
-      imageCache.set('https://example.com/dev-cached-safe.jpg', 'safe', 0.10, 200, 'content');
+      imageCache.setThreshold(0.6);
+      imageCache.set('https://example.com/dev-cached-safe.jpg', 'safe', 0.1, 200, 'content');
 
       queueImages([img]);
       await flushAsyncWork();

@@ -55,9 +55,7 @@ describe('perspective-api', () => {
         statusText: 'Forbidden',
       });
 
-      await expect(analyzeText('test', 'bad-key')).rejects.toThrow(
-        'Perspective API error: 403',
-      );
+      await expect(analyzeText('test', 'bad-key')).rejects.toThrow('Perspective API error: 403');
     });
 
     it('uses cache for repeated text', async () => {
@@ -79,6 +77,23 @@ describe('perspective-api', () => {
       // Should only call fetch once (second time from cache)
       expect(mockFetch).toHaveBeenCalledTimes(1);
       expect(result2.toxicity).toBe(0.5);
+    });
+
+    it('marks text as toxic when insult exceeds 0.8 threshold', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            attributeScores: {
+              TOXICITY: { summaryScore: { value: 0.3 } },
+              PROFANITY: { summaryScore: { value: 0.2 } },
+              INSULT: { summaryScore: { value: 0.9 } },
+            },
+          }),
+      });
+
+      const result = await analyzeText('insulting text here', 'test-key');
+      expect(result.isToxic).toBe(true);
     });
   });
 

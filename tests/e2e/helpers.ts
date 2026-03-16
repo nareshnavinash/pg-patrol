@@ -7,26 +7,18 @@ const __dirname = path.dirname(__filename);
 
 export const TEST_PAGE = `file://${path.resolve(__dirname, 'fixtures/test-page.html')}`;
 
-export async function openPopup(
-  context: BrowserContext,
-  extensionId: string,
-): Promise<Page> {
+export async function openPopup(context: BrowserContext, extensionId: string): Promise<Page> {
   const popup = await context.newPage();
   await popup.goto(`chrome-extension://${extensionId}/src/popup/index.html`);
   await popup.waitForTimeout(500);
   return popup;
 }
 
-export async function waitForContentScript(
-  page: Page,
-  ms = 1000,
-): Promise<void> {
+export async function waitForContentScript(page: Page, ms = 1000): Promise<void> {
   await page.waitForTimeout(ms);
 }
 
-export async function navigateToTestPage(
-  context: BrowserContext,
-): Promise<Page> {
+export async function navigateToTestPage(context: BrowserContext): Promise<Page> {
   const page = await context.newPage();
   await page.goto(TEST_PAGE);
   await waitForContentScript(page);
@@ -52,10 +44,7 @@ export async function toggleSetting(
   enable: boolean,
 ): Promise<void> {
   const popup = await openPopup(context, extensionId);
-  const toggle = popup
-    .locator(`text=${label}`)
-    .locator('../..')
-    .locator('button[role="switch"]');
+  const toggle = popup.locator(`text=${label}`).locator('../..').locator('button[role="switch"]');
   const currentState = await toggle.getAttribute('aria-checked');
   const isEnabled = currentState === 'true';
   if (isEnabled !== enable) {
@@ -88,10 +77,7 @@ export async function addCustomWord(
   await popup.evaluate((w) => {
     const input = document.querySelector('input[type="text"]') as HTMLInputElement;
     if (!input) return;
-    const setter = Object.getOwnPropertyDescriptor(
-      HTMLInputElement.prototype,
-      'value',
-    )?.set;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
     if (setter) {
       setter.call(input, w);
     } else {

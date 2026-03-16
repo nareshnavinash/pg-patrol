@@ -7,7 +7,7 @@ import {
   removeCustomWord,
 } from './helpers';
 
-test('replaces profanity on a static page', async ({ context, extensionId }) => {
+test('replaces profanity on a static page', async ({ context, extensionId: _extensionId }) => {
   const page = await context.newPage();
   await page.goto(TEST_PAGE);
   await waitForContentScript(page);
@@ -101,7 +101,10 @@ test('Good Vibes Mode toggle visible in popup settings', async ({ context, exten
   await expect(wordFilterLabel).toBeVisible();
 });
 
-test('Good Vibes Mode hides negative news with overlay', async ({ context, extensionId }) => {
+test('Good Vibes Mode hides negative news with overlay', async ({
+  context,
+  extensionId: _extensionId,
+}) => {
   const page = await context.newPage();
   await page.goto(TEST_PAGE);
   await waitForContentScript(page, 1500);
@@ -109,16 +112,20 @@ test('Good Vibes Mode hides negative news with overlay', async ({ context, exten
   const negativeNews1 = page.locator('#negative-news-1');
   const overlay1 = negativeNews1.locator('[data-pg-patrol-overlay-inner]');
 
-  const hasOverlay = await overlay1.count() > 0 ||
-    await negativeNews1.locator('p[data-pg-patrol-overlay]').count() > 0;
+  const _hasOverlay =
+    (await overlay1.count()) > 0 ||
+    (await negativeNews1.locator('p[data-pg-patrol-overlay]').count()) > 0;
 
   const safeNews = page.locator('#safe-news-entertainment');
   const safeOverlay = safeNews.locator('[data-pg-patrol-overlay-inner]');
-  const safeHasOverlay = await safeOverlay.count() > 0;
+  const safeHasOverlay = (await safeOverlay.count()) > 0;
   expect(safeHasOverlay).toBe(false);
 });
 
-test('Good Vibes Mode: overlays are interactive with reveal text', async ({ context, extensionId }) => {
+test('Good Vibes Mode: overlays are interactive with reveal text', async ({
+  context,
+  extensionId: _extensionId,
+}) => {
   const page = await context.newPage();
   await page.goto(TEST_PAGE);
   await waitForContentScript(page, 1500);
@@ -135,9 +142,7 @@ test('Good Vibes Mode: overlays are interactive with reveal text', async ({ cont
   expect(text).toContain('Click to reveal');
 
   // Overlays should have pointer cursor (clickable)
-  const cursor = await firstOverlay.evaluate(
-    (el) => getComputedStyle(el).cursor,
-  );
+  const cursor = await firstOverlay.evaluate((el) => getComputedStyle(el).cursor);
   expect(cursor).toBe('pointer');
 
   // Corresponding parent should have the overlay attribute
@@ -152,7 +157,7 @@ test('reveal toggle: button state changes on click', async ({ context, extension
   await page.goto(TEST_PAGE);
   await waitForContentScript(page);
 
-  let text1 = await page.locator('#profanity-1').textContent();
+  const text1 = await page.locator('#profanity-1').textContent();
   expect(text1).not.toContain('fuck');
 
   const popup = await openPopup(context, extensionId);
@@ -234,6 +239,9 @@ test('removing custom blocked word restores original text', async ({ context, ex
 test('Good Vibes Mode is on by default', async ({ context, extensionId }) => {
   const popup = await openPopup(context, extensionId);
 
-  const toggle = popup.locator('text=Good Vibes Mode').locator('../..').locator('button[role="switch"]');
+  const toggle = popup
+    .locator('text=Good Vibes Mode')
+    .locator('../..')
+    .locator('button[role="switch"]');
   await expect(toggle).toHaveAttribute('aria-checked', 'true');
 });

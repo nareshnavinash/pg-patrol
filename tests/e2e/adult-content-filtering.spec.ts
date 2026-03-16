@@ -63,7 +63,13 @@ test.describe('Adult Content Filtering', () => {
     // Verify the NSFW classification pipeline processes fixture images.
     // Images may be classified as safe, nsfw, or error — all are valid outcomes
     // as long as the image was actually scanned (not stuck unprocessed).
-    const sampleIds = ['nsfw-fixture-01', 'nsfw-fixture-05', 'nsfw-fixture-10', 'nsfw-fixture-15', 'nsfw-fixture-21'];
+    const sampleIds = [
+      'nsfw-fixture-01',
+      'nsfw-fixture-05',
+      'nsfw-fixture-10',
+      'nsfw-fixture-15',
+      'nsfw-fixture-21',
+    ];
     for (const id of sampleIds) {
       const img = page.locator(`#${id}`);
       const processed = await img.getAttribute('data-pg-patrol-img-processed');

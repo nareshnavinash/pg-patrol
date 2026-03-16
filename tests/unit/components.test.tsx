@@ -9,14 +9,7 @@ describe('Toggle', () => {
   });
 
   it('renders description when provided', () => {
-    render(
-      <Toggle
-        enabled={true}
-        onChange={jest.fn()}
-        label="Test"
-        description="A description"
-      />,
-    );
+    render(<Toggle enabled={true} onChange={jest.fn()} label="Test" description="A description" />);
     expect(screen.getByText('A description')).toBeInTheDocument();
   });
 

@@ -141,8 +141,7 @@ function createMessageContent(): HTMLDivElement {
     padding: '16px',
     boxSizing: 'border-box',
     textAlign: 'center',
-    fontFamily:
-      'system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+    fontFamily: 'system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
   });
   return content;
 }
@@ -238,8 +237,17 @@ function positionSurface(record: SurfaceRecord): void {
   });
 }
 
-function fillMessageSurface(record: SurfaceRecord, options: MessageSurfaceOptions, background: string): void {
-  record.mode = options.title === 'Checking image' ? 'pending' : options.title === 'Unable to verify image' ? 'error' : 'blocked';
+function fillMessageSurface(
+  record: SurfaceRecord,
+  options: MessageSurfaceOptions,
+  background: string,
+): void {
+  record.mode =
+    options.title === 'Checking image'
+      ? 'pending'
+      : options.title === 'Unable to verify image'
+        ? 'error'
+        : 'blocked';
   record.shell.innerHTML = '';
   if (!record.content.isConnected || record.content.parentElement !== record.shell) {
     record.content = createMessageContent();
@@ -250,7 +258,8 @@ function fillMessageSurface(record: SurfaceRecord, options: MessageSurfaceOption
     backdropFilter: 'blur(8px)',
     WebkitBackdropFilter: 'blur(8px)',
     border: '1px solid rgba(255, 255, 255, 0.12)',
-    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), 0 16px 40px rgba(15,23,42,0.35), 0 2px 4px rgba(0,0,0,0.15)',
+    boxShadow:
+      'inset 0 1px 0 rgba(255,255,255,0.08), 0 16px 40px rgba(15,23,42,0.35), 0 2px 4px rgba(0,0,0,0.15)',
   });
   record.content.innerHTML =
     `<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#93c5fd">${options.eyebrow || 'PG Patrol'}</div>` +
@@ -286,7 +295,8 @@ export function showBlockedSurface(target: HTMLElement): void {
   Object.assign(record.shell.style, {
     background: '#EEF2FF',
     border: '1px solid rgba(255, 255, 255, 0.18)',
-    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 16px rgba(67,56,202,0.15), 0 1px 3px rgba(0,0,0,0.08)',
+    boxShadow:
+      'inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 16px rgba(67,56,202,0.15), 0 1px 3px rgba(0,0,0,0.08)',
   });
   record.content.innerHTML =
     `<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#6366f1">PG Patrol</div>` +
@@ -307,10 +317,7 @@ export function showErrorSurface(target: HTMLElement): void {
   );
 }
 
-export function showSafeImageSurface(
-  target: HTMLElement,
-  options: SafeImageSurfaceOptions,
-): void {
+export function showSafeImageSurface(target: HTMLElement, options: SafeImageSurfaceOptions): void {
   const record = getOrCreateSurface(target);
   record.mode = 'safe-image';
   record.shell.innerHTML = '';

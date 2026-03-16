@@ -187,11 +187,7 @@ describe('content-filtering integration', () => {
       app.appendChild(wrapper);
 
       // Walk all text nodes (simulating what the content script does)
-      const walker = document.createTreeWalker(
-        wrapper,
-        NodeFilter.SHOW_TEXT,
-        null,
-      );
+      const walker = document.createTreeWalker(wrapper, NodeFilter.SHOW_TEXT, null);
 
       let node: Text | null;
       const filtered: string[] = [];

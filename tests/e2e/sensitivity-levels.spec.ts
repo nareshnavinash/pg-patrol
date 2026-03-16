@@ -1,10 +1,5 @@
 import { test, expect } from './fixtures/extension';
-import {
-  TEST_PAGE,
-  waitForContentScript,
-  openPopup,
-  changeSensitivity,
-} from './helpers';
+import { TEST_PAGE, waitForContentScript, openPopup, changeSensitivity } from './helpers';
 
 test.describe('Sensitivity Levels', () => {
   test('default sensitivity is moderate', async ({ context, extensionId }) => {
@@ -24,10 +19,7 @@ test.describe('Sensitivity Levels', () => {
     expect(isActive).toBeTruthy();
   });
 
-  test('strict mode filters all profanity levels', async ({
-    context,
-    extensionId,
-  }) => {
+  test('strict mode filters all profanity levels', async ({ context, extensionId }) => {
     await changeSensitivity(context, extensionId, 'Strict');
 
     const page = await context.newPage();
@@ -45,10 +37,7 @@ test.describe('Sensitivity Levels', () => {
     expect(mild).not.toContain('crap');
   });
 
-  test('moderate mode filters moderate and strict profanity', async ({
-    context,
-    extensionId,
-  }) => {
+  test('moderate mode filters moderate and strict profanity', async ({ context, extensionId }) => {
     // Moderate is default, but set explicitly to be sure
     await changeSensitivity(context, extensionId, 'Moderate');
 
@@ -65,10 +54,7 @@ test.describe('Sensitivity Levels', () => {
     expect(moderate).not.toContain('bullshit');
   });
 
-  test('mild mode only filters severe profanity', async ({
-    context,
-    extensionId,
-  }) => {
+  test('mild mode only filters severe profanity', async ({ context, extensionId }) => {
     await changeSensitivity(context, extensionId, 'Mild');
 
     const page = await context.newPage();
@@ -84,10 +70,7 @@ test.describe('Sensitivity Levels', () => {
     expect(mild).toContain('crap');
   });
 
-  test('sensitivity change applies after page reload', async ({
-    context,
-    extensionId,
-  }) => {
+  test('sensitivity change applies after page reload', async ({ context, extensionId }) => {
     await changeSensitivity(context, extensionId, 'Strict');
 
     const page = await context.newPage();
@@ -110,10 +93,7 @@ test.describe('Sensitivity Levels', () => {
     expect(mildAfter).toContain('crap');
   });
 
-  test('sensitivity persists across navigation', async ({
-    context,
-    extensionId,
-  }) => {
+  test('sensitivity persists across navigation', async ({ context, extensionId }) => {
     await changeSensitivity(context, extensionId, 'Strict');
 
     // Navigate to test page

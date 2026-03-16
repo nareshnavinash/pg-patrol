@@ -8,7 +8,11 @@ describe('bayes-scorer', () => {
 
     it('strips punctuation', () => {
       expect(tokenize('Hello, World! How are you?')).toEqual([
-        'hello', 'world', 'how', 'are', 'you',
+        'hello',
+        'world',
+        'how',
+        'are',
+        'you',
       ]);
     });
 
@@ -52,7 +56,9 @@ describe('bayes-scorer', () => {
     });
 
     it('scores kind text as low toxicity', () => {
-      const result = scoreBayes('Thank you so much for your help. You are very kind and wonderful.');
+      const result = scoreBayes(
+        'Thank you so much for your help. You are very kind and wonderful.',
+      );
       expect(result.toxicityProb).toBeLessThan(0.3);
     });
 
@@ -102,7 +108,7 @@ describe('bayes-scorer', () => {
 
     it('implicit toxicity without explicit trigger words scores higher', () => {
       // "you're worthless and nobody cares" — the key use case for Bayes
-      const implicit = scoreBayes("You are worthless and nobody cares about you.");
+      const implicit = scoreBayes('You are worthless and nobody cares about you.');
       expect(implicit.toxicityProb).toBeGreaterThan(0.3);
     });
   });

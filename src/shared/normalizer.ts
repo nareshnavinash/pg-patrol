@@ -13,7 +13,7 @@ const LEET_MAP: Record<string, string> = {
   '!': 'i',
   '0': 'o',
   '5': 's',
-  '$': 's',
+  $: 's',
   '7': 't',
   '+': 't',
   '8': 'b',
@@ -50,10 +50,7 @@ const HOMOGLYPH_MAP: Record<string, string> = {
 function removeSeparators(text: string): string {
   // Pattern: single char followed by separator followed by single char (repeating)
   // Match patterns like "f.u.c.k" or "s h i t" or "f-u-c-k" or "f_u_c_k"
-  return text.replace(
-    /(?<=\w)[.\-_\s]+(?=\w)/g,
-    '',
-  );
+  return text.replace(/(?<=\w)[.\-_\s]+(?=\w)/g, '');
 }
 
 /**

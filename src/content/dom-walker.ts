@@ -4,9 +4,18 @@
  */
 
 const SKIP_TAGS = new Set([
-  'SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE',
-  'TEXTAREA', 'INPUT', 'SELECT', 'OPTION',
-  'SVG', 'MATH', 'IFRAME',
+  'SCRIPT',
+  'STYLE',
+  'NOSCRIPT',
+  'CODE',
+  'PRE',
+  'TEXTAREA',
+  'INPUT',
+  'SELECT',
+  'OPTION',
+  'SVG',
+  'MATH',
+  'IFRAME',
 ]);
 
 /**
@@ -32,25 +41,21 @@ function shouldSkipNode(node: Node): boolean {
 export function getFilterableTextNodes(root: Node = document.body): Text[] {
   const textNodes: Text[] = [];
 
-  const walker = document.createTreeWalker(
-    root,
-    NodeFilter.SHOW_TEXT,
-    {
-      acceptNode(node: Text): number {
-        // Skip empty or whitespace-only text nodes
-        if (!node.textContent || node.textContent.trim().length === 0) {
-          return NodeFilter.FILTER_REJECT;
-        }
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node: Text): number {
+      // Skip empty or whitespace-only text nodes
+      if (!node.textContent || node.textContent.trim().length === 0) {
+        return NodeFilter.FILTER_REJECT;
+      }
 
-        // Skip nodes inside elements that shouldn't be filtered
-        if (shouldSkipNode(node)) {
-          return NodeFilter.FILTER_REJECT;
-        }
+      // Skip nodes inside elements that shouldn't be filtered
+      if (shouldSkipNode(node)) {
+        return NodeFilter.FILTER_REJECT;
+      }
 
-        return NodeFilter.FILTER_ACCEPT;
-      },
+      return NodeFilter.FILTER_ACCEPT;
     },
-  );
+  });
 
   let node: Text | null;
   while ((node = walker.nextNode() as Text | null)) {

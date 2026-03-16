@@ -4,7 +4,8 @@ export default defineManifest({
   manifest_version: 3,
   name: 'PG Patrol',
   version: '1.0.0',
-  description: 'Family-friendly web filter — replaces swear words with funny alternatives and detects NSFW images',
+  description:
+    'Free parental control web filter — replaces profanity with funny words, blocks NSFW images using on-device AI',
   permissions: ['storage', 'activeTab', 'alarms', 'offscreen'],
   host_permissions: ['<all_urls>'],
   action: {

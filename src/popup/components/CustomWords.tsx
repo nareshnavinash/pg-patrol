@@ -16,13 +16,9 @@ export default function CustomWords({ settings, onUpdate, showToast }: CustomWor
   const [category, setCategory] = useState<WordCategory>('blocked');
   const [inputValue, setInputValue] = useState('');
 
-  const words = category === 'blocked'
-    ? settings.customBlockedWords
-    : settings.customSafeWords;
+  const words = category === 'blocked' ? settings.customBlockedWords : settings.customSafeWords;
 
-  const settingsKey = category === 'blocked'
-    ? 'customBlockedWords'
-    : 'customSafeWords';
+  const settingsKey = category === 'blocked' ? 'customBlockedWords' : 'customSafeWords';
 
   const addWord = () => {
     const word = inputValue.trim().toLowerCase();
@@ -47,17 +43,13 @@ export default function CustomWords({ settings, onUpdate, showToast }: CustomWor
     }
   };
 
-  const totalCustom =
-    settings.customBlockedWords.length +
-    settings.customSafeWords.length;
+  const totalCustom = settings.customBlockedWords.length + settings.customSafeWords.length;
 
   return (
     <div className="mt-3 space-y-2">
       <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
         Custom Words
-        {totalCustom > 0 && (
-          <span className="ml-1 text-indigo-500">({totalCustom})</span>
-        )}
+        {totalCustom > 0 && <span className="ml-1 text-indigo-500">({totalCustom})</span>}
       </h2>
 
       <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
@@ -99,9 +91,7 @@ export default function CustomWords({ settings, onUpdate, showToast }: CustomWor
           </div>
         )}
 
-        {words.length === 0 && (
-          <EmptyState type="words" />
-        )}
+        {words.length === 0 && <EmptyState type="words" />}
 
         {/* Input + Add */}
         <div className="flex gap-1">

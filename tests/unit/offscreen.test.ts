@@ -30,11 +30,13 @@ const mockNsfwCreate = jest.fn().mockResolvedValue({
   outputNames: ['output'],
   run: mockNsfwRun,
 });
-const mockTensor = jest.fn().mockImplementation((type: string, data: Float32Array, dims: number[]) => ({
-  type,
-  data,
-  dims,
-}));
+const mockTensor = jest
+  .fn()
+  .mockImplementation((type: string, data: Float32Array, dims: number[]) => ({
+    type,
+    data,
+    dims,
+  }));
 
 jest.mock('onnxruntime-web', () => ({
   env: {
@@ -217,11 +219,7 @@ describe('offscreen ML inference', () => {
     const calls = mockAddListener.mock.calls;
     const handler = calls[calls.length - 1][0];
 
-    handler(
-      { type: 'ML_CLASSIFY_INTERNAL', data: { text: 'text', requestId: 55 } },
-      {},
-      jest.fn(),
-    );
+    handler({ type: 'ML_CLASSIFY_INTERNAL', data: { text: 'text', requestId: 55 } }, {}, jest.fn());
 
     await new Promise((r) => setTimeout(r, 50));
 
@@ -235,11 +233,7 @@ describe('offscreen ML inference', () => {
   });
 
   it('ignores non ML_CLASSIFY_INTERNAL messages', async () => {
-    messageHandler(
-      { type: 'UPDATE_STATS', data: {} },
-      {},
-      jest.fn(),
-    );
+    messageHandler({ type: 'UPDATE_STATS', data: {} }, {}, jest.fn());
 
     await new Promise((r) => setTimeout(r, 50));
 
@@ -349,11 +343,7 @@ describe('offscreen ML inference', () => {
   });
 
   it('warms the NSFW model on NSFW_WARMUP_INTERNAL', async () => {
-    messageHandler(
-      { type: 'NSFW_WARMUP_INTERNAL', data: { requestId: 77 } },
-      {},
-      jest.fn(),
-    );
+    messageHandler({ type: 'NSFW_WARMUP_INTERNAL', data: { requestId: 77 } }, {}, jest.fn());
 
     await new Promise((r) => setTimeout(r, 50));
 

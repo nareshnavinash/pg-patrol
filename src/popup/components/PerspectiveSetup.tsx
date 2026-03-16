@@ -26,14 +26,11 @@ export default function PerspectiveSetup({ apiKey, onSave }: PerspectiveSetupPro
   };
 
   return (
-    <CollapsibleSection
-      title="Enhanced Detection (Perspective API)"
-      defaultOpen={false}
-    >
+    <CollapsibleSection title="Enhanced Detection (Perspective API)" defaultOpen={false}>
       <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Optionally use Google&apos;s Perspective API for ML-based toxicity detection.
-          This requires a free API key.
+          Optionally use Google&apos;s Perspective API for ML-based toxicity detection. This
+          requires a free API key.
         </p>
 
         <div className="flex gap-2">
@@ -67,9 +64,7 @@ export default function PerspectiveSetup({ apiKey, onSave }: PerspectiveSetupPro
         </div>
 
         {testResult === 'success' && (
-          <p className="text-xs text-green-600 dark:text-green-400">
-            API key is valid!
-          </p>
+          <p className="text-xs text-green-600 dark:text-green-400">API key is valid!</p>
         )}
         {testResult === 'error' && (
           <p className="text-xs text-red-600 dark:text-red-400">

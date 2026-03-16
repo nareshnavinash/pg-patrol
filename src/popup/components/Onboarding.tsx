@@ -19,7 +19,10 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             fill="#4f46e5"
           />
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg" style={{ paddingBottom: '4px' }}>
+        <span
+          className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg"
+          style={{ paddingBottom: '4px' }}
+        >
           PG
         </span>
       </div>
@@ -44,7 +47,9 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             </svg>
           </span>
           <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Replaces swear words</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              Replaces swear words
+            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Automatically swaps profanity with funny, family-friendly alternatives
             </p>
@@ -57,7 +62,9 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             </svg>
           </span>
           <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Detects NSFW images</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              Detects NSFW images
+            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               AI-powered image scanning hides inappropriate visual content
             </p>
@@ -70,7 +77,9 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             </svg>
           </span>
           <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Hides distressing news</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              Hides distressing news
+            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Good Vibes Mode softens negative and upsetting content
             </p>
@@ -85,11 +94,19 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         Choose your level
       </h2>
       <div className="space-y-2">
-        {([
+        {[
           { value: 'mild' as Sensitivity, label: 'Mild', desc: 'Catches the worst offenders' },
-          { value: 'moderate' as Sensitivity, label: 'Moderate', desc: 'Good balance for most families' },
-          { value: 'strict' as Sensitivity, label: 'Strict', desc: 'Maximum protection for young kids' },
-        ]).map((option) => (
+          {
+            value: 'moderate' as Sensitivity,
+            label: 'Moderate',
+            desc: 'Good balance for most families',
+          },
+          {
+            value: 'strict' as Sensitivity,
+            label: 'Strict',
+            desc: 'Maximum protection for young kids',
+          },
+        ].map((option) => (
           <button
             key={option.value}
             onClick={() => setSensitivity(option.value)}
@@ -99,11 +116,13 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
             }`}
           >
-            <p className={`text-sm font-medium ${
-              sensitivity === option.value
-                ? 'text-indigo-700 dark:text-indigo-300'
-                : 'text-gray-900 dark:text-gray-100'
-            }`}>
+            <p
+              className={`text-sm font-medium ${
+                sensitivity === option.value
+                  ? 'text-indigo-700 dark:text-indigo-300'
+                  : 'text-gray-900 dark:text-gray-100'
+              }`}
+            >
               {option.label}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</p>
@@ -118,9 +137,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   return (
     <div className="w-[360px] min-h-[480px] bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col">
       {/* Content */}
-      <div className="flex-1 flex items-center justify-center py-8">
-        {steps[step]}
-      </div>
+      <div className="flex-1 flex items-center justify-center py-8">{steps[step]}</div>
 
       {/* Progress dots */}
       <div className="flex justify-center gap-2 mb-4" role="tablist" aria-label="Onboarding steps">

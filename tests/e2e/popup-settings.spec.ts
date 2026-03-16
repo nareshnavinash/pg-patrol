@@ -1,10 +1,5 @@
 import { test, expect } from './fixtures/extension';
-import {
-  TEST_PAGE,
-  waitForContentScript,
-  openPopup,
-  toggleSetting,
-} from './helpers';
+import { TEST_PAGE, waitForContentScript, openPopup, toggleSetting } from './helpers';
 
 test.describe('Popup Settings', () => {
   test('popup shows all toggle labels', async ({ context, extensionId }) => {
@@ -16,10 +11,7 @@ test.describe('Popup Settings', () => {
     await expect(popup.locator('text=AI-Enhanced Detection')).toBeVisible();
   });
 
-  test('sensitivity selector has 3 options', async ({
-    context,
-    extensionId,
-  }) => {
+  test('sensitivity selector has 3 options', async ({ context, extensionId }) => {
     const popup = await openPopup(context, extensionId);
 
     const mild = popup.locator('button', { hasText: /^Mild$/ });
@@ -31,10 +23,7 @@ test.describe('Popup Settings', () => {
     await expect(strict).toBeVisible();
   });
 
-  test('toggling Word Filter off stops profanity replacement', async ({
-    context,
-    extensionId,
-  }) => {
+  test('toggling Word Filter off stops profanity replacement', async ({ context, extensionId }) => {
     // Disable word filter
     await toggleSetting(context, extensionId, '18+ Word Filter', false);
 
@@ -50,10 +39,7 @@ test.describe('Popup Settings', () => {
     await toggleSetting(context, extensionId, '18+ Word Filter', true);
   });
 
-  test('toggling Word Filter back on re-filters', async ({
-    context,
-    extensionId,
-  }) => {
+  test('toggling Word Filter back on re-filters', async ({ context, extensionId }) => {
     // Start with word filter off
     await toggleSetting(context, extensionId, '18+ Word Filter', false);
 
@@ -77,10 +63,7 @@ test.describe('Popup Settings', () => {
     expect(text).not.toContain('fuck');
   });
 
-  test('toggling Good Vibes off removes overlays', async ({
-    context,
-    extensionId,
-  }) => {
+  test('toggling Good Vibes off removes overlays', async ({ context, extensionId }) => {
     // Disable Good Vibes
     await toggleSetting(context, extensionId, 'Good Vibes Mode', false);
 
@@ -96,10 +79,7 @@ test.describe('Popup Settings', () => {
     await toggleSetting(context, extensionId, 'Good Vibes Mode', true);
   });
 
-  test('toggling Good Vibes on applies overlays', async ({
-    context,
-    extensionId,
-  }) => {
+  test('toggling Good Vibes on applies overlays', async ({ context, extensionId }) => {
     // Ensure Good Vibes is on
     await toggleSetting(context, extensionId, 'Good Vibes Mode', true);
 
@@ -110,8 +90,7 @@ test.describe('Popup Settings', () => {
     // There should be overlays on negative news articles
     const overlays = page.locator('[data-pg-patrol-overlay-inner]');
     const hasOverlays =
-      (await overlays.count()) > 0 ||
-      (await page.locator('[data-pg-patrol-overlay]').count()) > 0;
+      (await overlays.count()) > 0 || (await page.locator('[data-pg-patrol-overlay]').count()) > 0;
     expect(hasOverlays).toBe(true);
   });
 
@@ -130,10 +109,7 @@ test.describe('Popup Settings', () => {
     await expect(input).toBeVisible();
   });
 
-  test('stats display shows replacement count', async ({
-    context,
-    extensionId,
-  }) => {
+  test('stats display shows replacement count', async ({ context, extensionId }) => {
     // Navigate to a page with profanity so replacements happen
     const page = await context.newPage();
     await page.goto(TEST_PAGE);

@@ -145,7 +145,8 @@ describe('block-overlay', () => {
   });
 
   it('skips overlay on child when ancestor already has one (nested blocks)', () => {
-    document.body.innerHTML = '<article id="parent"><p id="child">Nested negative content here</p></article>';
+    document.body.innerHTML =
+      '<article id="parent"><p id="child">Nested negative content here</p></article>';
     const parent = document.getElementById('parent') as HTMLElement;
     const child = document.getElementById('child') as HTMLElement;
 
@@ -159,7 +160,8 @@ describe('block-overlay', () => {
   });
 
   it('skips overlay on parent when descendant already has one', () => {
-    document.body.innerHTML = '<article id="parent"><p id="child">Nested negative content here</p></article>';
+    document.body.innerHTML =
+      '<article id="parent"><p id="child">Nested negative content here</p></article>';
     const parent = document.getElementById('parent') as HTMLElement;
     const child = document.getElementById('child') as HTMLElement;
 
@@ -185,7 +187,8 @@ describe('block-overlay', () => {
   });
 
   it('skips child overlay when ancestor has been revealed (re-scan protection)', () => {
-    document.body.innerHTML = '<article id="parent"><p id="child">Negative content here</p></article>';
+    document.body.innerHTML =
+      '<article id="parent"><p id="child">Negative content here</p></article>';
     const parent = document.getElementById('parent') as HTMLElement;
     const child = document.getElementById('child') as HTMLElement;
 
@@ -199,8 +202,38 @@ describe('block-overlay', () => {
     expect(child.getAttribute('data-pg-patrol-overlay')).toBeNull();
   });
 
+  it('applies overlay with dark theme detection on dark backgrounds', () => {
+    document.body.innerHTML = '<p id="test">Distressing content</p>';
+    const el = document.getElementById('test') as HTMLElement;
+
+    // Set a dark background on body
+    document.body.style.backgroundColor = 'rgb(30, 30, 30)';
+
+    applyOverlay(el);
+
+    const overlay = el.querySelector('[data-pg-patrol-overlay-inner]') as HTMLElement;
+    expect(overlay).not.toBeNull();
+    // Dark page should produce lighter overlay colors
+    expect(overlay.style.backgroundColor).toBeTruthy();
+  });
+
+  it('removeAllOverlays clears revealed attributes', () => {
+    document.body.innerHTML = '<p id="test">Content</p>';
+    const el = document.getElementById('test') as HTMLElement;
+
+    applyOverlay(el);
+
+    // Simulate reveal
+    el.setAttribute('data-pg-patrol-revealed', 'true');
+
+    removeAllOverlays();
+
+    expect(el.getAttribute('data-pg-patrol-revealed')).toBeNull();
+  });
+
   it('click sets revealed attr on descendant blocks too', (done) => {
-    document.body.innerHTML = '<article id="parent"><p id="child">Negative content here</p></article>';
+    document.body.innerHTML =
+      '<article id="parent"><p id="child">Negative content here</p></article>';
     const parent = document.getElementById('parent') as HTMLElement;
 
     applyOverlay(parent);

@@ -37,7 +37,9 @@ export default function RevealToggle() {
         type: MessageType.TOGGLE_FILTERING,
         data: { enabled: !newState },
       });
-    } catch { /* content script may be unloading */ }
+    } catch {
+      /* content script may be unloading */
+    }
 
     chrome.tabs.reload(tabId);
   };
@@ -48,9 +50,10 @@ export default function RevealToggle() {
         onClick={toggleReveal}
         className={`
           w-full text-sm py-2 px-3 rounded-lg transition-colors
-          ${revealed
-            ? 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-500 border border-red-700 dark:border-red-500'
-            : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-700'
+          ${
+            revealed
+              ? 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-500 border border-red-700 dark:border-red-500'
+              : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-700'
           }
         `}
       >

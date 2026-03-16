@@ -37,7 +37,12 @@ describe('ActivityLog', () => {
     const entries: ActivityEntry[] = [
       { type: 'word', original: 'badword', replacement: 'unicorn', timestamp: Date.now() - 30000 },
       { type: 'image', original: 'https://example.com/nsfw.jpg', timestamp: Date.now() - 120000 },
-      { type: 'block', original: 'Distressing news content here', category: 'violence', timestamp: Date.now() - 5000 },
+      {
+        type: 'block',
+        original: 'Distressing news content here',
+        category: 'violence',
+        timestamp: Date.now() - 5000,
+      },
     ];
 
     mockSendMessage.mockImplementation(

@@ -70,13 +70,13 @@ export function createInferenceEngine(config: InferenceEngineConfig): InferenceE
    */
   const NSFW_THRESHOLDS: Record<string, number> = {
     mild: 0.85,
-    moderate: 0.60,
-    strict: 0.30,
+    moderate: 0.6,
+    strict: 0.3,
   };
 
   // Ambiguous score range — images in this range get a second zoomed-in pass
-  const AMBIGUOUS_LOW = 0.20;
-  const AMBIGUOUS_HIGH = 0.70;
+  const AMBIGUOUS_LOW = 0.2;
+  const AMBIGUOUS_HIGH = 0.7;
 
   // ---- Lifecycle ----
 
@@ -107,18 +107,19 @@ export function createInferenceEngine(config: InferenceEngineConfig): InferenceE
     }
 
     if (!classifierPromise) {
-      classifierPromise = pipeline(
-        'text-classification',
-        'minuva/MiniLMv2-toxic-jigsaw-onnx',
-        { local_files_only: true, device: 'wasm' },
-      ).then((clf) => {
-        classifier = clf;
-        resetIdleTimer();
-        return classifier;
-      }).catch((err) => {
-        classifierPromise = null;
-        throw err;
-      });
+      classifierPromise = pipeline('text-classification', 'minuva/MiniLMv2-toxic-jigsaw-onnx', {
+        local_files_only: true,
+        device: 'wasm',
+      })
+        .then((clf) => {
+          classifier = clf;
+          resetIdleTimer();
+          return classifier;
+        })
+        .catch((err) => {
+          classifierPromise = null;
+          throw err;
+        });
     }
 
     return classifierPromise;
@@ -172,7 +173,12 @@ export function createInferenceEngine(config: InferenceEngineConfig): InferenceE
 
     await ensureNsfwModel();
     const ort = await import('onnxruntime-web');
-    const inputTensor = new ort.Tensor('float32', float32Data, [1, 3, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE]);
+    const inputTensor = new ort.Tensor('float32', float32Data, [
+      1,
+      3,
+      MODEL_INPUT_SIZE,
+      MODEL_INPUT_SIZE,
+    ]);
     const feeds: Record<string, import('onnxruntime-web').Tensor> = {};
     feeds[nsfwSession!.inputNames[0]] = inputTensor;
 
@@ -240,7 +246,7 @@ export function createInferenceEngine(config: InferenceEngineConfig): InferenceE
 
     bitmap?.close();
 
-    const threshold = customThreshold ?? NSFW_THRESHOLDS[sensitivity] ?? 0.60;
+    const threshold = customThreshold ?? NSFW_THRESHOLDS[sensitivity] ?? 0.6;
     return { isNSFW: nsfwProb >= threshold, score: nsfwProb };
   }
 

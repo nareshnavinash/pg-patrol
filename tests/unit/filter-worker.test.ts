@@ -5,7 +5,7 @@
 
 import { handleWorkerMessage } from '../../src/content/filter-worker';
 import type { WorkerRequest, WorkerResponse } from '../../src/content/filter-worker';
-import { replaceProfanity, setCustomProfanity, setCustomSafeWords } from '../../src/shared/profanity-engine';
+import { replaceProfanity } from '../../src/shared/profanity-engine';
 import { scoreText } from '../../src/shared/negative-news-engine';
 
 // We test the handler function, not the actual Worker self-registration.
@@ -26,7 +26,9 @@ describe('filter-worker handleWorkerMessage', () => {
       expect(response).toBeDefined();
       expect(response!.type).toBe('FILTER_TEXT_RESULT');
       expect((response as Extract<WorkerResponse, { type: 'FILTER_TEXT_RESULT' }>).id).toBe(1);
-      expect((response as Extract<WorkerResponse, { type: 'FILTER_TEXT_RESULT' }>).results).toHaveLength(2);
+      expect(
+        (response as Extract<WorkerResponse, { type: 'FILTER_TEXT_RESULT' }>).results,
+      ).toHaveLength(2);
     });
 
     it('produces same results as calling replaceProfanity directly', () => {
@@ -40,7 +42,10 @@ describe('filter-worker handleWorkerMessage', () => {
         sensitivity,
       };
 
-      const response = handleWorkerMessage(request) as Extract<WorkerResponse, { type: 'FILTER_TEXT_RESULT' }>;
+      const response = handleWorkerMessage(request) as Extract<
+        WorkerResponse,
+        { type: 'FILTER_TEXT_RESULT' }
+      >;
       const directResults = texts.map((t) => replaceProfanity(t, sensitivity));
 
       expect(response.results).toEqual(directResults);
@@ -54,7 +59,10 @@ describe('filter-worker handleWorkerMessage', () => {
         sensitivity: 'moderate',
       };
 
-      const response = handleWorkerMessage(request) as Extract<WorkerResponse, { type: 'FILTER_TEXT_RESULT' }>;
+      const response = handleWorkerMessage(request) as Extract<
+        WorkerResponse,
+        { type: 'FILTER_TEXT_RESULT' }
+      >;
       expect(response.results).toEqual([]);
     });
 
@@ -106,7 +114,9 @@ describe('filter-worker handleWorkerMessage', () => {
       expect(response).toBeDefined();
       expect(response!.type).toBe('SCORE_TEXT_RESULT');
       expect((response as Extract<WorkerResponse, { type: 'SCORE_TEXT_RESULT' }>).id).toBe(10);
-      expect((response as Extract<WorkerResponse, { type: 'SCORE_TEXT_RESULT' }>).results).toHaveLength(2);
+      expect(
+        (response as Extract<WorkerResponse, { type: 'SCORE_TEXT_RESULT' }>).results,
+      ).toHaveLength(2);
     });
 
     it('produces same results as calling scoreText directly', () => {
@@ -118,7 +128,10 @@ describe('filter-worker handleWorkerMessage', () => {
         texts,
       };
 
-      const response = handleWorkerMessage(request) as Extract<WorkerResponse, { type: 'SCORE_TEXT_RESULT' }>;
+      const response = handleWorkerMessage(request) as Extract<
+        WorkerResponse,
+        { type: 'SCORE_TEXT_RESULT' }
+      >;
       const directResults = texts.map((t) => scoreText(t));
 
       expect(response.results).toEqual(directResults);
@@ -131,7 +144,10 @@ describe('filter-worker handleWorkerMessage', () => {
         texts: [],
       };
 
-      const response = handleWorkerMessage(request) as Extract<WorkerResponse, { type: 'SCORE_TEXT_RESULT' }>;
+      const response = handleWorkerMessage(request) as Extract<
+        WorkerResponse,
+        { type: 'SCORE_TEXT_RESULT' }
+      >;
       expect(response.results).toEqual([]);
     });
 
@@ -229,6 +245,69 @@ describe('filter-worker handleWorkerMessage', () => {
         delta: { version: 1, lastModified: '2026-01-01' },
       });
 
+      expect(response).toBeUndefined();
+    });
+
+    it('applies profanity addSafe delta', () => {
+      const response = handleWorkerMessage({
+        type: 'APPLY_WORD_DELTA',
+        delta: {
+          version: 1,
+          lastModified: '2026-01-01',
+          profanity: { addSafe: ['safeword123'] },
+        },
+      });
+      expect(response).toBeUndefined();
+    });
+
+    it('applies negativeNews triggers and safe context', () => {
+      const response = handleWorkerMessage({
+        type: 'APPLY_WORD_DELTA',
+        delta: {
+          version: 1,
+          lastModified: '2026-01-01',
+          negativeNews: {
+            addTriggers: ['badnews_trigger'],
+            addSafeContext: ['safe_context_word'],
+          },
+        },
+      });
+      expect(response).toBeUndefined();
+    });
+
+    it('applies funnyWords delta', () => {
+      const response = handleWorkerMessage({
+        type: 'APPLY_WORD_DELTA',
+        delta: {
+          version: 1,
+          lastModified: '2026-01-01',
+          funnyWords: { add: { f: ['fluffy unicorns'] } },
+        },
+      });
+      expect(response).toBeUndefined();
+    });
+
+    it('handles delta with profanity but no addSafe', () => {
+      const response = handleWorkerMessage({
+        type: 'APPLY_WORD_DELTA',
+        delta: {
+          version: 1,
+          lastModified: '2026-01-01',
+          profanity: { add: ['sometestword999'] },
+        },
+      });
+      expect(response).toBeUndefined();
+    });
+
+    it('handles delta with negativeNews but empty arrays', () => {
+      const response = handleWorkerMessage({
+        type: 'APPLY_WORD_DELTA',
+        delta: {
+          version: 1,
+          lastModified: '2026-01-01',
+          negativeNews: { addTriggers: [], addSafeContext: [] },
+        },
+      });
       expect(response).toBeUndefined();
     });
   });

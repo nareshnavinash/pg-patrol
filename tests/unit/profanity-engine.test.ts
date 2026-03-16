@@ -49,9 +49,7 @@ describe('profanity-engine', () => {
 
     it('skips URLs', () => {
       const matches = detectProfanity('check https://example.com/shitpost for details');
-      const urlMatch = matches.find(
-        (m) => m.index > 5 && m.index < 40,
-      );
+      const urlMatch = matches.find((m) => m.index > 5 && m.index < 40);
       // The word inside the URL should be skipped
       expect(urlMatch).toBeUndefined();
     });
@@ -157,9 +155,7 @@ describe('profanity-engine', () => {
     });
 
     it('handles profane URL alongside text profanity', () => {
-      const result = replaceProfanity(
-        'holy shit check https://example.com/shitpost now',
-      );
+      const result = replaceProfanity('holy shit check https://example.com/shitpost now');
       expect(result.profaneUrls.length).toBe(1);
       expect(result.replacements.length).toBeGreaterThan(0);
       expect(result.filtered).toContain('[link]');
@@ -190,7 +186,9 @@ describe('profanity-engine', () => {
     });
 
     it('does NOT flag "dick" in "Moby Dick"', () => {
-      expect(containsProfanity('We are reading Moby Dick in literature class', 'moderate')).toBe(false);
+      expect(containsProfanity('We are reading Moby Dick in literature class', 'moderate')).toBe(
+        false,
+      );
     });
 
     it('does NOT flag "dick" in "spotted dick"', () => {
@@ -202,11 +200,15 @@ describe('profanity-engine', () => {
     });
 
     it('does NOT flag "cock" in "weathercock"', () => {
-      expect(containsProfanity('The weathercock on the barn spun in the wind', 'moderate')).toBe(false);
+      expect(containsProfanity('The weathercock on the barn spun in the wind', 'moderate')).toBe(
+        false,
+      );
     });
 
     it('does NOT flag "prick" in "prick your finger"', () => {
-      expect(containsProfanity('Be careful not to prick your finger on that needle', 'moderate')).toBe(false);
+      expect(
+        containsProfanity('Be careful not to prick your finger on that needle', 'moderate'),
+      ).toBe(false);
     });
 
     it('does NOT flag "prick" in "pinprick"', () => {
@@ -220,7 +222,9 @@ describe('profanity-engine', () => {
     });
 
     it('does NOT flag "pussy" in "pussy willow"', () => {
-      expect(containsProfanity('We found pussy willow branches by the creek', 'moderate')).toBe(false);
+      expect(containsProfanity('We found pussy willow branches by the creek', 'moderate')).toBe(
+        false,
+      );
     });
 
     it('does NOT flag "balls" in "tennis balls" at strict', () => {
@@ -314,11 +318,11 @@ describe('profanity-engine', () => {
 
   describe('sexual/adult content words at moderate sensitivity', () => {
     it('detects "sex" at moderate sensitivity', () => {
-      expect(containsProfanity('let\'s talk about sex', 'moderate')).toBe(true);
+      expect(containsProfanity("let's talk about sex", 'moderate')).toBe(true);
     });
 
     it('does NOT detect "sex" at mild sensitivity', () => {
-      expect(containsProfanity('let\'s talk about sex', 'mild')).toBe(false);
+      expect(containsProfanity("let's talk about sex", 'mild')).toBe(false);
     });
 
     it('detects "sexy" at moderate sensitivity', () => {

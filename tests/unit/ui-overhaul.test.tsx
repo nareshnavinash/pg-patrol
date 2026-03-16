@@ -1,7 +1,7 @@
 /**
  * Tests for the UI/UX overhaul components.
  */
-import { render, screen, fireEvent, act } from '@testing-library/preact';
+import { render, screen, fireEvent } from '@testing-library/preact';
 import Chip from '../../src/popup/components/Chip';
 import EmptyState from '../../src/popup/components/EmptyState';
 import Toast from '../../src/popup/components/Toast';

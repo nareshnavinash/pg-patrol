@@ -1,4 +1,9 @@
-import { scoreText, isNegativeContent, isInSafeNgram, isPrecededByNegation } from '../../src/shared/negative-news-engine';
+import {
+  scoreText,
+  isNegativeContent,
+  isInSafeNgram,
+  isPrecededByNegation,
+} from '../../src/shared/negative-news-engine';
 
 describe('negative-news-engine', () => {
   describe('scoreText', () => {
@@ -45,9 +50,7 @@ describe('negative-news-engine', () => {
     });
 
     it('matches multi-word phrases like "death toll"', () => {
-      const result = scoreText(
-        'The death toll from the earthquake has risen to over one hundred.',
-      );
+      const result = scoreText('The death toll from the earthquake has risen to over one hundred.');
       expect(result.isNegative).toBe(true);
       const phraseMatch = result.matches.find((m) => m.phrase === 'death toll');
       expect(phraseMatch).toBeDefined();
@@ -55,9 +58,7 @@ describe('negative-news-engine', () => {
     });
 
     it('matches "civil war" as a phrase', () => {
-      const result = scoreText(
-        'The civil war has displaced millions of people from their homes.',
-      );
+      const result = scoreText('The civil war has displaced millions of people from their homes.');
       expect(result.isNegative).toBe(true);
       const phraseMatch = result.matches.find((m) => m.phrase === 'civil war');
       expect(phraseMatch).toBeDefined();
@@ -83,9 +84,7 @@ describe('negative-news-engine', () => {
     });
 
     it('scores terrorism-related text as negative', () => {
-      const result = scoreText(
-        'The terrorist attack killed several hostages in a horrific siege.',
-      );
+      const result = scoreText('The terrorist attack killed several hostages in a horrific siege.');
       expect(result.isNegative).toBe(true);
     });
 
@@ -126,7 +125,9 @@ describe('negative-news-engine', () => {
     });
 
     it('does not flag "star wars" context for "war"', () => {
-      const result = scoreText('The new Star Wars movie has amazing special effects and great acting.');
+      const result = scoreText(
+        'The new Star Wars movie has amazing special effects and great acting.',
+      );
       expect(result.isNegative).toBe(false);
     });
 
@@ -181,7 +182,9 @@ describe('negative-news-engine', () => {
     });
 
     it('still flags actual shooting news', () => {
-      const result = scoreText('A shooting at the mall left three people injured. Police responded.');
+      const result = scoreText(
+        'A shooting at the mall left three people injured. Police responded.',
+      );
       expect(result.isNegative).toBe(true);
     });
   });
@@ -194,32 +197,44 @@ describe('negative-news-engine', () => {
     });
 
     it('skips "no war" — negation before trigger', () => {
-      const result = scoreText('There is no war happening in this beautiful region. Peace and joy prevail here every day.');
+      const result = scoreText(
+        'There is no war happening in this beautiful region. Peace and joy prevail here every day.',
+      );
       expect(result.isNegative).toBe(false);
     });
 
     it('skips "never killed" — negation before trigger', () => {
-      const result = scoreText('He never killed anyone in his life. He is a very peaceful person who loves and cares deeply.');
+      const result = scoreText(
+        'He never killed anyone in his life. He is a very peaceful person who loves and cares deeply.',
+      );
       expect(result.isNegative).toBe(false);
     });
 
     it("skips contraction negation: isn't, don't, etc.", () => {
-      const result = scoreText("This isn't terrorism and you should know that. Don't worry about the current situation at all.");
+      const result = scoreText(
+        "This isn't terrorism and you should know that. Don't worry about the current situation at all.",
+      );
       expect(result.isNegative).toBe(false);
     });
 
     it('skips "without" as negation before trigger', () => {
-      const result = scoreText('The peaceful protest was conducted without assault or any violent incidents at all.');
+      const result = scoreText(
+        'The peaceful protest was conducted without assault or any violent incidents at all.',
+      );
       expect(result.isNegative).toBe(false);
     });
 
     it('skips "hardly any casualties" — negation before trigger', () => {
-      const result = scoreText('The minor weather event resulted in hardly any casualties in the region. Most people are safe and well.');
+      const result = scoreText(
+        'The minor weather event resulted in hardly any casualties in the region. Most people are safe and well.',
+      );
       expect(result.isNegative).toBe(false);
     });
 
     it('skips "zero fatalities" — negation before trigger', () => {
-      const result = scoreText('The minor traffic accident resulted in zero fatalities and everyone is safe and doing well today.');
+      const result = scoreText(
+        'The minor traffic accident resulted in zero fatalities and everyone is safe and doing well today.',
+      );
       expect(result.isNegative).toBe(false);
     });
 
@@ -352,9 +367,9 @@ describe('negative-news-engine', () => {
 
   describe('isNegativeContent', () => {
     it('returns true for negative content', () => {
-      expect(
-        isNegativeContent('War continues as casualties mount and bombing intensifies.'),
-      ).toBe(true);
+      expect(isNegativeContent('War continues as casualties mount and bombing intensifies.')).toBe(
+        true,
+      );
     });
 
     it('returns false for clean content', () => {

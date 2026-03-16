@@ -7,7 +7,7 @@
 import funnyWordsData from '../data/funny-words.json';
 
 // Mutable copy so custom words can be added at runtime
-let funnyWords: Record<string, string[]> = { ...funnyWordsData.funnyWords };
+const funnyWords: Record<string, string[]> = { ...funnyWordsData.funnyWords };
 const FALLBACK_WORDS = funnyWordsData.fallbackWords;
 
 /**
@@ -56,7 +56,10 @@ export function matchCase(replacement: string, original: string): string {
   if (original === original.toUpperCase() && original.length > 1) {
     return replacement.toUpperCase();
   }
-  if (original[0] === original[0].toUpperCase() && original.slice(1) === original.slice(1).toLowerCase()) {
+  if (
+    original[0] === original[0].toUpperCase() &&
+    original.slice(1) === original.slice(1).toLowerCase()
+  ) {
     return replacement.charAt(0).toUpperCase() + replacement.slice(1);
   }
   return replacement;

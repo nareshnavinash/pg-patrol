@@ -9,13 +9,9 @@ export default function Toggle({ enabled, onChange, label, description }: Toggle
   return (
     <div className="flex items-center justify-between py-2">
       <div className="flex-1 min-w-0">
-        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-          {label}
-        </span>
+        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</span>
         {description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            {description}
-          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>
         )}
       </div>
       <button

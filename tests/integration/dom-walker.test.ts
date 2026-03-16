@@ -82,7 +82,7 @@ describe('dom-walker', () => {
       </div>
     `;
     const nodes = getFilterableTextNodes();
-    const contentNodes = nodes.filter(n => n.textContent!.trim() === 'Deeply nested text');
+    const contentNodes = nodes.filter((n) => n.textContent!.trim() === 'Deeply nested text');
     expect(contentNodes.length).toBe(1);
   });
 

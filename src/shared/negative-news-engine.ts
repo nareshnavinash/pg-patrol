@@ -22,13 +22,45 @@ const CODE_PATTERN = /`[^`]+`/g;
 
 // Negation words — when found before a trigger, suppress the trigger
 const NEGATION_WORDS = new Set([
-  'not', 'no', 'never', 'none', 'neither', 'nor',
-  "isn't", "aren't", "wasn't", "weren't", "don't", "doesn't", "didn't",
-  "won't", "wouldn't", "couldn't", "shouldn't", "hasn't", "haven't", "hadn't",
+  'not',
+  'no',
+  'never',
+  'none',
+  'neither',
+  'nor',
+  "isn't",
+  "aren't",
+  "wasn't",
+  "weren't",
+  "don't",
+  "doesn't",
+  "didn't",
+  "won't",
+  "wouldn't",
+  "couldn't",
+  "shouldn't",
+  "hasn't",
+  "haven't",
+  "hadn't",
   // Contracted forms without apostrophe (common in normalized text)
-  'isnt', 'arent', 'wasnt', 'werent', 'dont', 'doesnt', 'didnt',
-  'wont', 'wouldnt', 'couldnt', 'shouldnt', 'hasnt', 'havent', 'hadnt',
-  'hardly', 'barely', 'without', 'zero',
+  'isnt',
+  'arent',
+  'wasnt',
+  'werent',
+  'dont',
+  'doesnt',
+  'didnt',
+  'wont',
+  'wouldnt',
+  'couldnt',
+  'shouldnt',
+  'hasnt',
+  'havent',
+  'hadnt',
+  'hardly',
+  'barely',
+  'without',
+  'zero',
 ]);
 
 // Max number of tokens to look back for negation
@@ -38,7 +70,7 @@ const NEGATION_WINDOW = 3;
 const SAFE_NGRAM_MAP: Record<string, string[]> = safeNgrams;
 
 // Pre-sorted phrases (longest first) — computed once at module load
-let sortedPhrases = [...TRIGGER_PHRASES].sort((a, b) => b.length - a.length);
+const sortedPhrases = [...TRIGGER_PHRASES].sort((a, b) => b.length - a.length);
 
 /**
  * Strip URLs and code blocks from text before scoring.
@@ -51,7 +83,12 @@ function stripSkippedRanges(text: string): string {
  * Extract a context window of words around a position in the text.
  * Returns the surrounding text (windowSize words before and after).
  */
-function getContextWindow(text: string, matchIndex: number, matchLength: number, windowSize: number = 3): string {
+function getContextWindow(
+  text: string,
+  matchIndex: number,
+  matchLength: number,
+  windowSize: number = 3,
+): string {
   // Get text before the match
   const before = text.slice(Math.max(0, matchIndex - 80), matchIndex);
   const after = text.slice(matchIndex + matchLength, matchIndex + matchLength + 80);
@@ -108,9 +145,7 @@ export function scoreText(text: string): NegativeContentResult {
       if (idx === -1) break;
 
       // Check this range isn't already covered
-      const alreadyCovered = matchedRanges.some(
-        (r) => idx >= r.start && idx < r.end,
-      );
+      const alreadyCovered = matchedRanges.some((r) => idx >= r.start && idx < r.end);
       if (!alreadyCovered) {
         matches.push({
           phrase,
@@ -141,9 +176,7 @@ export function scoreText(text: string): NegativeContentResult {
     const idx = wordMatch.index;
 
     // Skip if inside an already-matched phrase range
-    const inRange = matchedRanges.some(
-      (r) => idx >= r.start && idx + word.length <= r.end,
-    );
+    const inRange = matchedRanges.some((r) => idx >= r.start && idx + word.length <= r.end);
     if (inRange) continue;
 
     if (TRIGGER_WORDS.has(word)) {

@@ -59,18 +59,21 @@ async function getSession(): Promise<any> {
   if (!sessionPromise) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ai = (globalThis as any).ai;
-    sessionPromise = ai.languageModel.create({
-      systemPrompt: SYSTEM_PROMPT,
-      temperature: 0,
-      topK: 1,
-    }).then((s: unknown) => {
-      session = s;
-      sessionPromise = null;
-      return session;
-    }).catch((err: unknown) => {
-      sessionPromise = null;
-      throw err;
-    });
+    sessionPromise = ai.languageModel
+      .create({
+        systemPrompt: SYSTEM_PROMPT,
+        temperature: 0,
+        topK: 1,
+      })
+      .then((s: unknown) => {
+        session = s;
+        sessionPromise = null;
+        return session;
+      })
+      .catch((err: unknown) => {
+        sessionPromise = null;
+        throw err;
+      });
   }
 
   return sessionPromise;
@@ -87,9 +90,7 @@ export async function classifyWithChromeAi(text: string): Promise<ChromeAiResult
 
     const sess = await getSession();
     const truncated = text.length > 500 ? text.slice(0, 500) + '...' : text;
-    const response: string = await sess.prompt(
-      `Is this text toxic or safe?\n\n"${truncated}"`,
-    );
+    const response: string = await sess.prompt(`Is this text toxic or safe?\n\n"${truncated}"`);
 
     return parseResponse(response);
   } catch {

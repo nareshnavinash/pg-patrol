@@ -53,9 +53,7 @@ test.describe('Leetspeak & Unicode Evasion Filtering', () => {
     await waitForContentScript(page);
 
     const text = await page.locator('#leet-clean').textContent();
-    expect(text).toBe(
-      'Normal text with numbers like 4 and symbols like @ should stay',
-    );
+    expect(text).toBe('Normal text with numbers like 4 and symbols like @ should stay');
   });
 
   test('filters dynamically added leetspeak', async ({ context }) => {

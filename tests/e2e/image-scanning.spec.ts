@@ -46,7 +46,9 @@ test.describe('Image & Video Scanning Pipeline', () => {
     expect(isIgnored).toBe(true);
   });
 
-  test('images are covered immediately when discovered (before classification)', async ({ context }) => {
+  test('images are covered immediately when discovered (before classification)', async ({
+    context,
+  }) => {
     const page = await context.newPage();
     // Navigate and check quickly before classification completes
     await page.goto(TEST_PAGE);
@@ -77,7 +79,9 @@ test.describe('Image & Video Scanning Pipeline', () => {
     // Check any image marked as error — it should still be hidden behind a cover.
     const errorImages = await page.locator('img[data-pg-patrol-img-processed="error"]').all();
     for (const img of errorImages) {
-      const visibility = await img.evaluate((el) => window.getComputedStyle(el as HTMLElement).visibility);
+      const visibility = await img.evaluate(
+        (el) => window.getComputedStyle(el as HTMLElement).visibility,
+      );
       expect(visibility).toBe('hidden');
     }
   });

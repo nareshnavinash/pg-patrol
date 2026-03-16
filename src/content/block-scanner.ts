@@ -4,9 +4,18 @@
  */
 
 const SKIP_TAGS = new Set([
-  'SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE',
-  'TEXTAREA', 'INPUT', 'SELECT', 'OPTION',
-  'SVG', 'MATH', 'IFRAME',
+  'SCRIPT',
+  'STYLE',
+  'NOSCRIPT',
+  'CODE',
+  'PRE',
+  'TEXTAREA',
+  'INPUT',
+  'SELECT',
+  'OPTION',
+  'SVG',
+  'MATH',
+  'IFRAME',
 ]);
 
 const BLOCK_SELECTORS = 'article, p, li, h1, h2, h3, h4, h5, h6, blockquote';
@@ -35,7 +44,7 @@ function isInsideSkippedTag(el: HTMLElement): boolean {
  * Find all block-level elements suitable for content scoring.
  */
 export function getFilterableBlocks(root?: Node): BlockInfo[] {
-  const container = (root instanceof HTMLElement ? root : document.body);
+  const container = root instanceof HTMLElement ? root : document.body;
   const blocks: BlockInfo[] = [];
 
   // Include the container itself if it matches a block selector

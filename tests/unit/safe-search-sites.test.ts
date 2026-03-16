@@ -134,11 +134,7 @@ describe('isSafeSearchSite', () => {
   });
 
   describe('adult sites return false', () => {
-    const adultDomains = [
-      'pornhub.com',
-      'xvideos.com',
-      'onlyfans.com',
-    ];
+    const adultDomains = ['pornhub.com', 'xvideos.com', 'onlyfans.com'];
 
     it.each(adultDomains)('does NOT flag %s as safe', (domain) => {
       expect(isSafeSearchSite(domain)).toBe(false);

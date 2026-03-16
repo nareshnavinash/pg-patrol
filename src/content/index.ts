@@ -75,7 +75,7 @@ function applyCustomWords(s: PGPatrolSettings): void {
   });
 }
 let pageReplacementCount = 0;
-let hiddenBlockCount = 0;
+let _hiddenBlockCount = 0;
 
 // Track processed nodes to avoid double-processing
 let processedNodes = new WeakSet<Text>();
@@ -140,15 +140,17 @@ async function filterTextNodes(nodes: Text[]): Promise<number> {
 
       // Log each replaced word for activity log
       for (const match of result.replacements) {
-        chrome.runtime.sendMessage({
-          type: MessageType.LOG_ACTIVITY,
-          data: {
-            type: 'word',
-            original: match.original,
-            replacement: match.replacement,
-            timestamp: Date.now(),
-          },
-        }).catch(() => {});
+        chrome.runtime
+          .sendMessage({
+            type: MessageType.LOG_ACTIVITY,
+            data: {
+              type: 'word',
+              original: match.original,
+              replacement: match.replacement,
+              timestamp: Date.now(),
+            },
+          })
+          .catch(() => {});
       }
 
       if (result.profaneUrls.length > 0) {
@@ -244,7 +246,7 @@ async function refilterAll(): Promise<void> {
   pageReplacementCount = 0;
   removeAllOverlays();
   removeImageFilterBanner();
-  hiddenBlockCount = 0;
+  _hiddenBlockCount = 0;
   await fullScan();
 }
 
@@ -287,16 +289,18 @@ async function blockScan(root?: Node): Promise<void> {
       if (result.score > 0.06) {
         // Tier 0: Clear negative — block immediately
         applyOverlay(element, { category: result.matches?.[0]?.category });
-        hiddenBlockCount++;
-        chrome.runtime.sendMessage({
-          type: MessageType.LOG_ACTIVITY,
-          data: {
-            type: 'block',
-            original: text.slice(0, 100),
-            category: result.matches?.[0]?.category,
-            timestamp: Date.now(),
-          },
-        }).catch(() => {});
+        _hiddenBlockCount++;
+        chrome.runtime
+          .sendMessage({
+            type: MessageType.LOG_ACTIVITY,
+            data: {
+              type: 'block',
+              original: text.slice(0, 100),
+              category: result.matches?.[0]?.category,
+              timestamp: Date.now(),
+            },
+          })
+          .catch(() => {});
       } else if (result.score > 0.015) {
         // Tier 1: Borderline — async ML classification
         classifyToxicity(text).then(async (mlResult) => {
@@ -313,16 +317,18 @@ async function blockScan(root?: Node): Promise<void> {
 
           if (shouldBlock) {
             applyOverlay(element, { category: result.matches?.[0]?.category });
-            hiddenBlockCount++;
-            chrome.runtime.sendMessage({
-              type: MessageType.LOG_ACTIVITY,
-              data: {
-                type: 'block',
-                original: text.slice(0, 100),
-                category: result.matches?.[0]?.category,
-                timestamp: Date.now(),
-              },
-            }).catch(() => {});
+            _hiddenBlockCount++;
+            chrome.runtime
+              .sendMessage({
+                type: MessageType.LOG_ACTIVITY,
+                data: {
+                  type: 'block',
+                  original: text.slice(0, 100),
+                  category: result.matches?.[0]?.category,
+                  timestamp: Date.now(),
+                },
+              })
+              .catch(() => {});
             updateBadge();
           }
         });
@@ -332,16 +338,18 @@ async function blockScan(root?: Node): Promise<void> {
       // Original keyword-only scoring
       if (result.isNegative) {
         applyOverlay(element, { category: result.matches?.[0]?.category });
-        hiddenBlockCount++;
-        chrome.runtime.sendMessage({
-          type: MessageType.LOG_ACTIVITY,
-          data: {
-            type: 'block',
-            original: text.slice(0, 100),
-            category: result.matches?.[0]?.category,
-            timestamp: Date.now(),
-          },
-        }).catch(() => {});
+        _hiddenBlockCount++;
+        chrome.runtime
+          .sendMessage({
+            type: MessageType.LOG_ACTIVITY,
+            data: {
+              type: 'block',
+              original: text.slice(0, 100),
+              category: result.matches?.[0]?.category,
+              timestamp: Date.now(),
+            },
+          })
+          .catch(() => {});
       }
     }
   }
@@ -351,15 +359,17 @@ async function blockScan(root?: Node): Promise<void> {
  * Send replacement count to background for badge display.
  */
 function updateBadge(): void {
-  chrome.runtime.sendMessage({
-    type: MessageType.UPDATE_STATS,
-    data: {
-      wordsReplaced: pageReplacementCount,
-      imagesReplaced: getReplacedImageCount(),
-    },
-  }).catch(() => {
-    // Background may not be ready
-  });
+  chrome.runtime
+    .sendMessage({
+      type: MessageType.UPDATE_STATS,
+      data: {
+        wordsReplaced: pageReplacementCount,
+        imagesReplaced: getReplacedImageCount(),
+      },
+    })
+    .catch(() => {
+      // Background may not be ready
+    });
 }
 
 /**
@@ -565,7 +575,10 @@ function removePreBlurStylesheet(): void {
 function revealBody(): void {
   const style = document.getElementById('pg-patrol-pre-blur');
   if (style) {
-    style.textContent = (style.textContent || '').replace(/body\s*\{[^}]*visibility:\s*hidden[^}]*\}/g, '');
+    style.textContent = (style.textContent || '').replace(
+      /body\s*\{[^}]*visibility:\s*hidden[^}]*\}/g,
+      '',
+    );
   }
 }
 
@@ -596,7 +609,7 @@ async function init(): Promise<void> {
       mlClassifierEnabled: true,
       sensitivity: 'strict',
       developerMode: false,
-      customThreshold: 0.10,
+      customThreshold: 0.1,
       whitelistedSites: [],
       perspectiveApiKey: '',
       customBlockedWords: [],

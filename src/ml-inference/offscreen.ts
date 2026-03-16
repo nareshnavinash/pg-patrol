@@ -24,21 +24,26 @@ chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'ML_CLASSIFY_INTERNAL') {
     const { text, requestId } = message.data;
 
-    engine.classifyText(text)
+    engine
+      .classifyText(text)
       .then((result) => {
-        chrome.runtime.sendMessage({
-          type: 'ML_CLASSIFY_RESPONSE',
-          data: { requestId, result },
-        }).catch(() => {});
+        chrome.runtime
+          .sendMessage({
+            type: 'ML_CLASSIFY_RESPONSE',
+            data: { requestId, result },
+          })
+          .catch(() => {});
       })
       .catch(() => {
-        chrome.runtime.sendMessage({
-          type: 'ML_CLASSIFY_RESPONSE',
-          data: {
-            requestId,
-            result: { isToxic: false, confidence: 0 },
-          },
-        }).catch(() => {});
+        chrome.runtime
+          .sendMessage({
+            type: 'ML_CLASSIFY_RESPONSE',
+            data: {
+              requestId,
+              result: { isToxic: false, confidence: 0 },
+            },
+          })
+          .catch(() => {});
       });
   }
 
@@ -46,18 +51,23 @@ chrome.runtime.onMessage.addListener((message) => {
     const { requestId } = message.data;
     engine.resetIdleTimer();
 
-    engine.warmupNSFW()
+    engine
+      .warmupNSFW()
       .then(() => {
-        chrome.runtime.sendMessage({
-          type: 'NSFW_WARMUP_RESPONSE',
-          data: { requestId, ok: true },
-        }).catch(() => {});
+        chrome.runtime
+          .sendMessage({
+            type: 'NSFW_WARMUP_RESPONSE',
+            data: { requestId, ok: true },
+          })
+          .catch(() => {});
       })
       .catch(() => {
-        chrome.runtime.sendMessage({
-          type: 'NSFW_WARMUP_RESPONSE',
-          data: { requestId, ok: false },
-        }).catch(() => {});
+        chrome.runtime
+          .sendMessage({
+            type: 'NSFW_WARMUP_RESPONSE',
+            data: { requestId, ok: false },
+          })
+          .catch(() => {});
       });
   }
 
@@ -65,22 +75,27 @@ chrome.runtime.onMessage.addListener((message) => {
     const { source, sensitivity, requestId, customThreshold } = message.data;
     engine.resetIdleTimer();
 
-    engine.classifyImage(source, sensitivity, customThreshold)
+    engine
+      .classifyImage(source, sensitivity, customThreshold)
       .then((result) => {
-        chrome.runtime.sendMessage({
-          type: 'NSFW_CLASSIFY_RESPONSE',
-          data: { requestId, result },
-        }).catch(() => {});
+        chrome.runtime
+          .sendMessage({
+            type: 'NSFW_CLASSIFY_RESPONSE',
+            data: { requestId, result },
+          })
+          .catch(() => {});
       })
       .catch(() => {
         // Fail-safe: return NSFW on any error
-        chrome.runtime.sendMessage({
-          type: 'NSFW_CLASSIFY_RESPONSE',
-          data: {
-            requestId,
-            result: { isNSFW: true, score: 1 },
-          },
-        }).catch(() => {});
+        chrome.runtime
+          .sendMessage({
+            type: 'NSFW_CLASSIFY_RESPONSE',
+            data: {
+              requestId,
+              result: { isNSFW: true, score: 1 },
+            },
+          })
+          .catch(() => {});
       });
   }
 });
