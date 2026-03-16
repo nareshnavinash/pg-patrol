@@ -21,6 +21,8 @@ import {
   showPendingSurface,
   showSafeBackgroundSurface,
 } from './media-surfaces';
+import { pauseObserver, resumeObserver } from './observer';
+import { createBannerDataUri } from './banner-data-uri';
 
 const PROCESSED_ATTR = 'data-pg-patrol-img-processed';
 const VIDEO_PROCESSED_ATTR = 'data-pg-patrol-vid-processed';
@@ -28,6 +30,9 @@ const BG_PROCESSED_ATTR = 'data-pg-patrol-bg-processed';
 const DEBUG_BADGE_ATTR = 'data-pg-patrol-debug-badge';
 const SOURCE_ATTR = 'data-pg-patrol-img-source';
 const MASKED_ATTR = 'data-pg-patrol-img-masked';
+const REPLACED_ATTR = 'data-pg-patrol-replaced';
+const ORIGINAL_SRC_ATTR = 'data-pg-patrol-original-src';
+const OVERLAY_OWNED_ATTR = 'data-pg-patrol-overlay-owned';
 const PENDING_RETRY_ATTR = 'data-pg-patrol-pending-retry';
 const MIN_IMAGE_SIZE = 50; // Skip images smaller than 50px
 const MAX_CONCURRENT = 6; // Max concurrent classifications
@@ -80,7 +85,7 @@ export function ensureNsfwStyleSheet(): void {
   nsfwStyleEl = document.createElement('style');
   nsfwStyleEl.id = 'pg-patrol-nsfw-styles';
   nsfwStyleEl.textContent =
-    `img:not([data-pg-patrol-overlay-owned="true"]):not([${PROCESSED_ATTR}="safe"]):not([${PROCESSED_ATTR}="skipped"]){` +
+    `img:not([data-pg-patrol-overlay-owned="true"]):not([${REPLACED_ATTR}="true"]):not([${PROCESSED_ATTR}="safe"]):not([${PROCESSED_ATTR}="skipped"]){` +
     `opacity:0!important;visibility:hidden!important;pointer-events:none!important;user-select:none!important;}` +
     `video:not([${VIDEO_PROCESSED_ATTR}="safe"]):not([${VIDEO_PROCESSED_ATTR}="skipped"]){` +
     `opacity:0!important;visibility:hidden!important;pointer-events:none!important;user-select:none!important;}`;
@@ -90,7 +95,7 @@ export function ensureNsfwStyleSheet(): void {
 /** Returns the CSS text used by the scan-first stylesheet (for Shadow DOM injection). */
 export function getNsfwStyleSheetCssText(): string {
   return (
-    `img:not([data-pg-patrol-overlay-owned="true"]):not([${PROCESSED_ATTR}="safe"]):not([${PROCESSED_ATTR}="skipped"]){` +
+    `img:not([data-pg-patrol-overlay-owned="true"]):not([${REPLACED_ATTR}="true"]):not([${PROCESSED_ATTR}="safe"]):not([${PROCESSED_ATTR}="skipped"]){` +
     `opacity:0!important;visibility:hidden!important;pointer-events:none!important;user-select:none!important;}` +
     `video:not([${VIDEO_PROCESSED_ATTR}="safe"]):not([${VIDEO_PROCESSED_ATTR}="skipped"]){` +
     `opacity:0!important;visibility:hidden!important;pointer-events:none!important;user-select:none!important;}`
@@ -400,6 +405,8 @@ function restoreExistingImageSurface(img: HTMLImageElement): void {
   }
 
   if (status === 'nsfw') {
+    // Banner IS the image — no overlay needed
+    if (img.getAttribute(REPLACED_ATTR) === 'true') return;
     showBlockedSurface(img);
     return;
   }
@@ -482,10 +489,6 @@ function clearImageMaskStyles(img: HTMLImageElement): void {
  */
 function hideImage(img: HTMLImageElement): void {
   const source = img.getAttribute(SOURCE_ATTR) || getScannableSrc(img) || img.src;
-  applyImageMaskStyles(img);
-  img.setAttribute(PROCESSED_ATTR, 'nsfw');
-  img.setAttribute(MASKED_ATTR, 'true');
-  ensureNsfwStyleSheet();
 
   // Dedup: only count each unique URL once per page navigation
   if (source && !pageNsfwUrls.has(source)) {
@@ -506,7 +509,34 @@ function hideImage(img: HTMLImageElement): void {
     }
   }
 
-  showBlockedSurface(img);
+  pauseObserver();
+
+  const banner = document.createElement('img');
+  banner.src = createBannerDataUri();
+  banner.alt = 'Restricted image hidden by PG Patrol';
+
+  // Mark as ours — exempt from scanning + CSS hiding
+  banner.setAttribute(OVERLAY_OWNED_ATTR, 'true');
+  banner.setAttribute(PROCESSED_ATTR, 'nsfw');
+  banner.setAttribute(REPLACED_ATTR, 'true');
+  banner.setAttribute(SOURCE_ATTR, source);
+  banner.setAttribute(ORIGINAL_SRC_ATTR, img.src || '');
+
+  // Copy layout attributes to preserve page structure
+  if (img.className) banner.className = img.className;
+  if (img.id) banner.id = img.id;
+  if (img.width) banner.width = img.width;
+  if (img.height) banner.height = img.height;
+  banner.style.cssText = img.style.cssText;
+  banner.style.objectFit = 'contain';
+  banner.style.backgroundColor = '#EEF2FF';
+  // Force visible (override NSFW stylesheet)
+  banner.style.setProperty('opacity', '1', 'important');
+  banner.style.setProperty('visibility', 'visible', 'important');
+
+  img.replaceWith(banner);
+
+  resumeObserver();
 }
 
 /**
@@ -898,7 +928,7 @@ async function processQueue(): Promise<void> {
  */
 export function queueImages(images: HTMLImageElement[]): void {
   for (const img of images) {
-    if (isOverlayOwnedImage(img)) {
+    if (isOverlayOwnedImage(img) || img.getAttribute(REPLACED_ATTR) === 'true') {
       continue;
     }
 
@@ -993,7 +1023,7 @@ export function queueBackgroundImages(elements: HTMLElement[]): void {
  * Removes the 'skipped' status and queues for scanning.
  */
 export function requeueImage(img: HTMLImageElement): void {
-  if (isOverlayOwnedImage(img)) {
+  if (isOverlayOwnedImage(img) || img.getAttribute(REPLACED_ATTR) === 'true') {
     return;
   }
 

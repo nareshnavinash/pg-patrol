@@ -5,7 +5,7 @@
  */
 
 import { getFilterableTextNodes } from './dom-walker';
-import { startObserver, stopObserver, pauseObserver, resumeObserver } from './observer';
+import { startObserver, pauseObserver, resumeObserver } from './observer';
 import { setCustomProfanity, setCustomSafeWords } from '../shared/profanity-engine';
 import { getSettings, onSettingsChanged, isSiteWhitelisted } from '../shared/storage';
 import { setCustomTriggers, setCustomSafeContext } from '../shared/negative-news-words';
@@ -25,14 +25,12 @@ import {
   onScanProgress,
   requeueImage,
   startViewportScanner,
-  stopViewportScanner,
   observeImagesForViewport,
   ensureNsfwStyleSheet,
-  resetManagedMedia,
   initImageCache,
   imageCache,
 } from './image-scanner';
-import { startShadowDomScanner, stopShadowDomScanner } from './shadow-dom-scanner';
+import { startShadowDomScanner } from './shadow-dom-scanner';
 import { isAdultDomain } from '../shared/adult-domain-keywords';
 import { isSafeSearchSite } from '../shared/safe-search-sites';
 import { loadModel, THRESHOLDS } from '../shared/nsfw-detector';
@@ -49,7 +47,6 @@ import {
   scoreTextBatch,
   syncCustomWords,
   applyWorkerWordListDelta,
-  terminateWorker,
 } from './filter-worker-proxy';
 import type { PGPatrolSettings, Sensitivity, Message } from '../shared/types';
 
@@ -378,6 +375,7 @@ function onMessage(
       if (message.data) {
         settings = { ...settings!, ...message.data };
         applyCustomWords(settings);
+        // Text-only changes handled in-place
         if (settings.enabled && settings.textFilterEnabled) {
           refilterAll();
         }
@@ -386,33 +384,15 @@ function onMessage(
           setDeveloperMode(settings.developerMode);
           setCustomThreshold(settings.customThreshold);
         }
-        if (!settings.enabled) {
-          stopObserver();
-          stopViewportScanner();
-          stopShadowDomScanner();
-          revealOriginals();
-          resetManagedMedia();
-          removeAllOverlays();
-          removeImageFilterBanner();
-          terminateWorker();
-        }
       }
       break;
     case MessageType.TOGGLE_FILTERING:
       if (message.data.enabled) {
-        filteringPaused = false;
-        refilterAll();
-        startObserverIfEnabled();
+        sessionStorage.removeItem('pg-patrol-filtering-paused');
       } else {
-        filteringPaused = true;
-        stopObserver();
-        stopViewportScanner();
-        stopShadowDomScanner();
-        revealOriginals();
-        resetManagedMedia();
-        removeAllOverlays();
-        terminateWorker();
+        sessionStorage.setItem('pg-patrol-filtering-paused', 'true');
       }
+      sendResponse({ ok: true });
       break;
     case MessageType.GET_FILTER_STATE:
       sendResponse({ filteringPaused });
@@ -593,6 +573,14 @@ function revealBody(): void {
  * Initialize the content script.
  */
 async function init(): Promise<void> {
+  // Check if filtering was paused via reveal toggle (survives page reload)
+  const wasPaused = sessionStorage.getItem('pg-patrol-filtering-paused') === 'true';
+  if (wasPaused) {
+    filteringPaused = true;
+    removePreBlurStylesheet();
+    return; // Skip all filtering — page shows original content
+  }
+
   // Initialize the Web Worker for off-main-thread text processing
   initFilterWorker();
 
@@ -680,7 +668,7 @@ async function init(): Promise<void> {
   // Listen for messages
   chrome.runtime.onMessage.addListener(onMessage);
 
-  // Listen for settings changes
+  // Listen for settings changes (popup drives reload for structural changes)
   onSettingsChanged((newSettings) => {
     const prevImageEnabled = settings?.imageFilterEnabled;
     settings = newSettings;
@@ -697,30 +685,12 @@ async function init(): Promise<void> {
       void initImageFiltering();
     }
 
-    if (!settings.imageFilterEnabled && prevImageEnabled) {
-      stopViewportScanner();
-      stopShadowDomScanner();
-      resetManagedMedia();
-      removeImageFilterBanner();
-    }
-
     // Sync developer mode, custom threshold, and cache threshold
     setDeveloperMode(settings.developerMode);
     setCustomThreshold(settings.customThreshold);
     imageCache.setThreshold(settings.customThreshold ?? THRESHOLDS[settings.sensitivity]);
 
     startObserverIfEnabled();
-
-    if (!settings.enabled) {
-      stopObserver();
-      stopViewportScanner();
-      stopShadowDomScanner();
-      revealOriginals();
-      resetManagedMedia();
-      removeAllOverlays();
-      removeImageFilterBanner();
-      terminateWorker();
-    }
   });
 }
 

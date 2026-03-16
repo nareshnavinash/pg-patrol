@@ -37,6 +37,16 @@ export function useStorage() {
       }).catch(() => {
         // Popup might not have background ready
       });
+
+      // Reload active tab on structural changes that affect filtering
+      const needsReload = 'enabled' in partial
+        || 'imageFilterEnabled' in partial
+        || 'sensitivity' in partial
+        || 'customThreshold' in partial;
+      if (needsReload) {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tabs[0]?.id) chrome.tabs.reload(tabs[0].id);
+      }
     },
     [],
   );

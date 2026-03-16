@@ -43,7 +43,7 @@
     ]
   },
   "index.ts-loader.js": {
-    "file": "assets/index.ts-loader-Dv8BD5T3.js",
+    "file": "assets/index.ts-loader-Cuad9kYg.js",
     "src": "index.ts-loader.js"
   },
   "node_modules/onnxruntime-web/dist/ort.wasm.min.mjs": {
@@ -74,7 +74,7 @@
     ]
   },
   "src/content/index.ts": {
-    "file": "assets/index.ts-D59nb2lE.js",
+    "file": "assets/index.ts-EM0ru7CG.js",
     "name": "index.ts",
     "src": "src/content/index.ts",
     "isEntry": true,
@@ -108,7 +108,7 @@
     ]
   },
   "src/popup/index.html": {
-    "file": "assets/index.html-DESgriIm.js",
+    "file": "assets/index.html-De59_Gho.js",
     "name": "index.html",
     "src": "src/popup/index.html",
     "isEntry": true,

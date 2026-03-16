@@ -28,19 +28,18 @@ export default function RevealToggle() {
     const newState = !revealed;
     setRevealed(newState);
 
-    // Send toggle to content script
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    const tabId = tabs[0]?.id;
+    if (!tabId) return;
+
     try {
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      const tabId = tabs[0]?.id;
-      if (tabId) {
-        await chrome.tabs.sendMessage(tabId, {
-          type: MessageType.TOGGLE_FILTERING,
-          data: { enabled: !newState },
-        });
-      }
-    } catch {
-      // Tab might not have content script
-    }
+      await chrome.tabs.sendMessage(tabId, {
+        type: MessageType.TOGGLE_FILTERING,
+        data: { enabled: !newState },
+      });
+    } catch { /* content script may be unloading */ }
+
+    chrome.tabs.reload(tabId);
   };
 
   return (

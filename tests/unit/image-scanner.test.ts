@@ -39,6 +39,14 @@ jest.mock('../../src/shared/nsfw-detector', () => ({
   THRESHOLDS: { mild: 0.85, moderate: 0.60, strict: 0.30 },
 }));
 
+// Mock observer to avoid importing the full observer module
+jest.mock('../../src/content/observer', () => ({
+  pauseObserver: jest.fn(),
+  resumeObserver: jest.fn(),
+  startObserver: jest.fn(),
+  stopObserver: jest.fn(),
+}));
+
 // Provide chrome.storage.local stub for cache
 if (!(globalThis as Record<string, unknown>).chrome) {
   (globalThis as Record<string, unknown>).chrome = {
@@ -184,7 +192,7 @@ describe('image-scanner', () => {
       expect(img.getAttribute('data-pg-patrol-img-processed')).toBe('safe');
     });
 
-    it('keeps the original NSFW image src hidden and mounts a blocked surface', async () => {
+    it('replaces NSFW image with a banner element in the DOM', async () => {
       mockClassifyImage.mockResolvedValueOnce({
         isNSFW: true,
         score: 0.95,
@@ -197,18 +205,19 @@ describe('image-scanner', () => {
       queueImages([img]);
       await flushAsyncWork();
 
-      expect(img.getAttribute('data-pg-patrol-img-processed')).toBe('nsfw');
-      expect(img.getAttribute('data-pg-patrol-img-source')).toBe('https://example.com/nsfw.jpg');
-      expect(img.getAttribute('data-pg-patrol-img-masked')).toBe('true');
-      expect(img.src).toBe('https://example.com/nsfw.jpg');
-      expect(img.style.opacity).toBe('0');
-      expect(img.style.visibility).toBe('hidden');
-      // Blocked surface shows professional text overlay
-      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
-      expect(overlayRoot!.textContent).toContain('Restricted image hidden');
+      // Original image should be removed from the DOM
+      expect(img.parentNode).toBeNull();
+
+      // Banner should be in the DOM instead
+      const banner = document.body.querySelector('img[data-pg-patrol-replaced="true"]');
+      expect(banner).not.toBeNull();
+      expect(banner!.getAttribute('data-pg-patrol-overlay-owned')).toBe('true');
+      expect(banner!.getAttribute('data-pg-patrol-img-processed')).toBe('nsfw');
+      expect(banner!.getAttribute('data-pg-patrol-original-src')).toBe('https://example.com/nsfw.jpg');
+      expect((banner as HTMLImageElement).src).toMatch(/^data:image\/svg\+xml/);
     });
 
-    it('re-applies the blocked surface when an NSFW image loses its overlay', async () => {
+    it('skips banner elements in requeueImage', async () => {
       mockClassifyImage.mockResolvedValueOnce({
         isNSFW: true,
         score: 0.95,
@@ -220,17 +229,20 @@ describe('image-scanner', () => {
       document.body.appendChild(img);
       queueImages([img]);
       await flushAsyncWork();
-      document.getElementById(OVERLAY_ROOT_ID)?.replaceChildren();
 
-      requeueImage(img);
+      // The banner is now in the DOM
+      const banner = document.body.querySelector('img[data-pg-patrol-replaced="true"]') as HTMLImageElement;
+      expect(banner).not.toBeNull();
 
-      expect(img.getAttribute('data-pg-patrol-img-processed')).toBe('nsfw');
-      // Blocked surface shows professional text overlay
-      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
-      expect(overlayRoot!.textContent).toContain('Restricted image hidden');
+      // requeueImage should be a no-op on the banner
+      mockClassifyImage.mockClear();
+      requeueImage(banner);
+      await flushAsyncWork();
+
+      expect(mockClassifyImage).not.toHaveBeenCalled();
     });
 
-    it('swaps from a blocked surface back to the original safe image when a new node replaces it', async () => {
+    it('allows a new safe image in the same parent after NSFW banner replacement', async () => {
       mockClassifyImage
         .mockResolvedValueOnce({
           isNSFW: true,
@@ -253,11 +265,12 @@ describe('image-scanner', () => {
       queueImages([nsfwImg]);
       await flushAsyncWork();
 
-      // Blocked surface shows professional text overlay
-      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
-      expect(overlayRoot!.textContent).toContain('Restricted image hidden');
+      // NSFW img replaced with banner
+      const banner = parent.querySelector('img[data-pg-patrol-replaced="true"]');
+      expect(banner).not.toBeNull();
 
-      nsfwImg.remove();
+      // Remove the banner, add a safe image
+      banner!.remove();
 
       const safeImg = createScannableImage('https://example.com/safe-replacement.jpg');
       parent.appendChild(safeImg);
@@ -267,6 +280,22 @@ describe('image-scanner', () => {
       expect(safeImg.getAttribute('data-pg-patrol-img-processed')).toBe('safe');
       expect(safeImg.style.opacity).toBe('');
       expect(safeImg.style.visibility).toBe('');
+    });
+  });
+
+  describe('banner element guards', () => {
+    it('queueImages skips banner elements entirely', async () => {
+      const banner = document.createElement('img');
+      banner.setAttribute('data-pg-patrol-replaced', 'true');
+      banner.setAttribute('data-pg-patrol-overlay-owned', 'true');
+      banner.src = 'data:image/svg+xml,<svg></svg>';
+      document.body.appendChild(banner);
+
+      mockClassifyImage.mockClear();
+      queueImages([banner]);
+      await flushAsyncWork();
+
+      expect(mockClassifyImage).not.toHaveBeenCalled();
     });
   });
 
@@ -515,11 +544,12 @@ describe('image-scanner', () => {
       expect(css).toContain('opacity:0!important');
     });
 
-    it('contains the raw image hide rule', () => {
+    it('contains the raw image hide rule with replaced exemption', () => {
       ensureNsfwStyleSheet();
       const style = document.getElementById('pg-patrol-nsfw-styles');
       const css = style?.textContent || '';
-      expect(css).toContain('img:not([data-pg-patrol-overlay-owned="true"]):not([data-pg-patrol-img-processed="safe"])');
+      expect(css).toContain('data-pg-patrol-replaced="true"');
+      expect(css).toContain('img:not([data-pg-patrol-overlay-owned="true"]):not([data-pg-patrol-replaced="true"])');
       expect(css).toContain('visibility:hidden!important');
       expect(css).toContain('pointer-events:none!important');
     });
@@ -544,6 +574,7 @@ describe('image-scanner', () => {
     it('returns CSS text matching the injected stylesheet content', () => {
       const cssText = getNsfwStyleSheetCssText();
       expect(cssText).toContain('data-pg-patrol-overlay-owned="true"');
+      expect(cssText).toContain('data-pg-patrol-replaced="true"');
       expect(cssText).toContain('data-pg-patrol-img-processed="safe"');
       expect(cssText).toContain('data-pg-patrol-img-processed="skipped"');
       expect(cssText).toContain('visibility:hidden!important');
@@ -579,7 +610,7 @@ describe('image-scanner', () => {
       expect(img.getAttribute('data-pg-patrol-img-processed')).toBe('safe');
     });
 
-    it('cached NSFW image is hidden immediately without classification', async () => {
+    it('cached NSFW image triggers DOM replacement without classification', async () => {
       const img = createScannableImage('https://example.com/cached-nsfw.jpg');
       document.body.appendChild(img);
 
@@ -590,7 +621,12 @@ describe('image-scanner', () => {
       await flushAsyncWork();
 
       expect(mockClassifyImage).not.toHaveBeenCalled();
-      expect(img.getAttribute('data-pg-patrol-img-processed')).toBe('nsfw');
+      // Original removed, banner inserted
+      expect(img.parentNode).toBeNull();
+      const banner = document.body.querySelector('img[data-pg-patrol-replaced="true"]');
+      expect(banner).not.toBeNull();
+      expect(banner!.getAttribute('data-pg-patrol-img-processed')).toBe('nsfw');
+      expect((banner as HTMLImageElement).src).toMatch(/^data:image\/svg\+xml/);
     });
 
     it('cached NSFW video poster skips classification and shows blocked surface', async () => {
