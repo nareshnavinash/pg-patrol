@@ -56,8 +56,8 @@ export default function Settings({ settings, onUpdate, showToast }: SettingsProp
           onUpdate({ imageFilterEnabled: enabled });
           showToast?.(enabled ? 'Image filtering enabled' : 'Image filtering disabled');
         }}
-        label="Image Filtering"
-        description="Detect and replace NSFW images"
+        label="Image Filtering (Research Preview)"
+        description="Detect and replace NSFW images — experimental, may affect video playback"
       />
 
       <Toggle

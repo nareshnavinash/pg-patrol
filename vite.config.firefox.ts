@@ -25,7 +25,7 @@ import { writeFileSync, copyFileSync, mkdirSync, existsSync, readdirSync, cpSync
 const firefoxManifest = {
   manifest_version: 3,
   name: 'PG Patrol',
-  version: '1.0.0',
+  version: '1.1.0',
   description:
     'Free parental control web filter — replaces profanity with funny words, blocks NSFW images using on-device AI',
   permissions: ['storage', 'activeTab', 'alarms'],

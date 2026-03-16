@@ -15,8 +15,7 @@ style.id = 'pg-patrol-pre-blur';
 
 style.textContent = `
   body { visibility: hidden; }
-  img:not([data-pg-patrol-img-processed]),
-  video:not([data-pg-patrol-vid-processed]) {
+  img:not([data-pg-patrol-img-processed]) {
     filter: blur(20px) !important;
     transition: filter 0.3s ease;
   }

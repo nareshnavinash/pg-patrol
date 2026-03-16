@@ -81,8 +81,6 @@ export function ensureNsfwStyleSheet(): void {
   nsfwStyleEl.id = 'pg-patrol-nsfw-styles';
   nsfwStyleEl.textContent =
     `img:not([data-pg-patrol-overlay-owned="true"]):not([${REPLACED_ATTR}="true"]):not([${PROCESSED_ATTR}="safe"]):not([${PROCESSED_ATTR}="skipped"]){` +
-    `opacity:0!important;visibility:hidden!important;pointer-events:none!important;user-select:none!important;}` +
-    `video:not([${VIDEO_PROCESSED_ATTR}="safe"]):not([${VIDEO_PROCESSED_ATTR}="skipped"]){` +
     `opacity:0!important;visibility:hidden!important;pointer-events:none!important;user-select:none!important;}`;
   (document.head || document.documentElement).appendChild(nsfwStyleEl);
 }
@@ -91,8 +89,6 @@ export function ensureNsfwStyleSheet(): void {
 export function getNsfwStyleSheetCssText(): string {
   return (
     `img:not([data-pg-patrol-overlay-owned="true"]):not([${REPLACED_ATTR}="true"]):not([${PROCESSED_ATTR}="safe"]):not([${PROCESSED_ATTR}="skipped"]){` +
-    `opacity:0!important;visibility:hidden!important;pointer-events:none!important;user-select:none!important;}` +
-    `video:not([${VIDEO_PROCESSED_ATTR}="safe"]):not([${VIDEO_PROCESSED_ATTR}="skipped"]){` +
     `opacity:0!important;visibility:hidden!important;pointer-events:none!important;user-select:none!important;}`
   );
 }

@@ -52,7 +52,7 @@ describe('Preact migration — component rendering', () => {
     render(<Settings settings={DEFAULT_SETTINGS} onUpdate={jest.fn()} />);
     expect(screen.getByText('18+ Word Filter')).toBeTruthy();
     expect(screen.getByText('Good Vibes Mode')).toBeTruthy();
-    expect(screen.getByText('Image Filtering')).toBeTruthy();
+    expect(screen.getByText('Image Filtering (Research Preview)')).toBeTruthy();
   });
 
   it('Settings sensitivity buttons are interactive', () => {

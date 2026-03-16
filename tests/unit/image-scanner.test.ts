@@ -583,12 +583,12 @@ describe('image-scanner', () => {
       expect(css).toContain('pointer-events:none!important');
     });
 
-    it('contains the video NSFW hide rule', () => {
+    it('does not contain video hiding rules (videos are not hidden)', () => {
       ensureNsfwStyleSheet();
       const style = document.getElementById('pg-patrol-nsfw-styles');
       const css = style?.textContent || '';
-      expect(css).toContain('data-pg-patrol-vid-processed="safe"');
-      expect(css).toContain('opacity:0!important');
+      expect(css).not.toContain('video');
+      expect(css).not.toContain('data-pg-patrol-vid-processed');
     });
 
     it('is idempotent — does not inject duplicate stylesheets', () => {

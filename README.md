@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./store-assets/pg-patrol-banner.gif" alt="PG Patrol — Let them explore. We'll keep it clean." width="800" />
+</p>
+
 # PG Patrol — Parental Control Browser Extension
 
 **Family-friendly web filter — replaces profanity with funny words, hides NSFW images, and softens distress-heavy content. All AI runs locally on your device.**
@@ -8,8 +12,7 @@
 [![Firefox MV3](https://img.shields.io/badge/Firefox-MV3-FF7139.svg?logo=firefox&logoColor=white)](#browser-compatibility)
 [![Privacy](https://img.shields.io/badge/privacy-100%25_local-8B5CF6.svg)](#privacy)
 
-<!-- TODO: Add screenshot -->
-<!-- ![PG Patrol Screenshot](./store-assets/screenshot-popup.png) -->
+<!-- Launch video: store-assets/pg-patrol-launch.mp4 — upload to a GitHub issue/PR to embed, or view at https://github.com/nareshnavinash/pg-patrol/releases -->
 
 ---
 

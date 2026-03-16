@@ -21,7 +21,7 @@ describe('Settings', () => {
 
     expect(screen.getByText('18+ Word Filter')).toBeInTheDocument();
     expect(screen.getByText('Good Vibes Mode')).toBeInTheDocument();
-    expect(screen.getByText('Image Filtering')).toBeInTheDocument();
+    expect(screen.getByText('Image Filtering (Research Preview)')).toBeInTheDocument();
     expect(screen.getByText('AI-Enhanced Detection')).toBeInTheDocument();
     expect(screen.getByText('Developer Mode')).toBeInTheDocument();
   });
