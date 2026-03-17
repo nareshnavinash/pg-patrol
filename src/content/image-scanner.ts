@@ -17,7 +17,7 @@ import {
   showSafeBackgroundSurface,
 } from './media-surfaces';
 import { pauseObserver, resumeObserver } from './observer';
-import { createBannerDataUri } from './banner-data-uri';
+import { getReplacementSrc } from './replacement-images';
 
 const PROCESSED_ATTR = 'data-pg-patrol-img-processed';
 const VIDEO_PROCESSED_ATTR = 'data-pg-patrol-vid-processed';
@@ -66,6 +66,9 @@ export async function initImageCache(): Promise<void> {
  * Expose the cache instance for threshold updates from index.ts.
  */
 export { imageCache };
+
+// Re-export for content script initialization
+export { initReplacementImages } from './replacement-images';
 
 // Persistent stylesheet for scan-first blur and final NSFW hiding.
 // CSS rules survive React/framework re-renders.
@@ -503,9 +506,14 @@ function hideImage(img: HTMLImageElement): void {
 
   pauseObserver();
 
+  // Detect aspect ratio for bucket selection
+  const w = img.naturalWidth || img.width || img.clientWidth || 300;
+  const h = img.naturalHeight || img.height || img.clientHeight || 300;
+  const repl = getReplacementSrc(source, w, h);
+
   const banner = document.createElement('img');
-  banner.src = createBannerDataUri();
-  banner.alt = 'Restricted image hidden by PG Patrol';
+  banner.src = repl.src;
+  banner.alt = repl.alt;
 
   // Mark as ours — exempt from scanning + CSS hiding
   banner.setAttribute(OVERLAY_OWNED_ATTR, 'true');
@@ -520,8 +528,8 @@ function hideImage(img: HTMLImageElement): void {
   if (img.width) banner.width = img.width;
   if (img.height) banner.height = img.height;
   banner.style.cssText = img.style.cssText;
-  banner.style.objectFit = 'contain';
-  banner.style.backgroundColor = '#EEF2FF';
+  banner.style.objectFit = 'cover';
+  banner.style.backgroundColor = '#e5e7eb';
   // Force visible (override NSFW stylesheet)
   banner.style.setProperty('opacity', '1', 'important');
   banner.style.setProperty('visibility', 'visible', 'important');

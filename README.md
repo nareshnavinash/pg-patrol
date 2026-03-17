@@ -7,7 +7,7 @@
 **Family-friendly web filter — replaces profanity with funny words, hides NSFW images, and softens distress-heavy content. All AI runs locally on your device.**
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Tests](https://img.shields.io/badge/tests-875%2B-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-908%2B-brightgreen.svg)](./tests)
 [![Chrome MV3](https://img.shields.io/badge/Chrome-MV3-4285F4.svg?logo=googlechrome&logoColor=white)](#browser-compatibility)
 [![Firefox MV3](https://img.shields.io/badge/Firefox-MV3-FF7139.svg?logo=firefox&logoColor=white)](#browser-compatibility)
 [![Privacy](https://img.shields.io/badge/privacy-100%25_local-8B5CF6.svg)](#privacy)
@@ -35,7 +35,7 @@
 ## Features
 
 - **Profanity Filter** — Replaces swear words with funny, family-friendly alternatives
-- **NSFW Image Blocker** — Detects and hides explicit images using a local AI model (ViT-Tiny ONNX)
+- **NSFW Image Blocker** — Detects and silently replaces explicit images with pleasant stock photos (cute animals, food) using a local AI model (ViT-Tiny ONNX)
 - **Good Vibes Mode** — Softens distress-heavy content blocks with a gentle overlay
 - **Real-Time Protection** — Works on dynamic pages: social feeds, infinite scroll, lazy-loaded images, comment sections
 - **ML Text Toxicity** — 6-label Jigsaw toxicity model (MiniLMv2) for borderline content classification
@@ -45,19 +45,22 @@
 - **Activity Log** — Per-page log of what was filtered
 - **Stats Tracking** — All-time counts of words replaced and images hidden
 - **Reveal Toggle** — Temporarily view original content
+- **Silent Replacement** — Blocked images are replaced with cute animals and mouth-watering food photos instead of obvious "blocked" banners — no curiosity spikes
+- **Offline Ready** — 60 bundled replacement images (WebP, 600px) ensure coverage even without internet; online mode caches more from Pexels CDN
 - **Privacy-First** — All core filtering runs locally; no data sent to servers
 
 ---
 
 ## Why PG Patrol?
 
-| Feature            | PG Patrol         | Typical Web Filters    |
-| ------------------ | ----------------- | ---------------------- |
-| Data privacy       | 100% on-device    | Cloud-based scanning   |
-| Profanity handling | Funny words       | Asterisks or blanks    |
-| NSFW detection     | Local AI model    | Cloud API or blocklist |
-| Cost               | Free, open source | $3-10/month            |
-| Browsers           | 6 browsers        | Usually Chrome only    |
+| Feature            | PG Patrol               | Typical Web Filters    |
+| ------------------ | ----------------------- | ---------------------- |
+| Data privacy       | 100% on-device          | Cloud-based scanning   |
+| Profanity handling | Funny words             | Asterisks or blanks    |
+| NSFW detection     | Local AI model          | Cloud API or blocklist |
+| Blocked images     | Cute animal/food photos | Scary warning banners  |
+| Cost               | Free, open source       | $3-10/month            |
+| Browsers           | 6 browsers              | Usually Chrome only    |
 
 ---
 
@@ -209,6 +212,7 @@ After loading, pin PG Patrol to your browser toolbar for easy access.
 ### Key Design Decisions
 
 - **Pre-blur CSS** — Injected at `document_start` to blur all images before page renders. Removed after classification completes.
+- **Silent image replacement** — Blocked NSFW images are replaced with pleasant stock photos (cute animals, food) matched by aspect ratio. 3-tier fallback: IndexedDB-cached data URIs > bundled WebP assets > SVG banner.
 - **Web Worker** — Text filtering (profanity + negative content scoring) runs off the main thread.
 - **Multi-crop inference** — Ambiguous NSFW scores (0.2-0.7) trigger a second pass with a 2x zoomed center crop.
 - **Tiered text classification** — Keyword score > 0.06 blocks immediately; 0.015-0.06 goes to ML classifier; < 0.015 allows immediately.
@@ -248,6 +252,7 @@ src/
 │   ├── filter-worker.ts      # Web Worker for off-thread text processing
 │   ├── filter-worker-proxy.ts# Worker communication proxy
 │   ├── image-scanner.ts      # NSFW image detection pipeline
+│   ├── replacement-images.ts # Stock photo selection (3-tier fallback)
 │   ├── dom-walker.ts         # DOM text node traversal
 │   ├── observer.ts           # MutationObserver for dynamic content
 │   └── ...
@@ -273,8 +278,9 @@ src/
 │   ├── icons/                # Extension icons (16, 32, 48, 128)
 │   ├── models/               # ONNX NSFW model (nsfw.onnx)
 │   ├── ml-models/            # Transformers.js text toxicity model
-│   └── cartoons/             # Placeholder SVGs for blocked images
-├── data/                     # JSON data files (word lists, model data)
+│   ├── cartoons/             # Placeholder SVGs for blocked images
+│   └── replacements/         # 60 bundled stock photos (animals + food, WebP)
+├── data/                     # Curated CDN URLs + JSON word lists
 ├── manifest.ts               # Chrome manifest (MV3)
 └── styles/
     └── global.css
@@ -288,7 +294,7 @@ store-assets/                 # Store listing descriptions
 ### Running Tests
 
 ```bash
-# Unit tests (879 tests across 44 suites)
+# Unit tests (908 tests across 46 suites)
 npm test
 
 # With coverage
@@ -311,13 +317,13 @@ PG Patrol is designed with a privacy-first approach:
 
 ### Permissions Explained
 
-| Permission                | Why                                              |
-| ------------------------- | ------------------------------------------------ |
-| `storage`                 | Save your settings and preferences               |
-| `activeTab`               | Access the current tab for filtering             |
-| `alarms`                  | Schedule periodic word list updates (every 24h)  |
-| `offscreen` (Chrome only) | Run AI models in an isolated background context  |
-| `<all_urls>`              | Inject content scripts to filter pages you visit |
+| Permission                | Why                                                                   |
+| ------------------------- | --------------------------------------------------------------------- |
+| `storage`                 | Save your settings and preferences                                    |
+| `activeTab`               | Access the current tab for filtering                                  |
+| `alarms`                  | Schedule periodic word list and replacement image updates (every 24h) |
+| `offscreen` (Chrome only) | Run AI models in an isolated background context                       |
+| `<all_urls>`              | Inject content scripts to filter pages you visit                      |
 
 For full details, see [PRIVACY.md](./PRIVACY.md).
 

@@ -2,6 +2,25 @@
  * @jest-environment jsdom
  */
 
+// Mock replacement-images before importing media-surfaces
+jest.mock('../../src/content/replacement-images', () => ({
+  getReplacementSrc: jest.fn((_url: string, _w: number, _h: number) => ({
+    src: 'data:image/jpeg;base64,mock-stock-photo',
+    alt: 'Pleasant scenic view',
+  })),
+  detectBucket: jest.fn(() => 'square'),
+  initReplacementImages: jest.fn(),
+  simpleHash: jest.fn((s: string) => Math.abs(s.length)),
+  setCachedReplacements: jest.fn(),
+}));
+
+// Mock banner-data-uri
+jest.mock('../../src/content/banner-data-uri', () => ({
+  createBannerDataUri: jest
+    .fn()
+    .mockReturnValue('data:image/svg+xml;charset=utf-8,%3Csvg%3E%3C/svg%3E'),
+}));
+
 import {
   showBlockedSurface,
   showPendingSurface,
@@ -11,6 +30,7 @@ import {
   removeAllMediaSurfaces,
   refreshAllMediaSurfaces,
 } from '../../src/content/media-surfaces';
+import { getReplacementSrc } from '../../src/content/replacement-images';
 
 const OVERLAY_ROOT_ID = 'pg-patrol-media-overlay-root';
 
@@ -41,46 +61,56 @@ describe('media-surfaces', () => {
   }
 
   describe('showBlockedSurface', () => {
-    it('creates a text overlay with "Restricted image hidden"', () => {
+    it('creates an overlay with a stock photo <img> element', () => {
       const target = createTarget(400, 400);
       showBlockedSurface(target);
 
       const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
       expect(overlayRoot).not.toBeNull();
-      expect(overlayRoot!.textContent).toContain('Restricted image hidden');
-      expect(overlayRoot!.textContent).toContain('Sensitive media was removed from view.');
+      const shell = overlayRoot!.firstElementChild as HTMLElement;
+      const img = shell.querySelector('img');
+      expect(img).not.toBeNull();
+      expect(img!.src).toContain('data:image/jpeg');
+      expect(img!.style.objectFit).toBe('cover');
     });
 
-    it('shows PG Patrol eyebrow label', () => {
+    it('uses neutral alt text on stock photo overlay', () => {
       const target = createTarget(400, 400);
       showBlockedSurface(target);
 
       const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
+      const shell = overlayRoot!.firstElementChild as HTMLElement;
+      const img = shell.querySelector('img');
+      expect(img).not.toBeNull();
+      const alt = img!.alt.toLowerCase();
+      expect(alt).not.toContain('blocked');
+      expect(alt).not.toContain('restricted');
+      expect(alt).not.toContain('nsfw');
+      expect(alt).not.toContain('hidden');
+    });
+
+    it('falls back to navy shield UI when no stock photos available', () => {
+      // Mock getReplacementSrc to return SVG fallback
+      (getReplacementSrc as jest.Mock).mockReturnValueOnce({
+        src: 'data:image/svg+xml;charset=utf-8,%3Csvg%3E%3C/svg%3E',
+        alt: 'Decorative image',
+      });
+
+      const target = createTarget(400, 400);
+      showBlockedSurface(target);
+
+      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
+      expect(overlayRoot!.textContent).toContain('Restricted image hidden');
       expect(overlayRoot!.textContent).toContain('PG Patrol');
     });
 
-    it('uses opaque #1e1b4b background with !important, indigo border and shadow', () => {
+    it('uses opaque background with !important', () => {
       const target = createTarget(400, 400);
       showBlockedSurface(target);
 
       const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
       const shell = overlayRoot!.firstElementChild as HTMLElement;
-      // setProperty stores values accessible via getPropertyValue
-      const bg = shell.style.getPropertyValue('background');
-      expect(bg).toContain('30, 27, 75');
-      expect(shell.style.getPropertyPriority('background')).toBe('important');
       expect(shell.style.getPropertyPriority('opacity')).toBe('important');
-      expect(shell.style.border).toContain('rgba(99');
-      expect(shell.style.boxShadow).toBeTruthy();
-    });
-
-    it('does not apply backdrop-filter (stays opaque)', () => {
-      const target = createTarget(400, 400);
-      showBlockedSurface(target);
-
-      const overlayRoot = document.getElementById(OVERLAY_ROOT_ID);
-      const shell = overlayRoot!.firstElementChild as HTMLElement;
-      expect(shell.style.backdropFilter).toBeFalsy();
     });
   });
 

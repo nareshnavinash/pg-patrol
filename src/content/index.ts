@@ -29,6 +29,7 @@ import {
   ensureNsfwStyleSheet,
   initImageCache,
   imageCache,
+  initReplacementImages,
 } from './image-scanner';
 import { startShadowDomScanner } from './shadow-dom-scanner';
 import { isAdultDomain } from '../shared/adult-domain-keywords';
@@ -656,6 +657,9 @@ async function init(): Promise<void> {
   if (settings.textFilterEnabled) {
     await fullScan();
   }
+
+  // Pre-load replacement images from background cache (async, non-blocking)
+  initReplacementImages();
 
   // Hydrate the persistent image classification cache before any scanning begins.
   await initImageCache();

@@ -47,6 +47,18 @@ jest.mock('../../src/content/observer', () => ({
   stopObserver: jest.fn(),
 }));
 
+// Mock replacement-images to provide stock photo replacements
+jest.mock('../../src/content/replacement-images', () => ({
+  getReplacementSrc: jest.fn((url: string, _w: number, _h: number) => ({
+    src: `data:image/jpeg;base64,mock-replacement-for-${url.slice(-10)}`,
+    alt: 'Pleasant scenic view',
+  })),
+  initReplacementImages: jest.fn(),
+  detectBucket: jest.fn(() => 'square'),
+  simpleHash: jest.fn((s: string) => Math.abs(s.length)),
+  setCachedReplacements: jest.fn(),
+}));
+
 // Provide chrome.storage.local stub for cache
 if (!(globalThis as Record<string, unknown>).chrome) {
   (globalThis as Record<string, unknown>).chrome = {
@@ -216,7 +228,9 @@ describe('image-scanner', () => {
       expect(banner!.getAttribute('data-pg-patrol-original-src')).toBe(
         'https://example.com/nsfw.jpg',
       );
-      expect((banner as HTMLImageElement).src).toMatch(/^data:image\/svg\+xml/);
+      // Banner src is now a stock photo (data URI or chrome-extension URL)
+      expect((banner as HTMLImageElement).src).toBeTruthy();
+      expect((banner as HTMLImageElement).style.objectFit).toBe('cover');
     });
 
     it('skips banner elements in requeueImage', async () => {
@@ -655,7 +669,8 @@ describe('image-scanner', () => {
       const banner = document.body.querySelector('img[data-pg-patrol-replaced="true"]');
       expect(banner).not.toBeNull();
       expect(banner!.getAttribute('data-pg-patrol-img-processed')).toBe('nsfw');
-      expect((banner as HTMLImageElement).src).toMatch(/^data:image\/svg\+xml/);
+      // Banner src is now a stock photo replacement
+      expect((banner as HTMLImageElement).src).toBeTruthy();
     });
 
     it('cached NSFW video poster skips classification and shows blocked surface', async () => {

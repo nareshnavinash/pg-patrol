@@ -1,6 +1,7 @@
 import { MessageType } from '../shared/types';
 import type { Message, StatsResponse, MLClassifyResult, ActivityEntry } from '../shared/types';
 import { fetchAndCacheWordList } from '../shared/word-list-updater';
+import { cacheImages, getAllCachedImages, rotateCachedImages } from './image-cache';
 
 // Per-tab replacement counts
 const tabStats = new Map<number, { wordsReplaced: number; imagesReplaced: number }>();
@@ -247,6 +248,13 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
       break;
     }
 
+    case MessageType.GET_REPLACEMENT_BATCH: {
+      getAllCachedImages()
+        .then((images) => sendResponse(images))
+        .catch(() => sendResponse({ landscape: [], portrait: [], square: [] }));
+      return true; // async response
+    }
+
     case MessageType.OFFSCREEN_IDLE: {
       closeOffscreenDocument();
       break;
@@ -262,10 +270,19 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 
 // Periodic remote word list update (every 24 hours)
 chrome.alarms.create('wordListUpdate', { periodInMinutes: 1440 });
+
+// Daily replacement image cache rotation (every 24 hours)
+chrome.alarms.create('refresh-replacements', { periodInMinutes: 1440 });
+
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'wordListUpdate') {
     fetchAndCacheWordList().catch(() => {
       // Network failure — cached/bundled defaults still work
+    });
+  }
+  if (alarm.name === 'refresh-replacements') {
+    rotateCachedImages().catch(() => {
+      // Network failure — existing cached images still work
     });
   }
 });
@@ -274,6 +291,11 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 chrome.runtime.onInstalled.addListener((details) => {
   fetchAndCacheWordList().catch(() => {
     // Silent fail — offline still works with bundled defaults
+  });
+
+  // Fill replacement image cache on install/update
+  cacheImages().catch(() => {
+    // Network failure — bundled fallbacks still work
   });
 
   // Existing users upgrading should skip the onboarding flow

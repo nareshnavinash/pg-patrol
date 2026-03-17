@@ -67,6 +67,7 @@ export enum MessageType {
   NSFW_CLASSIFY_RESPONSE = 'NSFW_CLASSIFY_RESPONSE',
   LOG_ACTIVITY = 'LOG_ACTIVITY',
   GET_ACTIVITY_LOG = 'GET_ACTIVITY_LOG',
+  GET_REPLACEMENT_BATCH = 'GET_REPLACEMENT_BATCH',
 }
 
 export interface UpdateStatsMessage {
@@ -131,6 +132,10 @@ export interface GetActivityLogMessage {
   tabId?: number;
 }
 
+export interface GetReplacementBatchMessage {
+  type: MessageType.GET_REPLACEMENT_BATCH;
+}
+
 export type NSFWImageInput =
   | { kind: 'url'; imageUrl: string }
   | { kind: 'pixels'; width: number; height: number; data: Uint8ClampedArray };
@@ -191,7 +196,8 @@ export type Message =
   | NSFWClassifyInternalMessage
   | NSFWClassifyResponseMessage
   | LogActivityMessage
-  | GetActivityLogMessage;
+  | GetActivityLogMessage
+  | GetReplacementBatchMessage;
 
 export interface StatsResponse {
   wordsReplaced: number;

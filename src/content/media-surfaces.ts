@@ -1,3 +1,5 @@
+import { getReplacementSrc } from './replacement-images';
+
 const OVERLAY_ROOT_ID = 'pg-patrol-media-overlay-root';
 const OVERLAY_OWNED_ATTR = 'data-pg-patrol-overlay-owned';
 
@@ -291,26 +293,63 @@ export function showBlockedSurface(target: HTMLElement): void {
   const record = getOrCreateSurface(target);
   record.mode = 'blocked';
   record.shell.innerHTML = '';
-  if (!record.content.isConnected || record.content.parentElement !== record.shell) {
-    record.content = createMessageContent();
+
+  // Derive source URL for deterministic hash
+  const sourceUrl =
+    target.getAttribute('data-pg-patrol-img-source') || (target as HTMLVideoElement).poster || '';
+  const rect = target.getBoundingClientRect();
+  const w = rect.width || 300;
+  const h = rect.height || 300;
+  const repl = getReplacementSrc(sourceUrl, w, h);
+
+  // Use stock photo if available (not SVG banner fallback)
+  const isSvgFallback = repl.src.startsWith('data:image/svg+xml');
+
+  if (!isSvgFallback) {
+    // Stock photo mode: fill with pleasant image
+    const img = document.createElement('img');
+    img.setAttribute(OVERLAY_OWNED_ATTR, 'true');
+    img.src = repl.src;
+    img.alt = repl.alt;
+    Object.assign(img.style, {
+      width: '100%',
+      height: '100%',
+      display: 'block',
+      objectFit: 'cover',
+      pointerEvents: 'none',
+      userSelect: 'none',
+    });
+    record.shell.appendChild(img);
+    Object.assign(record.shell.style, {
+      border: 'none',
+      boxShadow: 'none',
+    });
+    record.shell.style.setProperty('background', '#e5e7eb', 'important');
+    record.shell.style.setProperty('opacity', '1', 'important');
+  } else {
+    // Fallback: original navy shield UI
+    if (!record.content.isConnected || record.content.parentElement !== record.shell) {
+      record.content = createMessageContent();
+    }
+    record.shell.appendChild(record.content);
+    Object.assign(record.shell.style, {
+      border: '1px solid rgba(99, 102, 241, 0.25)',
+      boxShadow: '0 4px 24px rgba(15, 23, 42, 0.5), 0 1px 3px rgba(0,0,0,0.2)',
+    });
+    record.shell.style.setProperty('background', '#1e1b4b', 'important');
+    record.shell.style.setProperty('opacity', '1', 'important');
+    const shieldSvg =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 230" width="60" height="46" fill="none">' +
+      '<path d="M150 30 C150 30 100 45 70 50 C70 95 75 155 150 195 C225 155 230 95 230 50 C200 45 150 30 150 30Z" fill="#6366F1"/>' +
+      '<text x="150" y="135" text-anchor="middle" font-family="system-ui,sans-serif" font-size="52" font-weight="800" fill="white">PG</text>' +
+      '</svg>';
+    record.content.innerHTML =
+      `<div style="margin-bottom:2px">${shieldSvg}</div>` +
+      `<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#818cf8">PG Patrol</div>` +
+      `<div style="font-size:14px;font-weight:600;line-height:1.3;color:#f8fafc">Restricted image hidden</div>` +
+      `<div style="font-size:12px;line-height:1.4;color:#a5b4fc">Sensitive media was removed from view.</div>`;
   }
-  record.shell.appendChild(record.content);
-  Object.assign(record.shell.style, {
-    border: '1px solid rgba(99, 102, 241, 0.25)',
-    boxShadow: '0 4px 24px rgba(15, 23, 42, 0.5), 0 1px 3px rgba(0,0,0,0.2)',
-  });
-  record.shell.style.setProperty('background', '#1e1b4b', 'important');
-  record.shell.style.setProperty('opacity', '1', 'important');
-  const shieldSvg =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 230" width="60" height="46" fill="none">' +
-    '<path d="M150 30 C150 30 100 45 70 50 C70 95 75 155 150 195 C225 155 230 95 230 50 C200 45 150 30 150 30Z" fill="#6366F1"/>' +
-    '<text x="150" y="135" text-anchor="middle" font-family="system-ui,sans-serif" font-size="52" font-weight="800" fill="white">PG</text>' +
-    '</svg>';
-  record.content.innerHTML =
-    `<div style="margin-bottom:2px">${shieldSvg}</div>` +
-    `<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#818cf8">PG Patrol</div>` +
-    `<div style="font-size:14px;font-weight:600;line-height:1.3;color:#f8fafc">Restricted image hidden</div>` +
-    `<div style="font-size:12px;line-height:1.4;color:#a5b4fc">Sensitive media was removed from view.</div>`;
+
   positionSurface(record);
 }
 

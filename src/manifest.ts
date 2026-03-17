@@ -3,7 +3,7 @@ import { defineManifest } from '@crxjs/vite-plugin';
 export default defineManifest({
   manifest_version: 3,
   name: 'PG Patrol',
-  version: '1.1.0',
+  version: '1.2.0',
   description:
     'Free parental control web filter — replaces profanity with funny words, blocks NSFW images using on-device AI',
   permissions: ['storage', 'activeTab', 'alarms', 'offscreen'],
@@ -57,6 +57,10 @@ export default defineManifest({
     },
     {
       resources: ['filter-worker.js'],
+      matches: ['<all_urls>'],
+    },
+    {
+      resources: ['src/assets/replacements/**/*'],
       matches: ['<all_urls>'],
     },
   ],
