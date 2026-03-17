@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PixelGrid - Photo Gallery</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fafafa; color: #262626; }
+
+    .header {
+      background: white; padding: 14px 24px; border-bottom: 1px solid #dbdbdb;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header-logo { font-size: 22px; font-weight: 700; font-style: italic; }
+    .header-nav { display: flex; gap: 20px; font-size: 22px; }
+
+    .page-title {
+      text-align: center; padding: 32px 16px 8px;
+    }
+    .page-title h1 { font-size: 24px; font-weight: 700; }
+    .page-title p { font-size: 14px; color: #8e8e8e; margin-top: 4px; }
+
+    .gallery {
+      max-width: 960px; margin: 24px auto; padding: 0 16px;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+    }
+    .gallery-item {
+      position: relative; overflow: hidden;
+      aspect-ratio: 1; cursor: pointer;
+    }
+    .gallery-item img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .gallery-item:hover img { transform: scale(1.05); }
+    .gallery-item .overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.3);
+      display: flex; align-items: center; justify-content: center; gap: 20px;
+      opacity: 0; transition: opacity 0.3s;
+      color: white; font-weight: 700; font-size: 14px;
+    }
+    .gallery-item:hover .overlay { opacity: 1; }
+
+    .section-divider {
+      max-width: 960px; margin: 32px auto 16px; padding: 0 16px;
+      font-size: 18px; font-weight: 700;
+    }
+
+    @media (max-width: 640px) {
+      .gallery { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo">PixelGrid</div>
+    <div class="header-nav">&#127968; &#128269; &#10133; &#128140; &#128100;</div>
+  </div>
+
+  <div class="page-title">
+    <h1>Trending Photos</h1>
+    <p>Discover what's popular today</p>
+  </div>
+
+  <!-- Safe gallery section (these should not be filtered) -->
+  <div class="section-divider">&#127796; Nature &amp; Landscapes</div>
+  <div class="gallery">
+    <div class="gallery-item">
+      <img src="https://picsum.photos/seed/nature1/400/400" alt="Mountain landscape">
+      <div class="overlay">&#10084;&#65039; 2.4k</div>
+    </div>
+    <div class="gallery-item">
+      <img src="https://picsum.photos/seed/nature2/400/400" alt="Forest path">
+      <div class="overlay">&#10084;&#65039; 1.8k</div>
+    </div>
+    <div class="gallery-item">
+      <img src="https://picsum.photos/seed/nature3/400/400" alt="Ocean sunset">
+      <div class="overlay">&#10084;&#65039; 3.1k</div>
+    </div>
+  </div>
+
+  <!-- NSFW section (these should be detected and replaced by the extension) -->
+  <div class="section-divider">&#128248; People &amp; Portraits</div>
+  <div class="gallery" id="nsfw-gallery">
+    <div class="gallery-item">
+      <img src="../fixtures/nsfw-fixture-01.png" alt="Portrait 1" id="nsfw-img-1">
+      <div class="overlay">&#10084;&#65039; 5.2k</div>
+    </div>
+    <div class="gallery-item">
+      <img src="../fixtures/nsfw-fixture-02.png" alt="Portrait 2" id="nsfw-img-2">
+      <div class="overlay">&#10084;&#65039; 4.7k</div>
+    </div>
+    <div class="gallery-item">
+      <img src="../fixtures/nsfw-fixture-03.png" alt="Portrait 3" id="nsfw-img-3">
+      <div class="overlay">&#10084;&#65039; 3.9k</div>
+    </div>
+    <div class="gallery-item">
+      <img src="../fixtures/nsfw-fixture-04.png" alt="Portrait 4" id="nsfw-img-4">
+      <div class="overlay">&#10084;&#65039; 6.1k</div>
+    </div>
+    <div class="gallery-item">
+      <img src="../fixtures/nsfw-fixture-05.png" alt="Portrait 5" id="nsfw-img-5">
+      <div class="overlay">&#10084;&#65039; 2.8k</div>
+    </div>
+    <div class="gallery-item">
+      <img src="../fixtures/nsfw-fixture-06.png" alt="Portrait 6" id="nsfw-img-6">
+      <div class="overlay">&#10084;&#65039; 4.3k</div>
+    </div>
+  </div>
+
+  <!-- More safe images -->
+  <div class="section-divider">&#127860; Food &amp; Travel</div>
+  <div class="gallery">
+    <div class="gallery-item">
+      <img src="https://picsum.photos/seed/food1/400/400" alt="Pasta dish">
+      <div class="overlay">&#10084;&#65039; 1.5k</div>
+    </div>
+    <div class="gallery-item">
+      <img src="https://picsum.photos/seed/travel1/400/400" alt="City skyline">
+      <div class="overlay">&#10084;&#65039; 2.2k</div>
+    </div>
+    <div class="gallery-item">
+      <img src="https://picsum.photos/seed/food2/400/400" alt="Coffee and pastry">
+      <div class="overlay">&#10084;&#65039; 1.9k</div>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Daily Wire - Breaking News</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Georgia, 'Times New Roman', serif; background: #f8f8f8; color: #1a1a1a; }
+
+    .topbar {
+      background: #1a1a2e; color: white; padding: 8px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: -apple-system, sans-serif; font-size: 12px;
+    }
+    .topbar-date { opacity: 0.7; }
+
+    .masthead {
+      background: white; text-align: center; padding: 20px 24px;
+      border-bottom: 3px solid #1a1a2e;
+    }
+    .masthead h1 {
+      font-size: 36px; letter-spacing: 6px; text-transform: uppercase;
+      font-weight: 400;
+    }
+    .masthead .edition {
+      font-family: -apple-system, sans-serif; font-size: 12px;
+      color: #999; margin-top: 4px; letter-spacing: 2px; text-transform: uppercase;
+    }
+
+    .nav {
+      background: white; border-bottom: 1px solid #ddd;
+      display: flex; justify-content: center; gap: 28px;
+      padding: 10px 24px; font-family: -apple-system, sans-serif;
+      font-size: 13px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .nav a { text-decoration: none; color: #555; }
+    .nav a:hover { color: #c00; }
+    .nav .active { color: #c00; border-bottom: 2px solid #c00; padding-bottom: 8px; }
+
+    .content { max-width: 1000px; margin: 24px auto; padding: 0 24px; }
+
+    /* Breaking banner */
+    .breaking {
+      background: #c00; color: white; padding: 10px 20px;
+      font-family: -apple-system, sans-serif; font-weight: 700;
+      font-size: 14px; text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 24px; border-radius: 4px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .breaking-dot {
+      width: 10px; height: 10px; background: white; border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+
+    /* Articles */
+    .article { margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid #ddd; }
+    .article:last-child { border-bottom: none; }
+    .article-category {
+      font-family: -apple-system, sans-serif; font-size: 11px;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      color: #c00; font-weight: 700; margin-bottom: 6px;
+    }
+    .article h2 { font-size: 26px; line-height: 1.2; margin-bottom: 8px; }
+    .article h3 { font-size: 20px; line-height: 1.3; margin-bottom: 6px; }
+    .article .byline {
+      font-family: -apple-system, sans-serif; font-size: 12px;
+      color: #999; margin-bottom: 10px;
+    }
+    .article p { font-size: 15px; line-height: 1.7; margin-bottom: 8px; }
+    .article img {
+      width: 100%; height: auto; margin: 12px 0;
+      border: 1px solid #eee;
+    }
+
+    /* Sidebar */
+    .sidebar h3 {
+      font-family: -apple-system, sans-serif; font-size: 12px;
+      text-transform: uppercase; letter-spacing: 2px; color: #c00;
+      margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #c00;
+    }
+    .sidebar-item {
+      padding: 12px 0; border-bottom: 1px solid #eee;
+      font-size: 14px; line-height: 1.4;
+    }
+    .sidebar-item:last-child { border-bottom: none; }
+    .sidebar-item .number {
+      font-family: -apple-system, sans-serif; font-weight: 800;
+      color: #c00; font-size: 18px; margin-right: 8px;
+    }
+
+    /* Safe section */
+    .safe-section {
+      margin-top: 32px; padding-top: 24px; border-top: 2px solid #ddd;
+    }
+    .safe-section h3 {
+      font-family: -apple-system, sans-serif; font-size: 12px;
+      text-transform: uppercase; letter-spacing: 2px; color: #333;
+      margin-bottom: 16px;
+    }
+    .safe-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .safe-card h4 { font-size: 16px; margin-bottom: 4px; }
+    .safe-card p { font-size: 14px; color: #555; line-height: 1.5; }
+
+    @media (max-width: 768px) {
+      .grid { grid-template-columns: 1fr; }
+      .safe-grid { grid-template-columns: 1fr; }
+      .nav { flex-wrap: wrap; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <span>The Daily Wire</span>
+    <span class="topbar-date">Tuesday, March 17, 2026</span>
+  </div>
+
+  <header class="masthead">
+    <h1>The Daily Wire</h1>
+    <div class="edition">Breaking News &bull; Analysis &bull; Investigations</div>
+  </header>
+
+  <nav class="nav">
+    <a href="#" class="active">World</a>
+    <a href="#">Politics</a>
+    <a href="#">Business</a>
+    <a href="#">Science</a>
+    <a href="#">Sports</a>
+    <a href="#">Lifestyle</a>
+  </nav>
+
+  <div class="content">
+
+    <!-- Breaking News Banner -->
+    <div class="breaking">
+      <span class="breaking-dot"></span>
+      BREAKING NEWS: Multiple incidents reported across the region
+    </div>
+
+    <div class="grid">
+
+      <!-- Main Column -->
+      <div class="main-col">
+
+        <!-- Negative Article 1: War -->
+        <article class="article" id="neg-war">
+          <div class="article-category">World Crisis</div>
+          <h2>Devastating airstrike kills dozens of civilians in besieged city</h2>
+          <div class="byline">By Sarah Mitchell &bull; Updated 45 minutes ago</div>
+          <img src="https://picsum.photos/seed/news1/700/350" alt="News photo">
+          <p>A massive bombing campaign has killed at least 47 civilians and wounded over 100 others in what aid organizations are calling one of the deadliest attacks this year. Hospitals are overwhelmed with casualties as the death toll continues to climb.</p>
+          <p>Emergency responders struggled to reach victims trapped under rubble. The targeted area included a marketplace and residential buildings. International leaders have condemned the violence and called for an immediate ceasefire.</p>
+        </article>
+
+        <!-- Negative Article 2: Mass violence -->
+        <article class="article" id="neg-shooting">
+          <div class="article-category">Breaking</div>
+          <h2>Gunman opens fire at shopping center, multiple casualties reported</h2>
+          <div class="byline">By James Rodriguez &bull; 2 hours ago</div>
+          <p>A shooting at a busy shopping center has left at least five people dead and a dozen more injured. The gunman, who was armed with multiple weapons, opened fire in the food court during the lunchtime rush. Witnesses describe scenes of terror as shoppers fled for their lives.</p>
+          <p>Law enforcement responded within minutes, and the suspect was neutralized at the scene. Investigators are searching for a motive behind the deadly rampage. The victims include two children, according to hospital officials.</p>
+        </article>
+
+        <!-- Negative Article 3: Disaster -->
+        <article class="article" id="neg-disaster">
+          <div class="article-category">Natural Disaster</div>
+          <h3>Earthquake devastates coastal communities, hundreds feared dead</h3>
+          <div class="byline">By Lisa Wang &bull; 3 hours ago</div>
+          <p>A powerful 7.8-magnitude earthquake has caused catastrophic destruction along the coastline. Entire neighborhoods have been reduced to rubble, with hundreds of people feared dead and thousands more displaced. The resulting tsunami flooded low-lying areas, sweeping away homes and vehicles.</p>
+        </article>
+
+        <!-- Negative Article 4: Terrorism -->
+        <article class="article" id="neg-terror">
+          <div class="article-category">Security</div>
+          <h3>Terror cell uncovered: police arrest suspects planning coordinated attacks</h3>
+          <div class="byline">By David Chen &bull; 5 hours ago</div>
+          <p>Counter-terrorism units have arrested seven suspects allegedly planning a series of coordinated bombings targeting civilian infrastructure. Explosive materials and weapons were seized during raids across multiple locations. Officials warn the threat of domestic terrorism remains at its highest level.</p>
+        </article>
+
+        <!-- Safe Section -->
+        <div class="safe-section">
+          <h3>Lighter News</h3>
+          <div class="safe-grid">
+            <div class="safe-card">
+              <h4>Local library breaks record with summer reading program</h4>
+              <p>Over 5,000 children participated in this year's summer reading challenge, setting a new community record. The library celebrated with a carnival and book giveaway.</p>
+            </div>
+            <div class="safe-card">
+              <h4>Golden retriever named "Mayor" of small Vermont town</h4>
+              <p>Residents of Willowbrook unanimously elected Max the golden retriever as their honorary mayor. His platform of "more treats and belly rubs" won hearts across the state.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <h3>Most Read</h3>
+        <div class="sidebar-item" id="neg-sidebar-1">
+          <span class="number">1</span>
+          Deadly explosion at chemical plant kills workers and forces mass evacuation
+        </div>
+        <div class="sidebar-item" id="neg-sidebar-2">
+          <span class="number">2</span>
+          Violent riots erupt as protesters clash with police in capital city
+        </div>
+        <div class="sidebar-item" id="neg-sidebar-3">
+          <span class="number">3</span>
+          Child trafficking ring dismantled in international operation
+        </div>
+        <div class="sidebar-item">
+          <span class="number">4</span>
+          New telescope captures stunning images of distant galaxies
+        </div>
+        <div class="sidebar-item">
+          <span class="number">5</span>
+          Scientists develop breakthrough treatment for rare genetic disease
+        </div>
+      </aside>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

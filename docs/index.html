@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PG Patrol — Free Parental Control Extension</title>
+  <meta name="description" content="Free, open-source parental control extension. Replaces profanity with funny words, blocks NSFW images with on-device AI. Works on Chrome, Firefox, Edge, Brave, Opera, and Arc.">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="PG Patrol — Let them explore. We'll keep it clean.">
+  <meta property="og:description" content="Free parental control extension that replaces profanity with funny words and blocks NSFW images using on-device AI. No data ever leaves your device.">
+  <meta property="og:image" content="https://nareshnavinash.github.io/pg-patrol/og-image.svg">
+  <meta property="og:url" content="https://nareshnavinash.github.io/pg-patrol/">
+  <meta property="og:type" content="website">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PG Patrol — Let them explore. We'll keep it clean.">
+  <meta name="twitter:description" content="Free parental control extension. Profanity filter + NSFW image blocker, 100% on-device AI.">
+  <meta name="twitter:image" content="https://nareshnavinash.github.io/pg-patrol/og-image.svg">
+
+  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --gradient-start: #4f46e5;
+      --gradient-mid: #ec4899;
+      --gradient-end: #f97316;
+      --card-bg: rgba(255,255,255,0.92);
+      --text-dark: #1e1b4b;
+      --text-muted: #6b7280;
+      --accent: #6366f1;
+      --accent-pink: #ec4899;
+      --accent-orange: #f97316;
+      --green: #10b981;
+      --radius: 20px;
+      --shadow: 0 8px 32px rgba(79,70,229,0.12);
+      --shadow-hover: 0 12px 40px rgba(79,70,229,0.22);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-dark);
+      line-height: 1.6;
+      background: linear-gradient(135deg, #eef2ff 0%, #fce7f3 40%, #fff7ed 100%);
+      min-height: 100vh;
+    }
+
+    /* Nav */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(99,102,241,0.1);
+      padding: 12px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; color: var(--accent); text-decoration: none; }
+    .nav-logo img { width: 32px; height: 32px; border-radius: 8px; }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: 14px; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-cta {
+      background: linear-gradient(135deg, var(--gradient-start), var(--accent-pink));
+      color: white !important; padding: 8px 20px; border-radius: 50px;
+      font-weight: 700 !important; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(99,102,241,0.4); }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* Hero */
+    .hero {
+      padding: 140px 24px 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: -200px; left: -200px; width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+      border-radius: 50%; pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute; bottom: -150px; right: -150px; width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(236,72,153,0.12) 0%, transparent 70%);
+      border-radius: 50%; pointer-events: none;
+    }
+
+    .hero-shield {
+      width: 100px; height: 100px; margin: 0 auto 24px;
+      animation: float 3s ease-in-out infinite;
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(99,102,241,0.3);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.15;
+      background: linear-gradient(135deg, var(--gradient-start), var(--accent-pink), var(--accent-orange));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+      animation: fadeUp 0.8s ease-out;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--text-muted);
+      max-width: 600px; margin: 0 auto 32px;
+      animation: fadeUp 0.8s ease-out 0.15s both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-buttons {
+      display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 32px;
+      animation: fadeUp 0.8s ease-out 0.3s both;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 32px; border-radius: 50px;
+      font-family: inherit; font-weight: 700; font-size: 16px;
+      text-decoration: none; cursor: pointer; border: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gradient-start), var(--accent-pink));
+      color: white;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.35);
+    }
+    .btn-primary:hover { box-shadow: 0 8px 28px rgba(99,102,241,0.5); }
+
+    .btn-secondary {
+      background: white;
+      color: var(--accent);
+      box-shadow: var(--shadow);
+      border: 2px solid rgba(99,102,241,0.2);
+    }
+    .btn-secondary:hover { box-shadow: var(--shadow-hover); border-color: var(--accent); }
+
+    .browser-row {
+      display: flex; gap: 20px; justify-content: center; align-items: center; flex-wrap: wrap;
+      animation: fadeUp 0.8s ease-out 0.45s both;
+    }
+    .browser-row span {
+      font-size: 14px; color: var(--text-muted); font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .browser-icon { font-size: 20px; }
+
+    /* Section headings */
+    .section { padding: 80px 0; }
+    .section-title {
+      text-align: center; font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 900; margin-bottom: 12px;
+    }
+    .section-subtitle {
+      text-align: center; color: var(--text-muted);
+      font-size: 1.1rem; max-width: 600px; margin: 0 auto 48px;
+    }
+
+    /* How It Works — 3 big cards */
+    .how-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .how-card {
+      background: var(--card-bg); border-radius: var(--radius);
+      padding: 40px 28px; text-align: center;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s, box-shadow 0.3s;
+      position: relative; overflow: hidden;
+    }
+    .how-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-hover); }
+    .how-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .how-card:nth-child(1)::before { background: linear-gradient(90deg, var(--accent), #818cf8); }
+    .how-card:nth-child(2)::before { background: linear-gradient(90deg, var(--accent-pink), #f472b6); }
+    .how-card:nth-child(3)::before { background: linear-gradient(90deg, var(--accent-orange), #fbbf24); }
+
+    .how-emoji { font-size: 56px; margin-bottom: 16px; display: block; }
+    .how-card h3 { font-size: 1.3rem; font-weight: 800; margin-bottom: 8px; }
+    .how-card p { color: var(--text-muted); font-size: 0.95rem; }
+    .how-example {
+      margin-top: 16px; padding: 12px 16px;
+      background: rgba(99,102,241,0.06); border-radius: 12px;
+      font-size: 0.9rem; font-weight: 600;
+    }
+    .strike { text-decoration: line-through; color: #ef4444; opacity: 0.6; }
+    .replaced { color: var(--green); }
+
+    /* Comparison table */
+    .compare-wrap {
+      max-width: 700px; margin: 0 auto;
+      background: var(--card-bg); border-radius: var(--radius);
+      box-shadow: var(--shadow); overflow: hidden;
+    }
+    .compare-table { width: 100%; border-collapse: collapse; }
+    .compare-table th, .compare-table td {
+      padding: 14px 20px; text-align: left; font-size: 0.95rem;
+    }
+    .compare-table thead th {
+      background: linear-gradient(135deg, var(--gradient-start), var(--accent-pink));
+      color: white; font-weight: 700;
+    }
+    .compare-table tbody tr { border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .compare-table tbody tr:last-child { border-bottom: none; }
+    .compare-table tbody tr:hover { background: rgba(99,102,241,0.04); }
+    .check { color: var(--green); font-weight: 800; font-size: 1.2rem; }
+    .cross { color: #ef4444; font-weight: 800; font-size: 1.2rem; }
+
+    /* Feature cards */
+    .feature-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--card-bg); border-radius: 16px;
+      padding: 24px; box-shadow: var(--shadow);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+    .feature-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+    .feature-card h4 { font-weight: 800; font-size: 1rem; margin-bottom: 6px; }
+    .feature-card p { color: var(--text-muted); font-size: 0.88rem; }
+
+    /* Privacy badge */
+    .privacy-badge {
+      background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+      border: 2px solid #6ee7b7;
+      border-radius: var(--radius); padding: 48px 32px;
+      text-align: center; max-width: 700px; margin: 0 auto;
+      position: relative;
+    }
+    .privacy-icon { font-size: 56px; margin-bottom: 12px; display: block; }
+    .privacy-badge h3 { font-size: 1.5rem; font-weight: 900; color: #065f46; margin-bottom: 8px; }
+    .privacy-badge p { color: #047857; font-size: 1rem; max-width: 500px; margin: 0 auto; }
+
+    /* Demo section */
+    .demo-wrap {
+      text-align: center; max-width: 800px; margin: 0 auto;
+    }
+    .demo-media {
+      width: 100%; border-radius: 16px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.15);
+      border: 3px solid rgba(99,102,241,0.2);
+    }
+
+    /* Install CTA */
+    .install-section {
+      text-align: center;
+      background: linear-gradient(135deg, var(--gradient-start), var(--accent-pink), var(--accent-orange));
+      border-radius: var(--radius);
+      padding: 60px 32px; max-width: 800px; margin: 0 auto;
+      color: white;
+    }
+    .install-section h2 { font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 900; margin-bottom: 12px; }
+    .install-section p { opacity: 0.9; margin-bottom: 28px; font-size: 1.05rem; }
+    .install-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn-install {
+      background: white; color: var(--accent);
+      padding: 14px 28px; border-radius: 50px;
+      font-weight: 800; font-size: 15px;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    .btn-install:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+
+    /* Footer */
+    .footer {
+      text-align: center; padding: 40px 24px;
+      color: var(--text-muted); font-size: 0.9rem;
+    }
+    .footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .footer a:hover { text-decoration: underline; }
+    .footer-links { display: flex; gap: 20px; justify-content: center; margin-bottom: 12px; }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hero { padding: 120px 16px 60px; }
+      .section { padding: 60px 0; }
+      .how-grid { grid-template-columns: 1fr; }
+      .feature-grid { grid-template-columns: 1fr 1fr; }
+      .compare-table th, .compare-table td { padding: 10px 14px; font-size: 0.85rem; }
+      .install-section { margin: 0 16px; padding: 40px 24px; }
+    }
+    @media (max-width: 480px) {
+      .feature-grid { grid-template-columns: 1fr; }
+      .hero-buttons { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <a href="#" class="nav-logo">
+      <img src="favicon.png" alt="PG Patrol">
+      PG Patrol
+    </a>
+    <div class="nav-links">
+      <a href="#how-it-works">How It Works</a>
+      <a href="#features">Features</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#install" class="nav-cta">Install Free</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <img src="favicon.png" alt="PG Patrol Shield" class="hero-shield">
+      <h1>Let them explore.<br>We'll keep it clean.</h1>
+      <p class="hero-sub">
+        Free, open-source parental control that replaces profanity with funny words and blocks NSFW images — all powered by on-device AI. No data ever leaves your browser.
+      </p>
+      <div class="hero-buttons">
+        <a href="https://github.com/user/pg-patrol/releases" class="btn btn-primary">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Free
+        </a>
+        <a href="https://github.com/nareshnavinash/pg-patrol" class="btn btn-secondary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          View Source
+        </a>
+      </div>
+      <div class="browser-row">
+        <span><span class="browser-icon">&#127760;</span> Chrome</span>
+        <span><span class="browser-icon">&#129418;</span> Firefox</span>
+        <span><span class="browser-icon">&#127759;</span> Edge</span>
+        <span><span class="browser-icon">&#129409;</span> Brave</span>
+        <span><span class="browser-icon">&#127756;</span> Opera</span>
+        <span><span class="browser-icon">&#127752;</span> Arc</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-subtitle">Three layers of protection, all running locally on your device.</p>
+      <div class="how-grid">
+
+        <div class="how-card">
+          <span class="how-emoji">&#129313;</span>
+          <h3>Bad Words &#8594; Funny Words</h3>
+          <p>Profanity is replaced with hilarious, family-friendly alternatives in real-time. Pages stay readable and natural.</p>
+          <div class="how-example">
+            <span class="strike">What the f***</span> &#8594; <span class="replaced">What the fudge</span>
+          </div>
+        </div>
+
+        <div class="how-card">
+          <span class="how-emoji">&#128062;</span>
+          <h3>NSFW Images &#8594; Cute Animals</h3>
+          <p>Explicit images are detected by on-device AI and silently replaced with adorable animals and tasty food photos.</p>
+          <div class="how-example">
+            <span class="strike">[explicit image]</span> &#8594; <span class="replaced">&#128054; &#129408; &#127829;</span>
+          </div>
+        </div>
+
+        <div class="how-card">
+          <span class="how-emoji">&#127774;</span>
+          <h3>Bad News &#8594; Gentle Overlay</h3>
+          <p>Good Vibes Mode softens distressing content like graphic news and toxic discussions with a calming overlay.</p>
+          <div class="how-example">
+            <span class="strike">[violent headline]</span> &#8594; <span class="replaced">Content softened &#128156;</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Why PG Patrol -->
+  <section class="section" id="compare">
+    <div class="container">
+      <h2 class="section-title">Why PG Patrol?</h2>
+      <p class="section-subtitle">Built different from typical content filters.</p>
+      <div class="compare-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>PG Patrol</th>
+              <th>Typical Filters</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>100% Free &amp; Open Source</td><td><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td></tr>
+            <tr><td>Zero data sent to servers</td><td><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td></tr>
+            <tr><td>On-device AI (no cloud)</td><td><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td></tr>
+            <tr><td>6 browser support</td><td><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td></tr>
+            <tr><td>Replaces profanity (doesn't block pages)</td><td><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td></tr>
+            <tr><td>Custom word lists</td><td><span class="check">&#10003;</span></td><td><span class="check">&#10003;</span></td></tr>
+            <tr><td>No subscription required</td><td><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td></tr>
+            <tr><td>Real-time dynamic content</td><td><span class="check">&#10003;</span></td><td><span class="cross">&#10007;</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature Highlights -->
+  <section class="section" id="features">
+    <div class="container">
+      <h2 class="section-title">Feature Highlights</h2>
+      <p class="section-subtitle">Everything you need to keep browsing family-friendly.</p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="feature-icon">&#9889;</span>
+          <h4>Real-Time Protection</h4>
+          <p>Works on dynamic pages: social feeds, infinite scroll, lazy-loaded images, and live comment sections.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#129504;</span>
+          <h4>ML Text Toxicity</h4>
+          <p>MiniLM-based transformer model detects toxic text beyond simple keyword matching.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#128221;</span>
+          <h4>Custom Word Lists</h4>
+          <p>Add your own blocked words and safe words. You're in full control of what gets filtered.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#127760;</span>
+          <h4>Site Whitelisting</h4>
+          <p>Trust specific websites and disable filtering where you don't need it.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#127911;</span>
+          <h4>Sensitivity Levels</h4>
+          <p>Three levels — Mild, Moderate, Strict — to match your family's comfort.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#128200;</span>
+          <h4>Activity Log &amp; Stats</h4>
+          <p>See exactly what was filtered. Track all-time stats across your browsing.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#128065;</span>
+          <h4>Reveal Toggle</h4>
+          <p>Temporarily view original content when you need to. One click to reveal, one click to re-hide.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#128247;</span>
+          <h4>NSFW Image AI</h4>
+          <p>ViT-Tiny ONNX model with multi-crop inference detects explicit images without any cloud calls.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Privacy Badge -->
+  <section class="section" id="privacy">
+    <div class="container">
+      <div class="privacy-badge">
+        <span class="privacy-icon">&#128274;</span>
+        <h3>100% On-Device. Zero Data Sent to Servers.</h3>
+        <p>Both AI models run entirely in your browser using WebAssembly. Your browsing data never leaves your device. No accounts, no tracking, no cloud APIs.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo -->
+  <section class="section" id="demo">
+    <div class="container">
+      <h2 class="section-title">See It in Action</h2>
+      <p class="section-subtitle">Watch PG Patrol clean up a page in real-time.</p>
+      <div class="demo-wrap">
+        <img src="banner.gif" alt="PG Patrol demo showing profanity being replaced and images being blocked" class="demo-media" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+  <!-- Install CTA -->
+  <section class="section" id="install">
+    <div class="container">
+      <div class="install-section">
+        <h2>Ready to clean up the web?</h2>
+        <p>Install PG Patrol in seconds. Free forever, no account needed.</p>
+        <div class="install-buttons">
+          <a href="https://github.com/nareshnavinash/pg-patrol/releases" class="btn-install">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download for Chrome
+          </a>
+          <a href="https://github.com/nareshnavinash/pg-patrol/releases" class="btn-install">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download for Firefox
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="https://github.com/nareshnavinash/pg-patrol">GitHub</a>
+      <a href="https://github.com/nareshnavinash/pg-patrol/blob/main/PRIVACY.md">Privacy Policy</a>
+      <a href="https://github.com/nareshnavinash/pg-patrol/blob/main/LICENSE">MIT License</a>
+    </div>
+    <p>Made with &#10084;&#65039; by <a href="https://github.com/nareshnavinash">Naresh Navinash</a></p>
+  </footer>
+
+  <script>
+    // Smooth scroll for nav links
+    document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+      anchor.addEventListener('click', function(e) {
+        var target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // Simple scroll-triggered fade-in for sections
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.section').forEach(function(el) {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(30px)';
+      el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+      observer.observe(el);
+    });
+  </script>
+
+</body>
+</html>

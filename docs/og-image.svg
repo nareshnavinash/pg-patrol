@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5"/>
+      <stop offset="50%" style="stop-color:#ec4899"/>
+      <stop offset="100%" style="stop-color:#f97316"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.2)"/>
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)" rx="0"/>
+  <rect width="1200" height="315" fill="url(#shine)" rx="0"/>
+
+  <!-- Shield icon (simplified) -->
+  <g transform="translate(540, 80)">
+    <rect x="0" y="0" width="120" height="120" rx="28" fill="white" opacity="0.95"/>
+    <text x="60" y="82" text-anchor="middle" font-family="Arial, sans-serif" font-size="60" font-weight="900" fill="#4f46e5">PG</text>
+  </g>
+
+  <!-- Title -->
+  <text x="600" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" font-weight="900" fill="white">PG Patrol</text>
+
+  <!-- Tagline -->
+  <text x="600" y="340" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" fill="rgba(255,255,255,0.9)">Let them explore. We'll keep it clean.</text>
+
+  <!-- Features row -->
+  <text x="600" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="rgba(255,255,255,0.8)">Profanity Filter  &#x2022;  NSFW Image Blocker  &#x2022;  Good Vibes Mode</text>
+
+  <!-- Bottom bar -->
+  <rect x="0" y="530" width="1200" height="100" fill="rgba(0,0,0,0.15)"/>
+  <text x="600" y="580" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="rgba(255,255,255,0.8)">Free &amp; Open Source  &#x2022;  100% On-Device AI  &#x2022;  Chrome, Firefox, Edge, Brave, Opera, Arc</text>
+</svg>
