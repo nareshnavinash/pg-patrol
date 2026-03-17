@@ -15,10 +15,17 @@
   <rect width="1200" height="630" fill="url(#bg)" rx="0"/>
   <rect width="1200" height="315" fill="url(#shine)" rx="0"/>
 
-  <!-- Shield icon (simplified) -->
-  <g transform="translate(540, 80)">
-    <rect x="0" y="0" width="120" height="120" rx="28" fill="white" opacity="0.95"/>
-    <text x="60" y="82" text-anchor="middle" font-family="Arial, sans-serif" font-size="60" font-weight="900" fill="#4f46e5">PG</text>
+  <!-- Shield icon -->
+  <g transform="translate(540, 60) scale(0.28)">
+    <path
+      d="M256 32 L448 112 L448 240 C448 360 360 456 256 480 C152 456 64 360 64 240 L64 112 Z"
+      fill="white"
+      opacity="0.95"
+    />
+    <g fill="#4f46e5" fill-rule="evenodd">
+      <path d="M120 310 V168 H218 C256 168 268 190 268 216 C268 242 256 258 218 258 H168 V310 Z M168 200 H212 C230 200 236 210 236 216 C236 224 230 232 212 232 H168 Z"/>
+      <path d="M392 198 C376 178 358 168 334 168 C282 168 270 198 270 240 C270 282 282 312 334 312 C358 312 376 302 392 282 V240 H340 V268 C336 276 335 280 334 280 C302 280 296 264 296 240 C296 216 302 200 334 200 C346 200 360 206 376 214 Z"/>
+    </g>
   </g>
 
   <!-- Title -->

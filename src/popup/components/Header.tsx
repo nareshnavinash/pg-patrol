@@ -41,21 +41,19 @@ export default function Header({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div
-            className={`relative w-8 h-8 flex items-center justify-center ${enabled ? 'shield-pulse' : ''}`}
+            className={`w-8 h-8 flex items-center justify-center ${enabled ? 'shield-pulse' : ''}`}
           >
-            <svg viewBox="0 0 32 32" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+            <svg viewBox="0 0 512 512" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
               <path
-                d="M16 2 L28 7 L28 15 C28 22.5 22.5 28.5 16 30 C9.5 28.5 4 22.5 4 15 L4 7 Z"
+                d="M256 32 L448 112 L448 240 C448 360 360 456 256 480 C152 456 64 360 64 240 L64 112 Z"
                 fill={enabled ? '#4f46e5' : '#9ca3af'}
                 className="transition-colors duration-300"
               />
+              <g fill="white" fillRule="evenodd">
+                <path d="M120 310 V168 H218 C256 168 268 190 268 216 C268 242 256 258 218 258 H168 V310 Z M168 200 H212 C230 200 236 210 236 216 C236 224 230 232 212 232 H168 Z" />
+                <path d="M392 198 C376 178 358 168 334 168 C282 168 270 198 270 240 C270 282 282 312 334 312 C358 312 376 302 392 282 V240 H340 V268 C336 276 335 280 334 280 C302 280 296 264 296 240 C296 216 302 200 334 200 C346 200 360 206 376 214 Z" />
+              </g>
             </svg>
-            <span
-              className="absolute inset-0 flex items-center justify-center text-white font-bold text-[9px]"
-              style={{ paddingBottom: '2px' }}
-            >
-              PG
-            </span>
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">

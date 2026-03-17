@@ -19,7 +19,7 @@
   <meta name="twitter:description" content="Free parental control extension. Profanity filter + NSFW image blocker, 100% on-device AI.">
   <meta name="twitter:image" content="https://nareshnavinash.github.io/pg-patrol/og-image.svg">
 
-  <link rel="icon" href="favicon.png" type="image/png">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -64,7 +64,7 @@
       display: flex; align-items: center; justify-content: space-between;
     }
     .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; color: var(--accent); text-decoration: none; }
-    .nav-logo img { width: 32px; height: 32px; border-radius: 8px; }
+    .nav-logo svg { width: 32px; height: 32px; }
     .nav-links { display: flex; gap: 24px; align-items: center; }
     .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: 14px; transition: color 0.2s; }
     .nav-links a:hover { color: var(--accent); }
@@ -100,8 +100,7 @@
     .hero-shield {
       width: 100px; height: 100px; margin: 0 auto 24px;
       animation: float 3s ease-in-out infinite;
-      border-radius: 24px;
-      box-shadow: 0 8px 32px rgba(99,102,241,0.3);
+      filter: drop-shadow(0 6px 20px rgba(79,70,229,0.25));
     }
 
     @keyframes float {
@@ -323,7 +322,13 @@
   <!-- Navigation -->
   <nav class="nav">
     <a href="#" class="nav-logo">
-      <img src="favicon.png" alt="PG Patrol">
+      <svg viewBox="0 0 512 512" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+        <path d="M256 32 L448 112 L448 240 C448 360 360 456 256 480 C152 456 64 360 64 240 L64 112 Z" fill="#4f46e5"/>
+        <g fill="white" fill-rule="evenodd">
+          <path d="M120 310 V168 H218 C256 168 268 190 268 216 C268 242 256 258 218 258 H168 V310 Z M168 200 H212 C230 200 236 210 236 216 C236 224 230 232 212 232 H168 Z"/>
+          <path d="M392 198 C376 178 358 168 334 168 C282 168 270 198 270 240 C270 282 282 312 334 312 C358 312 376 302 392 282 V240 H340 V268 C336 276 335 280 334 280 C302 280 296 264 296 240 C296 216 302 200 334 200 C346 200 360 206 376 214 Z"/>
+        </g>
+      </svg>
       PG Patrol
     </a>
     <div class="nav-links">
@@ -337,7 +342,19 @@
   <!-- Hero -->
   <section class="hero">
     <div class="container">
-      <img src="favicon.png" alt="PG Patrol Shield" class="hero-shield">
+      <svg viewBox="0 0 512 512" class="hero-shield" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="heroShieldGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#6366f1"/>
+            <stop offset="100%" stop-color="#4f46e5"/>
+          </linearGradient>
+        </defs>
+        <path d="M256 32 L448 112 L448 240 C448 360 360 456 256 480 C152 456 64 360 64 240 L64 112 Z" fill="url(#heroShieldGrad)"/>
+        <g fill="white" fill-rule="evenodd">
+          <path d="M120 310 V168 H218 C256 168 268 190 268 216 C268 242 256 258 218 258 H168 V310 Z M168 200 H212 C230 200 236 210 236 216 C236 224 230 232 212 232 H168 Z"/>
+          <path d="M392 198 C376 178 358 168 334 168 C282 168 270 198 270 240 C270 282 282 312 334 312 C358 312 376 302 392 282 V240 H340 V268 C336 276 335 280 334 280 C302 280 296 264 296 240 C296 216 302 200 334 200 C346 200 360 206 376 214 Z"/>
+        </g>
+      </svg>
       <h1>Let them explore.<br>We'll keep it clean.</h1>
       <p class="hero-sub">
         Free, open-source parental control that replaces profanity with funny words and blocks NSFW images — all powered by on-device AI. No data ever leaves your browser.
