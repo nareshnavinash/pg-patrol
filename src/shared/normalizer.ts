@@ -23,6 +23,13 @@ const LEET_MAP: Record<string, string> = {
   '6': 'g',
 };
 
+// 2.1: Fast path regex — plain lowercase ASCII with no 3+ repeated chars needs no normalization
+const PLAIN_ASCII_RE = /^[a-z]+$/;
+const HAS_REPEAT_RUN = /(.)\1{2,}/;
+
+// 2.1: Combined map merging homoglyphs and leetspeak into a single pass
+const COMBINED_MAP: Record<string, string> = {};
+
 // Unicode homoglyph → ASCII mapping (Cyrillic, etc.)
 const HOMOGLYPH_MAP: Record<string, string> = {
   '\u0430': 'a', // Cyrillic а
@@ -43,6 +50,21 @@ const HOMOGLYPH_MAP: Record<string, string> = {
   '\u041C': 'm', // Cyrillic М
   '\u041A': 'k', // Cyrillic К
 };
+
+// Build combined map at module load (homoglyphs + leetspeak merged)
+for (const [k, v] of Object.entries(HOMOGLYPH_MAP)) COMBINED_MAP[k] = v;
+for (const [k, v] of Object.entries(LEET_MAP)) COMBINED_MAP[k] = v;
+
+/**
+ * Replace homoglyphs and leetspeak in a single pass using the combined map.
+ */
+function normalizeCombined(text: string): string {
+  let result = '';
+  for (const char of text) {
+    result += COMBINED_MAP[char] ?? char;
+  }
+  return result;
+}
 
 /**
  * Remove common separators placed between letters: s.h.i.t, s-h-i-t, s h i t
@@ -94,12 +116,17 @@ function normalizeAsterisks(text: string): string {
 
 /**
  * Full normalization pipeline for profanity detection.
- * Input → lowercase → homoglyphs → leetspeak → asterisks → remove separators → collapse repeats
+ * Input → lowercase → homoglyphs+leetspeak → asterisks → remove separators → collapse repeats
+ *
+ * 2.1: Early exit for plain ASCII lowercase words (~95% of words on typical pages).
  */
 export function normalize(input: string): string {
-  let text = input.toLowerCase();
-  text = normalizeHomoglyphs(text);
-  text = normalizeLeetspeak(text);
+  const lower = input.toLowerCase();
+  // Fast path: plain ASCII lowercase with no repeated runs needs no normalization
+  if (PLAIN_ASCII_RE.test(lower) && !HAS_REPEAT_RUN.test(lower)) return lower;
+
+  // Full pipeline with merged homoglyph+leetspeak pass
+  let text = normalizeCombined(lower);
   text = normalizeAsterisks(text);
   text = removeSeparators(text);
   text = collapseRepeats(text);

@@ -23,7 +23,7 @@ export interface CacheEntry {
 
 const STORAGE_KEY = 'pgPatrolImageCache';
 const MAX_SIZE = 2000;
-const PERSIST_DEBOUNCE_MS = 500;
+const PERSIST_DEBOUNCE_MS = 2500;
 
 // Query params that are safe to strip for cache normalization
 const STRIP_PARAMS = new Set([
@@ -140,6 +140,15 @@ export class ImageClassificationCache {
     } catch {
       // Storage unavailable — continue with empty in-memory cache
     }
+
+    // 2.4: Flush dirty cache to storage when page is being hidden (tab switch, close)
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden' && this.dirty) {
+          void this.persistToStorage();
+        }
+      });
+    }
   }
 
   /** Set the active threshold (called on init and when user changes sensitivity). */
@@ -166,11 +175,14 @@ export class ImageClassificationCache {
       return null;
     }
 
-    // Threshold changed since caching? Verdict may be wrong — re-classify.
+    // 2.8: Re-evaluate cached score against new threshold instead of invalidating.
+    // The stored score is threshold-independent; just re-derive the verdict.
     if (entry.threshold !== this.currentThreshold) {
-      this.cache.delete(normalized);
-      this.misses++;
-      return null;
+      const newVerdict: CacheVerdict = entry.score >= this.currentThreshold ? 'nsfw' : 'safe';
+      entry.verdict = newVerdict;
+      entry.threshold = this.currentThreshold;
+      this.dirty = true;
+      this.schedulePersist();
     }
 
     this.hits++;

@@ -1090,14 +1090,14 @@ export function collectVideoThumbnails(root?: Node): HTMLVideoElement[] {
 }
 
 /**
- * Collect elements with video-related background images from a DOM subtree.
+ * Collect elements with background images from a DOM subtree.
+ * 1.5: Uses [style*="background"] selector to pre-filter inline backgrounds,
+ * drastically reducing the number of elements that need getComputedStyle/getBoundingClientRect.
  */
 export function collectBackgroundThumbnails(root?: Node): HTMLElement[] {
   const container = root instanceof HTMLElement ? root : document;
-  const candidates = Array.from(
-    container.querySelectorAll('div, span, a, figure, section, article, header, li'),
-  );
-  return candidates.filter((el) => shouldScanBgImage(el as HTMLElement)) as HTMLElement[];
+  const candidates = Array.from(container.querySelectorAll<HTMLElement>('[style*="background"]'));
+  return candidates.filter((el) => shouldScanBgImage(el));
 }
 
 /**

@@ -66,6 +66,7 @@ export enum MessageType {
   NSFW_CLASSIFY_INTERNAL = 'NSFW_CLASSIFY_INTERNAL',
   NSFW_CLASSIFY_RESPONSE = 'NSFW_CLASSIFY_RESPONSE',
   LOG_ACTIVITY = 'LOG_ACTIVITY',
+  LOG_ACTIVITY_BATCH = 'LOG_ACTIVITY_BATCH',
   GET_ACTIVITY_LOG = 'GET_ACTIVITY_LOG',
   GET_REPLACEMENT_BATCH = 'GET_REPLACEMENT_BATCH',
 }
@@ -125,6 +126,11 @@ export interface GetFilterStateMessage {
 export interface LogActivityMessage {
   type: MessageType.LOG_ACTIVITY;
   data: ActivityEntry;
+}
+
+export interface LogActivityBatchMessage {
+  type: MessageType.LOG_ACTIVITY_BATCH;
+  data: ActivityEntry[];
 }
 
 export interface GetActivityLogMessage {
@@ -196,6 +202,7 @@ export type Message =
   | NSFWClassifyInternalMessage
   | NSFWClassifyResponseMessage
   | LogActivityMessage
+  | LogActivityBatchMessage
   | GetActivityLogMessage
   | GetReplacementBatchMessage;
 

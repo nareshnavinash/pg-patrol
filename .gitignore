@@ -13,6 +13,9 @@ coverage/
 # Demo video recording outputs
 demo-output/
 
+# Build artifacts
+*.zip
+
 # Remotion build outputs
 remotion/out/
 remotion/node_modules/

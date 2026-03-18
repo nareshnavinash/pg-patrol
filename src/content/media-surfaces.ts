@@ -108,8 +108,9 @@ function bindGlobalListeners(): void {
     return;
   }
 
+  // 2.7: Use rAF-throttled relayout instead of firing on every scroll event
   const relayout = () => scheduleSurfaceLayout();
-  window.addEventListener('scroll', relayout, true);
+  window.addEventListener('scroll', relayout, { capture: true, passive: true });
   window.addEventListener('resize', relayout, { passive: true });
   window.addEventListener('orientationchange', relayout);
   listenersBound = true;

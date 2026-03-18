@@ -10,7 +10,6 @@ import {
   addCustomProfanity,
   addCustomSafeWords,
 } from '../shared/profanity-engine';
-import { scoreText } from '../shared/negative-news-engine';
 import {
   setCustomTriggers,
   setCustomSafeContext,
@@ -41,7 +40,7 @@ export type WorkerResponse =
 /**
  * Handle an incoming worker message. Exported for testing.
  */
-export function handleWorkerMessage(msg: WorkerRequest): WorkerResponse | undefined {
+export async function handleWorkerMessage(msg: WorkerRequest): Promise<WorkerResponse | undefined> {
   switch (msg.type) {
     case 'FILTER_TEXT': {
       const results = msg.texts.map((text) => replaceProfanity(text, msg.sensitivity));
@@ -49,6 +48,7 @@ export function handleWorkerMessage(msg: WorkerRequest): WorkerResponse | undefi
     }
 
     case 'SCORE_TEXT': {
+      const { scoreText } = await import('../shared/negative-news-engine');
       const results = msg.texts.map((text) => scoreText(text));
       return { type: 'SCORE_TEXT_RESULT', id: msg.id, results };
     }
@@ -83,8 +83,8 @@ export function handleWorkerMessage(msg: WorkerRequest): WorkerResponse | undefi
 
 // Self-register when loaded as a Web Worker
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-(self as any).onmessage = (event: MessageEvent<WorkerRequest>) => {
-  const response = handleWorkerMessage(event.data);
+(self as any).onmessage = async (event: MessageEvent<WorkerRequest>) => {
+  const response = await handleWorkerMessage(event.data);
   if (response) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (self as any).postMessage(response);

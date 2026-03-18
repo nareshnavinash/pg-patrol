@@ -7,7 +7,7 @@
 import { getFilterableTextNodes } from './dom-walker';
 import { startObserver, pauseObserver, resumeObserver } from './observer';
 import { setCustomProfanity, setCustomSafeWords } from '../shared/profanity-engine';
-import { getSettings, onSettingsChanged, isSiteWhitelisted } from '../shared/storage';
+import { getSettings, onSettingsChanged } from '../shared/storage';
 import { setCustomTriggers, setCustomSafeContext } from '../shared/negative-news-words';
 import { loadRemoteWordList } from '../shared/word-list-updater';
 import {
@@ -41,7 +41,7 @@ import { classifyWithChromeAi } from '../shared/chrome-ai';
 import { applyOverlay, removeAllOverlays } from './block-overlay';
 import { showImageFilterBanner, removeImageFilterBanner } from './image-filter-banner';
 import { showScanProgress, hideScanProgress } from './scan-progress-indicator';
-import { MessageType } from '../shared/types';
+import { MessageType, type ActivityEntry } from '../shared/types';
 import {
   initFilterWorker,
   filterTextBatch,
@@ -129,6 +129,9 @@ async function filterTextNodes(nodes: Text[]): Promise<number> {
   // Apply results to DOM on main thread
   pauseObserver();
 
+  // 1.4: Accumulate activity log entries for batched IPC
+  const activityBatch: ActivityEntry[] = [];
+
   for (let i = 0; i < nodesToProcess.length; i++) {
     const node = nodesToProcess[i];
     const result = results[i];
@@ -139,19 +142,15 @@ async function filterTextNodes(nodes: Text[]): Promise<number> {
         originalTexts.set(node, textsToProcess[i]);
       }
 
-      // Log each replaced word for activity log
+      // Accumulate log entries (sent as single batch after loop)
+      const now = Date.now();
       for (const match of result.replacements) {
-        chrome.runtime
-          .sendMessage({
-            type: MessageType.LOG_ACTIVITY,
-            data: {
-              type: 'word',
-              original: match.original,
-              replacement: match.replacement,
-              timestamp: Date.now(),
-            },
-          })
-          .catch(() => {});
+        activityBatch.push({
+          type: 'word',
+          original: match.original,
+          replacement: match.replacement,
+          timestamp: now,
+        });
       }
 
       if (result.profaneUrls.length > 0) {
@@ -194,6 +193,14 @@ async function filterTextNodes(nodes: Text[]): Promise<number> {
   }
 
   resumeObserver();
+
+  // 1.4: Send all activity log entries in a single IPC call
+  if (activityBatch.length > 0) {
+    chrome.runtime
+      .sendMessage({ type: MessageType.LOG_ACTIVITY_BATCH, data: activityBatch })
+      .catch(() => {});
+  }
+
   return count;
 }
 
@@ -446,6 +453,7 @@ function startObserverIfEnabled(): void {
   if (settings?.enabled) {
     startObserver(
       (textNodes) => {
+        mutationsSinceInit = true;
         if (settings?.textFilterEnabled) {
           // Remove from processedNodes so SPA re-renders get re-evaluated
           for (const node of textNodes) {
@@ -583,6 +591,9 @@ function revealBody(): void {
   }
 }
 
+// Track whether MutationObserver has seen mutations (for conditional delayed re-scans)
+let mutationsSinceInit = false;
+
 /**
  * Initialize the content script.
  */
@@ -622,30 +633,15 @@ async function init(): Promise<void> {
     };
   }
 
-  // Layer 2: Apply cached remote word list delta (if available)
-  const wordDelta = await loadRemoteWordList();
-
-  // Sync word list delta to worker
-  if (wordDelta) {
-    applyWorkerWordListDelta(wordDelta);
-  }
-
-  // Layer 3: Apply user custom words (highest priority)
-  applyCustomWords(settings);
-
-  // Check if this is a known adult domain
+  // 1.3: Synchronous domain checks (moved up, before any early returns)
   const hostname = window.location.hostname;
   isAdultSite = isAdultDomain(hostname);
   isSafeSite = isSafeSearchSite(hostname);
 
-  // Check if site is whitelisted
-  try {
-    if (await isSiteWhitelisted(hostname)) {
-      removePreBlurStylesheet();
-      return;
-    }
-  } catch {
-    // Continue with filtering if check fails
+  // 1.3: Inline whitelist check against already-loaded settings (avoids redundant getSettings)
+  if (settings.whitelistedSites.includes(hostname)) {
+    removePreBlurStylesheet();
+    return;
   }
 
   if (!settings.enabled) {
@@ -653,33 +649,56 @@ async function init(): Promise<void> {
     return;
   }
 
+  // 2.6: Fire model warmup early (async, idempotent) — overlaps with word list & cache loading
+  if (settings.imageFilterEnabled && !isSafeSite && !isAdultSite) {
+    void loadModel();
+  }
+
+  // 1.3: Parallelize independent async operations (word list + image cache)
+  const [wordDelta] = await Promise.all([
+    loadRemoteWordList(),
+    (async () => {
+      await initImageCache();
+      const effectiveThreshold = settings!.customThreshold ?? THRESHOLDS[settings!.sensitivity];
+      imageCache.setThreshold(effectiveThreshold);
+    })(),
+  ]);
+
+  // Layer 2: Sync word list delta to worker
+  if (wordDelta) {
+    applyWorkerWordListDelta(wordDelta);
+  }
+
+  // Layer 3: Apply user custom words (highest priority)
+  applyCustomWords(settings);
+
   // Text filtering
   if (settings.textFilterEnabled) {
     await fullScan();
   }
 
+  // 1.6: Inject per-image CSS before revealing body (prevents image flash)
+  if (settings.imageFilterEnabled && !isSafeSite && !isAdultSite) {
+    ensureNsfwStyleSheet();
+  }
+
+  // 1.6: Reveal body after text scan — image pre-blur CSS handles individual images
+  revealBody();
+
   // Pre-load replacement images from background cache (async, non-blocking)
   initReplacementImages();
 
-  // Hydrate the persistent image classification cache before any scanning begins.
-  await initImageCache();
-  const effectiveThreshold = settings.customThreshold ?? THRESHOLDS[settings.sensitivity];
-  imageCache.setThreshold(effectiveThreshold);
-
-  // Start image filtering before the page becomes visible so initial media
-  // gets its neutral cover or safe surface without a raw-pixel flash.
+  // Start image filtering (body is already visible, per-image CSS keeps unscanned images hidden)
   await initImageFiltering();
 
-  // Start observing for dynamic content before reveal for the same reason.
+  // Start observing for dynamic content
   startObserverIfEnabled();
 
-  // Reveal body now that initial text and media setup has completed.
-  revealBody();
-
-  // Delayed re-scans to catch SPA content injected after document_idle
+  // 2.3: Conditional delayed re-scan — only fire if MutationObserver has seen mutations
   if (settings.textFilterEnabled) {
-    setTimeout(() => fullScan(), 1500);
-    setTimeout(() => fullScan(), 3500);
+    setTimeout(() => {
+      if (mutationsSinceInit) fullScan();
+    }, 2500);
   }
 
   // Listen for messages

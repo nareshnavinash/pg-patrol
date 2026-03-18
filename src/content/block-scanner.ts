@@ -3,20 +3,7 @@
  * Finds block elements suitable for negative content detection.
  */
 
-const SKIP_TAGS = new Set([
-  'SCRIPT',
-  'STYLE',
-  'NOSCRIPT',
-  'CODE',
-  'PRE',
-  'TEXTAREA',
-  'INPUT',
-  'SELECT',
-  'OPTION',
-  'SVG',
-  'MATH',
-  'IFRAME',
-]);
+import { SKIP_TAGS } from '../shared/skip-tags';
 
 const BLOCK_SELECTORS = 'article, p, li, h1, h2, h3, h4, h5, h6, blockquote';
 const MIN_TEXT_LENGTH = 20;

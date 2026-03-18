@@ -13,7 +13,7 @@ import { scoreText } from '../../src/shared/negative-news-engine';
 
 describe('filter-worker handleWorkerMessage', () => {
   describe('FILTER_TEXT', () => {
-    it('returns FilterResult array for a batch of texts', () => {
+    it('returns FilterResult array for a batch of texts', async () => {
       const request: WorkerRequest = {
         type: 'FILTER_TEXT',
         id: 1,
@@ -21,7 +21,7 @@ describe('filter-worker handleWorkerMessage', () => {
         sensitivity: 'moderate',
       };
 
-      const response = handleWorkerMessage(request);
+      const response = await handleWorkerMessage(request);
 
       expect(response).toBeDefined();
       expect(response!.type).toBe('FILTER_TEXT_RESULT');
@@ -31,7 +31,7 @@ describe('filter-worker handleWorkerMessage', () => {
       ).toHaveLength(2);
     });
 
-    it('produces same results as calling replaceProfanity directly', () => {
+    it('produces same results as calling replaceProfanity directly', async () => {
       const texts = ['hello world', 'some clean text'];
       const sensitivity = 'moderate' as const;
 
@@ -42,7 +42,7 @@ describe('filter-worker handleWorkerMessage', () => {
         sensitivity,
       };
 
-      const response = handleWorkerMessage(request) as Extract<
+      const response = (await handleWorkerMessage(request)) as Extract<
         WorkerResponse,
         { type: 'FILTER_TEXT_RESULT' }
       >;
@@ -51,7 +51,7 @@ describe('filter-worker handleWorkerMessage', () => {
       expect(response.results).toEqual(directResults);
     });
 
-    it('handles empty text array', () => {
+    it('handles empty text array', async () => {
       const request: WorkerRequest = {
         type: 'FILTER_TEXT',
         id: 3,
@@ -59,37 +59,37 @@ describe('filter-worker handleWorkerMessage', () => {
         sensitivity: 'moderate',
       };
 
-      const response = handleWorkerMessage(request) as Extract<
+      const response = (await handleWorkerMessage(request)) as Extract<
         WorkerResponse,
         { type: 'FILTER_TEXT_RESULT' }
       >;
       expect(response.results).toEqual([]);
     });
 
-    it('respects sensitivity parameter', () => {
+    it('respects sensitivity parameter', async () => {
       const texts = ['some text'];
 
-      const mildResponse = handleWorkerMessage({
+      const mildResponse = (await handleWorkerMessage({
         type: 'FILTER_TEXT',
         id: 4,
         texts,
         sensitivity: 'mild',
-      }) as Extract<WorkerResponse, { type: 'FILTER_TEXT_RESULT' }>;
+      })) as Extract<WorkerResponse, { type: 'FILTER_TEXT_RESULT' }>;
 
-      const strictResponse = handleWorkerMessage({
+      const strictResponse = (await handleWorkerMessage({
         type: 'FILTER_TEXT',
         id: 5,
         texts,
         sensitivity: 'strict',
-      }) as Extract<WorkerResponse, { type: 'FILTER_TEXT_RESULT' }>;
+      })) as Extract<WorkerResponse, { type: 'FILTER_TEXT_RESULT' }>;
 
       // Both should return results (content may differ by sensitivity)
       expect(mildResponse.results).toHaveLength(1);
       expect(strictResponse.results).toHaveLength(1);
     });
 
-    it('preserves request id in response', () => {
-      const response = handleWorkerMessage({
+    it('preserves request id in response', async () => {
+      const response = await handleWorkerMessage({
         type: 'FILTER_TEXT',
         id: 42,
         texts: ['test'],
@@ -102,14 +102,14 @@ describe('filter-worker handleWorkerMessage', () => {
   });
 
   describe('SCORE_TEXT', () => {
-    it('returns NegativeContentResult array for a batch of texts', () => {
+    it('returns NegativeContentResult array for a batch of texts', async () => {
       const request: WorkerRequest = {
         type: 'SCORE_TEXT',
         id: 10,
         texts: ['beautiful sunny day', 'nice weather'],
       };
 
-      const response = handleWorkerMessage(request);
+      const response = await handleWorkerMessage(request);
 
       expect(response).toBeDefined();
       expect(response!.type).toBe('SCORE_TEXT_RESULT');
@@ -119,7 +119,7 @@ describe('filter-worker handleWorkerMessage', () => {
       ).toHaveLength(2);
     });
 
-    it('produces same results as calling scoreText directly', () => {
+    it('produces same results as calling scoreText directly', async () => {
       const texts = ['beautiful day', 'some text'];
 
       const request: WorkerRequest = {
@@ -128,7 +128,7 @@ describe('filter-worker handleWorkerMessage', () => {
         texts,
       };
 
-      const response = handleWorkerMessage(request) as Extract<
+      const response = (await handleWorkerMessage(request)) as Extract<
         WorkerResponse,
         { type: 'SCORE_TEXT_RESULT' }
       >;
@@ -137,26 +137,26 @@ describe('filter-worker handleWorkerMessage', () => {
       expect(response.results).toEqual(directResults);
     });
 
-    it('handles empty text array', () => {
+    it('handles empty text array', async () => {
       const request: WorkerRequest = {
         type: 'SCORE_TEXT',
         id: 12,
         texts: [],
       };
 
-      const response = handleWorkerMessage(request) as Extract<
+      const response = (await handleWorkerMessage(request)) as Extract<
         WorkerResponse,
         { type: 'SCORE_TEXT_RESULT' }
       >;
       expect(response.results).toEqual([]);
     });
 
-    it('returns score and isNegative fields', () => {
-      const response = handleWorkerMessage({
+    it('returns score and isNegative fields', async () => {
+      const response = (await handleWorkerMessage({
         type: 'SCORE_TEXT',
         id: 13,
         texts: ['hello world'],
-      }) as Extract<WorkerResponse, { type: 'SCORE_TEXT_RESULT' }>;
+      })) as Extract<WorkerResponse, { type: 'SCORE_TEXT_RESULT' }>;
 
       expect(response.results[0]).toHaveProperty('score');
       expect(response.results[0]).toHaveProperty('isNegative');
@@ -165,8 +165,8 @@ describe('filter-worker handleWorkerMessage', () => {
   });
 
   describe('SET_CUSTOM_WORDS', () => {
-    it('returns undefined (no response needed)', () => {
-      const response = handleWorkerMessage({
+    it('returns undefined (no response needed)', async () => {
+      const response = await handleWorkerMessage({
         type: 'SET_CUSTOM_WORDS',
         customBlockedWords: ['badword'],
         customSafeWords: [],
@@ -177,9 +177,9 @@ describe('filter-worker handleWorkerMessage', () => {
       expect(response).toBeUndefined();
     });
 
-    it('applies custom blocked words to profanity engine', () => {
+    it('applies custom blocked words to profanity engine', async () => {
       // Set a custom word
-      handleWorkerMessage({
+      await handleWorkerMessage({
         type: 'SET_CUSTOM_WORDS',
         customBlockedWords: ['unicorn'],
         customSafeWords: [],
@@ -188,17 +188,17 @@ describe('filter-worker handleWorkerMessage', () => {
       });
 
       // Now filter text containing the custom word
-      const response = handleWorkerMessage({
+      const response = (await handleWorkerMessage({
         type: 'FILTER_TEXT',
         id: 20,
         texts: ['I saw a unicorn'],
         sensitivity: 'moderate',
-      }) as Extract<WorkerResponse, { type: 'FILTER_TEXT_RESULT' }>;
+      })) as Extract<WorkerResponse, { type: 'FILTER_TEXT_RESULT' }>;
 
       expect(response.results[0].hasProfanity).toBe(true);
 
       // Clean up
-      handleWorkerMessage({
+      await handleWorkerMessage({
         type: 'SET_CUSTOM_WORDS',
         customBlockedWords: [],
         customSafeWords: [],
@@ -209,8 +209,8 @@ describe('filter-worker handleWorkerMessage', () => {
   });
 
   describe('APPLY_WORD_DELTA', () => {
-    it('returns undefined (no response needed)', () => {
-      const response = handleWorkerMessage({
+    it('returns undefined (no response needed)', async () => {
+      const response = await handleWorkerMessage({
         type: 'APPLY_WORD_DELTA',
         delta: { version: 1, lastModified: '2026-01-01' },
       });
@@ -218,8 +218,8 @@ describe('filter-worker handleWorkerMessage', () => {
       expect(response).toBeUndefined();
     });
 
-    it('applies profanity delta additions', () => {
-      handleWorkerMessage({
+    it('applies profanity delta additions', async () => {
+      await handleWorkerMessage({
         type: 'APPLY_WORD_DELTA',
         delta: {
           version: 1,
@@ -228,19 +228,19 @@ describe('filter-worker handleWorkerMessage', () => {
         },
       });
 
-      const response = handleWorkerMessage({
+      const response = (await handleWorkerMessage({
         type: 'FILTER_TEXT',
         id: 30,
         texts: ['I found a zorplex'],
         sensitivity: 'moderate',
-      }) as Extract<WorkerResponse, { type: 'FILTER_TEXT_RESULT' }>;
+      })) as Extract<WorkerResponse, { type: 'FILTER_TEXT_RESULT' }>;
 
       expect(response.results[0].hasProfanity).toBe(true);
     });
 
-    it('handles delta with no fields gracefully', () => {
+    it('handles delta with no fields gracefully', async () => {
       // Should not throw
-      const response = handleWorkerMessage({
+      const response = await handleWorkerMessage({
         type: 'APPLY_WORD_DELTA',
         delta: { version: 1, lastModified: '2026-01-01' },
       });
@@ -248,8 +248,8 @@ describe('filter-worker handleWorkerMessage', () => {
       expect(response).toBeUndefined();
     });
 
-    it('applies profanity addSafe delta', () => {
-      const response = handleWorkerMessage({
+    it('applies profanity addSafe delta', async () => {
+      const response = await handleWorkerMessage({
         type: 'APPLY_WORD_DELTA',
         delta: {
           version: 1,
@@ -260,8 +260,8 @@ describe('filter-worker handleWorkerMessage', () => {
       expect(response).toBeUndefined();
     });
 
-    it('applies negativeNews triggers and safe context', () => {
-      const response = handleWorkerMessage({
+    it('applies negativeNews triggers and safe context', async () => {
+      const response = await handleWorkerMessage({
         type: 'APPLY_WORD_DELTA',
         delta: {
           version: 1,
@@ -275,8 +275,8 @@ describe('filter-worker handleWorkerMessage', () => {
       expect(response).toBeUndefined();
     });
 
-    it('applies funnyWords delta', () => {
-      const response = handleWorkerMessage({
+    it('applies funnyWords delta', async () => {
+      const response = await handleWorkerMessage({
         type: 'APPLY_WORD_DELTA',
         delta: {
           version: 1,
@@ -287,8 +287,8 @@ describe('filter-worker handleWorkerMessage', () => {
       expect(response).toBeUndefined();
     });
 
-    it('handles delta with profanity but no addSafe', () => {
-      const response = handleWorkerMessage({
+    it('handles delta with profanity but no addSafe', async () => {
+      const response = await handleWorkerMessage({
         type: 'APPLY_WORD_DELTA',
         delta: {
           version: 1,
@@ -299,8 +299,8 @@ describe('filter-worker handleWorkerMessage', () => {
       expect(response).toBeUndefined();
     });
 
-    it('handles delta with negativeNews but empty arrays', () => {
-      const response = handleWorkerMessage({
+    it('handles delta with negativeNews but empty arrays', async () => {
+      const response = await handleWorkerMessage({
         type: 'APPLY_WORD_DELTA',
         delta: {
           version: 1,

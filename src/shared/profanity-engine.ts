@@ -36,6 +36,17 @@ const MILD_WORDS = new Set([...sensitivityData.mild]);
 // Moderate additions (standard profanity)
 const MODERATE_WORDS = new Set([...MILD_WORDS, ...sensitivityData.moderate]);
 
+// 1.2: Pre-built regex for O(1) substring matching per word (replaces linear scan)
+function buildSensitivityRegex(wordSet: Set<string>): RegExp {
+  // Escape special regex chars and join with alternation, sorted longest-first for greedy match
+  const sorted = [...wordSet].sort((a, b) => b.length - a.length);
+  const escaped = sorted.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return new RegExp(escaped.join('|'));
+}
+
+const mildRegex = buildSensitivityRegex(MILD_WORDS);
+const moderateRegex = buildSensitivityRegex(MODERATE_WORDS);
+
 // Custom words bypass the sensitivity gate — always filtered at any level
 const CUSTOM_BLOCKED_WORDS = new Set<string>();
 
@@ -106,8 +117,8 @@ export function setCustomSafeWords(words: string[]): void {
 function isProfaneAtSensitivity(word: string, sensitivity: Sensitivity): boolean {
   const normalized = normalize(word);
 
-  // Check with the @2toad/profanity library
-  const isProfane = profanity.exists(word) || profanity.exists(normalized);
+  // Check with the @2toad/profanity library (skip second call when normalized === word)
+  const isProfane = profanity.exists(word) || (normalized !== word && profanity.exists(normalized));
   if (!isProfane) return false;
 
   // Custom blocked words bypass sensitivity — always filtered
@@ -120,22 +131,15 @@ function isProfaneAtSensitivity(word: string, sensitivity: Sensitivity): boolean
   // For strict: everything the engine catches
   if (sensitivity === 'strict') return true;
 
-  // For moderate/mild: check against the appropriate word set
+  // 1.2: Use Set.has() for exact match (O(1)), then regex for substring match (O(1) per word)
   const wordSet = sensitivity === 'mild' ? MILD_WORDS : MODERATE_WORDS;
+  const regex = sensitivity === 'mild' ? mildRegex : moderateRegex;
 
-  // Check if the normalized word (or a root form) is in the set
-  for (const profaneWord of wordSet) {
-    if (lowerNormalized === profaneWord || lowerNormalized.includes(profaneWord)) {
-      return true;
-    }
-  }
+  // Exact match (fast path)
+  if (wordSet.has(lowerNormalized) || wordSet.has(lowerWord)) return true;
 
-  // Also check original word
-  for (const profaneWord of wordSet) {
-    if (lowerWord === profaneWord || lowerWord.includes(profaneWord)) {
-      return true;
-    }
-  }
+  // Substring match via pre-built regex (e.g., "bullshit" contains "shit")
+  if (regex.test(lowerNormalized) || regex.test(lowerWord)) return true;
 
   return false;
 }
@@ -224,17 +228,8 @@ export function detectProfanity(
  */
 function segmentContainsProfanity(segment: string, sensitivity: Sensitivity): boolean {
   const lower = normalize(segment).toLowerCase();
-  const wordSet =
-    sensitivity === 'strict'
-      ? MODERATE_WORDS
-      : sensitivity === 'mild'
-        ? MILD_WORDS
-        : MODERATE_WORDS;
-
-  for (const profaneWord of wordSet) {
-    if (lower.includes(profaneWord)) return true;
-  }
-  return false;
+  const regex = sensitivity === 'mild' ? mildRegex : moderateRegex;
+  return regex.test(lower);
 }
 
 /**

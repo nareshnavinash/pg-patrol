@@ -65,6 +65,18 @@ export function createInferenceEngine(config: InferenceEngineConfig): InferenceE
   let nsfwSession: OrtInferenceSession | null = null;
   let nsfwSessionPromise: Promise<void> | null = null;
 
+  // 2.5: Reusable OffscreenCanvas — avoids allocation/GC per classification
+  let sharedCanvas: OffscreenCanvas | null = null;
+  let sharedCtx: OffscreenCanvasRenderingContext2D | null = null;
+
+  function getSharedCanvas(): { canvas: OffscreenCanvas; ctx: OffscreenCanvasRenderingContext2D } {
+    if (!sharedCanvas || !sharedCtx) {
+      sharedCanvas = new OffscreenCanvas(MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
+      sharedCtx = sharedCanvas.getContext('2d')!;
+    }
+    return { canvas: sharedCanvas, ctx: sharedCtx };
+  }
+
   /**
    * Sensitivity thresholds — must match nsfw-detector.ts
    */
@@ -95,6 +107,8 @@ export function createInferenceEngine(config: InferenceEngineConfig): InferenceE
     classifier?.dispose?.();
     classifier = null;
     classifierPromise = null;
+    sharedCanvas = null;
+    sharedCtx = null;
   }
 
   // ---- Text classification (Transformers.js) ----
@@ -201,8 +215,8 @@ export function createInferenceEngine(config: InferenceEngineConfig): InferenceE
     const sy = Math.floor((bitmap.height - cropH) / 2);
     const { sx: cx, sy: cy, sSize } = centerCropParams(cropW, cropH);
 
-    const canvas = new OffscreenCanvas(MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
-    const ctx = canvas.getContext('2d')!;
+    const { ctx } = getSharedCanvas();
+    ctx.clearRect(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
     ctx.drawImage(bitmap, sx + cx, sy + cy, sSize, sSize, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
     return ctx.getImageData(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
   }
@@ -223,8 +237,8 @@ export function createInferenceEngine(config: InferenceEngineConfig): InferenceE
       const blob = await response.blob();
       bitmap = await createImageBitmap(blob);
       const { sx, sy, sSize } = centerCropParams(bitmap.width, bitmap.height);
-      const canvas = new OffscreenCanvas(MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
-      const ctx = canvas.getContext('2d')!;
+      const { ctx } = getSharedCanvas();
+      ctx.clearRect(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
       ctx.drawImage(bitmap, sx, sy, sSize, sSize, 0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
       imageData = ctx.getImageData(0, 0, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
     } else {

@@ -115,12 +115,16 @@ describe('ImageClassificationCache', () => {
       expect(cache.get('https://example.com/img.jpg')).toBeNull();
     });
 
-    it('returns null when threshold has changed (invalidation)', () => {
+    it('re-evaluates verdict when threshold has changed (not invalidated)', () => {
       cache.set('https://example.com/img.jpg', 'safe', 0.05, 200, 'content');
       expect(cache.get('https://example.com/img.jpg')).not.toBeNull();
 
+      // Threshold lowered: score 0.05 < 0.3 → still safe
       cache.setThreshold(0.3);
-      expect(cache.get('https://example.com/img.jpg')).toBeNull();
+      const entry = cache.get('https://example.com/img.jpg');
+      expect(entry).not.toBeNull();
+      expect(entry!.verdict).toBe('safe');
+      expect(entry!.threshold).toBe(0.3);
     });
 
     it('caches both safe and NSFW verdicts', () => {
@@ -146,8 +150,8 @@ describe('ImageClassificationCache', () => {
       // Before debounce
       expect(mockSet).not.toHaveBeenCalled();
 
-      // Flush debounce timer
-      jest.advanceTimersByTime(600);
+      // Flush debounce timer (2500ms debounce)
+      jest.advanceTimersByTime(2600);
 
       // Allow async persist to complete
       await jest.runAllTimersAsync();
@@ -276,18 +280,42 @@ describe('ImageClassificationCache', () => {
   // ---- setThreshold() ----
 
   describe('setThreshold()', () => {
-    it('updates the active threshold used for cache validation', () => {
+    it('re-evaluates verdict when threshold changes (score 0.05 stays safe at 0.3)', () => {
       cache.set('https://example.com/img.jpg', 'safe', 0.05, 200, 'content');
 
       cache.setThreshold(0.3);
-      // Entry was cached at threshold 0.60, now threshold is 0.30 → invalidated
-      expect(cache.get('https://example.com/img.jpg')).toBeNull();
+      // Score 0.05 < 0.3 → still safe, re-evaluated not invalidated
+      const entry = cache.get('https://example.com/img.jpg');
+      expect(entry).not.toBeNull();
+      expect(entry!.verdict).toBe('safe');
+      expect(entry!.threshold).toBe(0.3);
     });
 
-    it('entry cached at threshold 0.60 returns null when current threshold is 0.30', () => {
+    it('re-evaluates NSFW verdict: score 0.5 stays NSFW at threshold 0.30', () => {
       cache.set('https://example.com/img.jpg', 'nsfw', 0.5, 200, 'content');
       cache.setThreshold(0.3);
-      expect(cache.get('https://example.com/img.jpg')).toBeNull();
+      // Score 0.5 >= 0.3 → still NSFW
+      const entry = cache.get('https://example.com/img.jpg');
+      expect(entry).not.toBeNull();
+      expect(entry!.verdict).toBe('nsfw');
+      expect(entry!.threshold).toBe(0.3);
+    });
+
+    it('flips verdict when threshold crosses score', () => {
+      // Cached as NSFW at threshold 0.6 with score 0.5
+      cache.set('https://example.com/img.jpg', 'nsfw', 0.5, 200, 'content');
+
+      // Raise threshold to 0.8: score 0.5 < 0.8 → now safe
+      cache.setThreshold(0.8);
+      const entry = cache.get('https://example.com/img.jpg');
+      expect(entry).not.toBeNull();
+      expect(entry!.verdict).toBe('safe');
+
+      // Lower threshold to 0.4: score 0.5 >= 0.4 → back to NSFW
+      cache.setThreshold(0.4);
+      const entry2 = cache.get('https://example.com/img.jpg');
+      expect(entry2).not.toBeNull();
+      expect(entry2!.verdict).toBe('nsfw');
     });
   });
 
@@ -389,7 +417,7 @@ describe('ImageClassificationCache', () => {
       cache.set('https://this-tab.com/img.jpg', 'safe', 0.1, 200, 'content');
 
       // Flush debounce
-      jest.advanceTimersByTime(600);
+      jest.advanceTimersByTime(2600);
       await jest.runAllTimersAsync();
 
       const stored = storageData['pgPatrolImageCache'] as Record<string, CacheEntry>;
@@ -489,18 +517,18 @@ describe('ImageClassificationCache', () => {
       expect(stats.misses).toBe(0);
     });
 
-    it('counts expired and threshold-invalidated lookups as misses', () => {
+    it('counts expired lookups as misses; threshold-change lookups as hits (re-evaluated)', () => {
       cache.set('https://example.com/expired.jpg', 'safe', 0.1, 900, 'content');
       jest.advanceTimersByTime(3 * DAY);
       cache.get('https://example.com/expired.jpg'); // miss (expired)
 
       cache.set('https://example.com/threshold.jpg', 'safe', 0.1, 200, 'content');
       cache.setThreshold(0.3);
-      cache.get('https://example.com/threshold.jpg'); // miss (threshold changed)
+      cache.get('https://example.com/threshold.jpg'); // hit (re-evaluated, not invalidated)
 
       const stats = cache.getStats();
-      expect(stats.misses).toBe(2);
-      expect(stats.hits).toBe(0);
+      expect(stats.misses).toBe(1);
+      expect(stats.hits).toBe(1);
     });
   });
 
@@ -535,7 +563,7 @@ describe('ImageClassificationCache', () => {
       cache.set('https://example.com/img.jpg', 'safe', 0.1, 200, 'content');
 
       // Flush debounce
-      jest.advanceTimersByTime(600);
+      jest.advanceTimersByTime(2600);
       await jest.runAllTimersAsync();
 
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Storage quota exceeded'));

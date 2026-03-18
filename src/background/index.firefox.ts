@@ -13,9 +13,11 @@ import { MessageType } from '../shared/types';
 import type { Message, StatsResponse, ActivityEntry } from '../shared/types';
 import { fetchAndCacheWordList } from '../shared/word-list-updater';
 import { createInferenceEngine } from '../ml-inference/inference-engine';
+import { StatAccumulator } from './stat-accumulator';
 
 // Per-tab replacement counts
 const tabStats = new Map<number, { wordsReplaced: number; imagesReplaced: number }>();
+const statAccumulator = new StatAccumulator();
 
 // Per-tab activity log (ring buffer, max 50 entries per tab)
 const MAX_ACTIVITY_ENTRIES = 50;
@@ -35,10 +37,13 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
   switch (message.type) {
     case MessageType.UPDATE_STATS: {
       if (tabId != null) {
-        tabStats.set(tabId, {
+        const prev = tabStats.get(tabId) ?? { wordsReplaced: 0, imagesReplaced: 0 };
+        const curr = {
           wordsReplaced: message.data.wordsReplaced,
           imagesReplaced: message.data.imagesReplaced,
-        });
+        };
+        statAccumulator.onStatsUpdate(tabId, prev, curr);
+        tabStats.set(tabId, curr);
         // Update badge with word count
         const count = message.data.wordsReplaced;
         if (count > 0) {
@@ -85,6 +90,23 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
         // Ring buffer: drop oldest on overflow
         if (entries.length > MAX_ACTIVITY_ENTRIES) {
           entries.shift();
+        }
+      }
+      break;
+    }
+
+    case MessageType.LOG_ACTIVITY_BATCH: {
+      if (tabId != null) {
+        let entries = tabActivityLog.get(tabId);
+        if (!entries) {
+          entries = [];
+          tabActivityLog.set(tabId, entries);
+        }
+        for (const entry of message.data) {
+          entries.push(entry);
+          if (entries.length > MAX_ACTIVITY_ENTRIES) {
+            entries.shift();
+          }
         }
       }
       break;
@@ -206,8 +228,9 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
   }
 });
 
-// Clean up tab stats and activity log when tab is closed
+// Persist all-time stats and clean up when tab is closed
 chrome.tabs.onRemoved.addListener((tabId) => {
+  statAccumulator.onTabRemoved(tabId, tabStats.get(tabId)).catch(() => {});
   tabStats.delete(tabId);
   tabActivityLog.delete(tabId);
 });
