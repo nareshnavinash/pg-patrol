@@ -10,7 +10,7 @@ ALL FILTERING HAPPENS LOCALLY ON YOUR DEVICE. No data is ever sent to external s
 Replaces swear words and offensive language with funny, family-friendly alternatives. Pages stay readable and natural.
 
 ★ NSFW Image Blocker
-Detects and hides explicit or sexual images using a local AI model. Blocked images are replaced with a clean PG Patrol banner — the page layout stays intact.
+Detects and hides explicit or sexual images using a local AI model. Blocked images are silently replaced with pleasant stock photos (cute animals, food) — no obvious banners, no curiosity spikes. The page layout stays intact.
 
 ★ Good Vibes Mode
 Softens distress-heavy content blocks (graphic news, toxic discussions) with a gentle overlay, creating a calmer browsing experience.
@@ -34,6 +34,7 @@ PG Patrol uses two local AI models:
 • Image NSFW detection (ViT-Tiny ONNX model with multi-crop inference)
 
 Both models run entirely on your device using WebAssembly. No cloud APIs required.
+• On Chrome 131+, borderline text is also refined by Chrome's built-in Gemini Nano — fully local, zero cost
 
 Optional: Connect your own Google Perspective API key for enhanced text analysis. This is completely opt-in and disabled by default.
 

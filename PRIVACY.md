@@ -12,6 +12,7 @@ PG Patrol is a browser extension that filters profanity, detects NSFW images, an
 
 - All text filtering happens entirely on your device using local algorithms
 - All image detection happens entirely on your device using a local machine learning model
+- On Chrome 131+, borderline text classifications may be refined by Chrome's built-in Gemini Nano model — this runs entirely within the browser engine and sends no data externally
 - No browsing data, page content, or personal information is ever sent to our servers
 - We do not use analytics, tracking pixels, or any form of telemetry
 
@@ -31,6 +32,12 @@ PG Patrol uses the browser's built-in storage API (`chrome.storage.sync` / `brow
 - Is stored locally in your browser
 - May sync across your browser instances if you have sync enabled
 - Contains no personal information — only your extension preferences
+
+PG Patrol also uses IndexedDB to cache replacement images fetched from the Pexels CDN. These cached images:
+
+- Are stored locally in your browser
+- Contain no personal information — only stock photo data URIs
+- Are rotated daily and can be cleared by clearing site data
 
 ## Permissions
 

@@ -7,7 +7,7 @@
 **Family-friendly web filter — replaces profanity with funny words, hides NSFW images, and softens distress-heavy content. All AI runs locally on your device.**
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Tests](https://img.shields.io/badge/tests-908%2B-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-924%2B-brightgreen.svg)](./tests)
 [![Chrome MV3](https://img.shields.io/badge/Chrome-MV3-4285F4.svg?logo=googlechrome&logoColor=white)](#browser-compatibility)
 [![Firefox MV3](https://img.shields.io/badge/Firefox-MV3-FF7139.svg?logo=firefox&logoColor=white)](#browser-compatibility)
 [![Privacy](https://img.shields.io/badge/privacy-100%25_local-8B5CF6.svg)](#privacy)
@@ -44,6 +44,7 @@
 - **Sensitivity Levels** — Mild, Moderate, or Strict
 - **Activity Log** — Per-page log of what was filtered
 - **Stats Tracking** — All-time counts of words replaced and images hidden
+- **Chrome AI Boost** — On Chrome 131+, borderline text classifications refined by Gemini Nano (fully local, silent fallback on other browsers)
 - **Reveal Toggle** — Temporarily view original content
 - **Silent Replacement** — Blocked images are replaced with cute animals and mouth-watering food photos instead of obvious "blocked" banners — no curiosity spikes
 - **Offline Ready** — 60 bundled replacement images (WebP, 600px) ensure coverage even without internet; online mode caches more from Pexels CDN
@@ -171,17 +172,18 @@ After loading, pin PG Patrol to your browser toolbar for easy access.
 
 ## Tech Stack
 
-| Layer              | Technology                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------ |
-| UI Framework       | [Preact](https://preactjs.com/)                                                            |
-| Styling            | [Tailwind CSS](https://tailwindcss.com/) v4                                                |
-| Language           | TypeScript (strict mode)                                                                   |
-| Build Tool         | [Vite](https://vitejs.dev/) + [@crxjs/vite-plugin](https://crxjs.dev/vite-plugin) (Chrome) |
-| NSFW Detection     | [ONNX Runtime Web](https://onnxruntime.ai/) (ViT-Tiny, WASM backend)                       |
-| Text Toxicity      | [Transformers.js](https://huggingface.co/docs/transformers.js) (MiniLMv2-toxic-jigsaw)     |
-| Profanity Engine   | [@2toad/profanity](https://github.com/2toad/Profanity) + custom n-gram/Bayes scoring       |
-| Testing            | [Jest](https://jestjs.io/) (unit) + [Playwright](https://playwright.dev/) (E2E)            |
-| Extension Manifest | Manifest V3                                                                                |
+| Layer              | Technology                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| UI Framework       | [Preact](https://preactjs.com/)                                                             |
+| Styling            | [Tailwind CSS](https://tailwindcss.com/) v4                                                 |
+| Language           | TypeScript (strict mode)                                                                    |
+| Build Tool         | [Vite](https://vitejs.dev/) + [@crxjs/vite-plugin](https://crxjs.dev/vite-plugin) (Chrome)  |
+| NSFW Detection     | [ONNX Runtime Web](https://onnxruntime.ai/) (ViT-Tiny, WASM backend)                        |
+| Text Toxicity      | [Transformers.js](https://huggingface.co/docs/transformers.js) (MiniLMv2-toxic-jigsaw)      |
+| Profanity Engine   | [@2toad/profanity](https://github.com/2toad/Profanity) + custom n-gram/Bayes scoring        |
+| Chrome Built-in AI | [Gemini Nano](https://developer.chrome.com/docs/ai/built-in) (Chrome 131+, silent fallback) |
+| Testing            | [Jest](https://jestjs.io/) (unit) + [Playwright](https://playwright.dev/) (E2E)             |
+| Extension Manifest | Manifest V3                                                                                 |
 
 ---
 
@@ -217,6 +219,8 @@ After loading, pin PG Patrol to your browser toolbar for easy access.
 - **Multi-crop inference** — Ambiguous NSFW scores (0.2-0.7) trigger a second pass with a 2x zoomed center crop.
 - **Tiered text classification** — Keyword score > 0.06 blocks immediately; 0.015-0.06 goes to ML classifier; < 0.015 allows immediately.
 - **Ring buffer activity log** — Max 50 entries per tab, cleaned up on tab close.
+- **Chrome AI Tier 2** — Borderline text (keyword score 0.015–0.06) that passes the ML classifier is optionally refined by Chrome's built-in Gemini Nano on supported browsers; all other browsers silently skip this step.
+- **Debounced stat persistence** — StatAccumulator batches popup stat updates with a 5-second flush to reduce storage writes.
 
 ---
 
@@ -273,6 +277,8 @@ src/
 │   ├── nsfw-detector.ts      # NSFW image detection coordinator
 │   ├── ml-text-classifier.ts # ML toxicity classification
 │   ├── bayes-scorer.ts       # Bayesian text classifier
+│   ├── chrome-ai.ts          # Chrome Built-in AI (Gemini Nano) integration
+│   ├── skip-tags.ts          # Shared skip-tag definitions for DOM walker
 │   └── ...
 ├── assets/
 │   ├── icons/                # Extension icons (16, 32, 48, 128)
@@ -294,7 +300,7 @@ store-assets/                 # Store listing descriptions
 ### Running Tests
 
 ```bash
-# Unit tests (908 tests across 46 suites)
+# Unit tests (924 tests across 47 suites)
 npm test
 
 # With coverage
