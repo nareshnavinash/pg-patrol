@@ -100,7 +100,7 @@ export function getNsfwStyleSheetCssText(): string {
 let totalQueued = 0;
 let totalProcessed = 0;
 let onAllProcessedCallback: (() => void) | null = null;
-let onImageHiddenCallback: ((count: number) => void) | null = null;
+let onImageHiddenCallback: ((count: number, source: string) => void) | null = null;
 let onScanProgressCallback: ((processed: number, total: number) => void) | null = null;
 
 /**
@@ -113,9 +113,9 @@ export function onAllProcessed(callback: () => void): void {
 
 /**
  * Register a callback invoked each time an image/video/bg is hidden as NSFW.
- * Receives the running total of replaced images.
+ * Receives the running total of replaced images and the source URL.
  */
-export function onImageHidden(callback: (count: number) => void): void {
+export function onImageHidden(callback: (count: number, source: string) => void): void {
   onImageHiddenCallback = callback;
 }
 
@@ -487,21 +487,7 @@ function hideImage(img: HTMLImageElement): void {
   if (source && !pageNsfwUrls.has(source)) {
     pageNsfwUrls.add(source);
     replacedCount++;
-    onImageHiddenCallback?.(replacedCount);
-    try {
-      chrome.runtime
-        .sendMessage({
-          type: 'LOG_ACTIVITY',
-          data: {
-            type: 'image',
-            original: source.length > 100 ? source.slice(0, 97) + '...' : source,
-            timestamp: Date.now(),
-          },
-        })
-        .catch(() => {});
-    } catch {
-      // chrome.runtime may be unavailable in tests
-    }
+    onImageHiddenCallback?.(replacedCount, source);
   }
 
   pauseObserver();
@@ -693,7 +679,7 @@ function handleNsfwVideo(video: HTMLVideoElement): void {
   if (video.poster && !pageNsfwUrls.has(video.poster)) {
     pageNsfwUrls.add(video.poster);
     replacedCount++;
-    onImageHiddenCallback?.(replacedCount);
+    onImageHiddenCallback?.(replacedCount, video.poster);
   }
 }
 
@@ -704,7 +690,7 @@ function handleNsfwBg(element: HTMLElement, url: string): void {
   if (!pageNsfwUrls.has(url)) {
     pageNsfwUrls.add(url);
     replacedCount++;
-    onImageHiddenCallback?.(replacedCount);
+    onImageHiddenCallback?.(replacedCount, url);
   }
 }
 

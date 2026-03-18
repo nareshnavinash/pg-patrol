@@ -41,14 +41,14 @@ export async function isSiteWhitelisted(hostname: string): Promise<boolean> {
 }
 
 /**
- * Update cumulative stats.
+ * Update cumulative stats. Single read-modify-write to avoid double storage reads.
  */
 export async function incrementStats(wordsReplaced: number, imagesReplaced: number): Promise<void> {
-  const settings = await getSettings();
-  await saveSettings({
-    stats: {
-      totalWordsReplaced: settings.stats.totalWordsReplaced + wordsReplaced,
-      totalImagesReplaced: settings.stats.totalImagesReplaced + imagesReplaced,
-    },
-  });
+  const stored = await chrome.storage.sync.get('settings');
+  const current = { ...DEFAULT_SETTINGS, ...stored.settings };
+  current.stats = {
+    totalWordsReplaced: current.stats.totalWordsReplaced + wordsReplaced,
+    totalImagesReplaced: current.stats.totalImagesReplaced + imagesReplaced,
+  };
+  await chrome.storage.sync.set({ settings: current });
 }

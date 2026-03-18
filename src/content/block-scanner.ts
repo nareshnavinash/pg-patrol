@@ -16,12 +16,31 @@ export interface BlockInfo {
 
 /**
  * Check if an element is inside a skipped tag.
+ * Results are cached in a WeakMap so repeated scans don't re-walk the tree.
  */
+const skipTagCache = new WeakMap<HTMLElement, boolean>();
+
 function isInsideSkippedTag(el: HTMLElement): boolean {
   let current: HTMLElement | null = el.parentElement;
   while (current && current !== document.body) {
-    if (SKIP_TAGS.has(current.tagName)) return true;
-    if (current.isContentEditable) return true;
+    const cached = skipTagCache.get(current);
+    if (cached !== undefined) return cached;
+    if (SKIP_TAGS.has(current.tagName) || current.isContentEditable) {
+      // Mark this ancestor and all ancestors up to it as skipped
+      let mark: HTMLElement | null = el.parentElement;
+      while (mark && mark !== current) {
+        skipTagCache.set(mark, true);
+        mark = mark.parentElement;
+      }
+      skipTagCache.set(current, true);
+      return true;
+    }
+    current = current.parentElement;
+  }
+  // No skipped ancestor found — cache all parents as safe
+  current = el.parentElement;
+  while (current && current !== document.body) {
+    skipTagCache.set(current, false);
     current = current.parentElement;
   }
   return false;

@@ -1,6 +1,6 @@
 {
   "name": "pg-patrol",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "PG Patrol — Family-friendly web filter that replaces swear words and NSFW images",
   "private": true,
   "type": "module",

@@ -72,7 +72,7 @@ export function createInferenceEngine(config: InferenceEngineConfig): InferenceE
   function getSharedCanvas(): { canvas: OffscreenCanvas; ctx: OffscreenCanvasRenderingContext2D } {
     if (!sharedCanvas || !sharedCtx) {
       sharedCanvas = new OffscreenCanvas(MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);
-      sharedCtx = sharedCanvas.getContext('2d')!;
+      sharedCtx = sharedCanvas.getContext('2d', { willReadFrequently: true })!;
     }
     return { canvas: sharedCanvas, ctx: sharedCtx };
   }

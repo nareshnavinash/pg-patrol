@@ -15,7 +15,7 @@ let observer: MutationObserver | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let isProcessing = false;
 let pendingMutations: MutationRecord[] = [];
-let attrChangedImages = new Set<HTMLImageElement>();
+const attrChangedImages = new Set<HTMLImageElement>();
 let attrFlushScheduled = false;
 
 const DEBOUNCE_MS = 100;
@@ -62,7 +62,7 @@ export function startObserver(
           for (const img of attrChangedImages) {
             onImageAttrChange!(img);
           }
-          attrChangedImages = new Set();
+          attrChangedImages.clear();
         });
       }
     }

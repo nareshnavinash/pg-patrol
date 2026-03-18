@@ -78,23 +78,33 @@ function applyCustomWords(s: PGPatrolSettings): void {
 let pageReplacementCount = 0;
 let _hiddenBlockCount = 0;
 
+// Activity log accumulator — batches individual LOG_ACTIVITY entries into a single IPC call
+let activityQueue: ActivityEntry[] = [];
+let activityFlushTimer: ReturnType<typeof setTimeout> | null = null;
+const ACTIVITY_FLUSH_MS = 200;
+
+function queueActivity(entry: ActivityEntry): void {
+  activityQueue.push(entry);
+  if (!activityFlushTimer) {
+    activityFlushTimer = setTimeout(flushActivityQueue, ACTIVITY_FLUSH_MS);
+  }
+}
+
+function flushActivityQueue(): void {
+  activityFlushTimer = null;
+  if (activityQueue.length === 0) return;
+  const batch = activityQueue;
+  activityQueue = [];
+  chrome.runtime.sendMessage({ type: MessageType.LOG_ACTIVITY_BATCH, data: batch }).catch(() => {});
+}
+
 // Track processed nodes to avoid double-processing
 let processedNodes = new WeakSet<Text>();
 
-// Store original text content for reveal functionality
-const originalTexts = new Map<Node, string>();
-
-/**
- * Remove entries for DOM nodes that are no longer connected to the document.
- * Prevents unbounded growth on infinite-scroll pages.
- */
-function pruneDetachedOriginals(): void {
-  for (const node of originalTexts.keys()) {
-    if (!node.isConnected) {
-      originalTexts.delete(node);
-    }
-  }
-}
+// Store original text content for reveal functionality.
+// WeakMap allows GC of detached nodes; companion Set enables iteration for reveal.
+let originalTexts = new WeakMap<Node, string>();
+const trackedOriginalNodes = new Set<Node>();
 
 /**
  * Filter a set of text nodes using the profanity engine via the Web Worker.
@@ -118,11 +128,6 @@ async function filterTextNodes(nodes: Text[]): Promise<number> {
 
   if (textsToProcess.length === 0) return 0;
 
-  // Prune detached nodes to prevent unbounded growth on infinite-scroll pages
-  if (originalTexts.size > 500) {
-    pruneDetachedOriginals();
-  }
-
   // Batch process through worker (or sync fallback)
   const results = await filterTextBatch(textsToProcess, sensitivity);
 
@@ -140,6 +145,7 @@ async function filterTextNodes(nodes: Text[]): Promise<number> {
       // Store original before any modification
       if (!originalTexts.has(node)) {
         originalTexts.set(node, textsToProcess[i]);
+        trackedOriginalNodes.add(node);
       }
 
       // Accumulate log entries (sent as single batch after loop)
@@ -210,34 +216,39 @@ async function filterTextNodes(nodes: Text[]): Promise<number> {
 function revealOriginals(): void {
   pauseObserver();
 
-  for (const [node, original] of originalTexts) {
+  // Build a parent→{node, original} index for O(1) link-restore lookups
+  const parentIndex = new Map<Node, { node: Node; original: string }>();
+
+  for (const node of trackedOriginalNodes) {
+    const original = originalTexts.get(node);
+    if (!original) continue; // GC'd — skip
+
     if (node.nodeType === Node.TEXT_NODE) {
       node.textContent = original;
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-      // For nodes that were replaced with fragments, handled via parent
       (node as Element).textContent = original;
+    }
+
+    // Index by parentNode (or node itself if detached) for link-restore
+    const parent = node.parentNode || node;
+    if (!parentIndex.has(parent)) {
+      parentIndex.set(parent, { node, original });
     }
   }
 
-  // Also restore nodes that were replaced with link fragments
-  // Find all pg-patrol links and restore their parent's original text
+  // Restore nodes that were replaced with link fragments — O(L) via index
   const links = document.querySelectorAll('a[data-pg-patrol-link]');
   for (const link of links) {
     const parent = link.parentNode;
-    if (parent) {
-      // Find original text for any child text node of this parent
-      for (const [node, original] of originalTexts) {
-        if (node.parentNode === parent || !node.parentNode) {
-          // Create a fresh text node with the original content
-          const textNode = document.createTextNode(original);
-          // Remove all children and replace with original text
-          while (parent.firstChild) {
-            parent.removeChild(parent.firstChild);
-          }
-          parent.appendChild(textNode);
-          break;
-        }
+    if (!parent) continue;
+
+    const entry = parentIndex.get(parent);
+    if (entry) {
+      const textNode = document.createTextNode(entry.original);
+      while (parent.firstChild) {
+        parent.removeChild(parent.firstChild);
       }
+      parent.appendChild(textNode);
     }
   }
 
@@ -249,7 +260,8 @@ function revealOriginals(): void {
  */
 async function refilterAll(): Promise<void> {
   revealOriginals();
-  originalTexts.clear();
+  originalTexts = new WeakMap<Node, string>();
+  trackedOriginalNodes.clear();
   processedNodes = new WeakSet<Text>();
   pageReplacementCount = 0;
   removeAllOverlays();
@@ -298,17 +310,12 @@ async function blockScan(root?: Node): Promise<void> {
         // Tier 0: Clear negative — block immediately
         applyOverlay(element, { category: result.matches?.[0]?.category });
         _hiddenBlockCount++;
-        chrome.runtime
-          .sendMessage({
-            type: MessageType.LOG_ACTIVITY,
-            data: {
-              type: 'block',
-              original: text.slice(0, 100),
-              category: result.matches?.[0]?.category,
-              timestamp: Date.now(),
-            },
-          })
-          .catch(() => {});
+        queueActivity({
+          type: 'block',
+          original: text.slice(0, 100),
+          category: result.matches?.[0]?.category,
+          timestamp: Date.now(),
+        });
       } else if (result.score > 0.015) {
         // Tier 1: Borderline — async ML classification
         classifyToxicity(text).then(async (mlResult) => {
@@ -326,17 +333,12 @@ async function blockScan(root?: Node): Promise<void> {
           if (shouldBlock) {
             applyOverlay(element, { category: result.matches?.[0]?.category });
             _hiddenBlockCount++;
-            chrome.runtime
-              .sendMessage({
-                type: MessageType.LOG_ACTIVITY,
-                data: {
-                  type: 'block',
-                  original: text.slice(0, 100),
-                  category: result.matches?.[0]?.category,
-                  timestamp: Date.now(),
-                },
-              })
-              .catch(() => {});
+            queueActivity({
+              type: 'block',
+              original: text.slice(0, 100),
+              category: result.matches?.[0]?.category,
+              timestamp: Date.now(),
+            });
             updateBadge();
           }
         });
@@ -347,17 +349,12 @@ async function blockScan(root?: Node): Promise<void> {
       if (result.isNegative) {
         applyOverlay(element, { category: result.matches?.[0]?.category });
         _hiddenBlockCount++;
-        chrome.runtime
-          .sendMessage({
-            type: MessageType.LOG_ACTIVITY,
-            data: {
-              type: 'block',
-              original: text.slice(0, 100),
-              category: result.matches?.[0]?.category,
-              timestamp: Date.now(),
-            },
-          })
-          .catch(() => {});
+        queueActivity({
+          type: 'block',
+          original: text.slice(0, 100),
+          category: result.matches?.[0]?.category,
+          timestamp: Date.now(),
+        });
       }
     }
   }
@@ -365,8 +362,12 @@ async function blockScan(root?: Node): Promise<void> {
 
 /**
  * Send replacement count to background for badge display.
+ * Trailing-edge throttled (500ms) to reduce IPC overhead on dynamic pages.
  */
-function updateBadge(): void {
+let badgeTimer: ReturnType<typeof setTimeout> | null = null;
+let badgePending = false;
+
+function sendBadgeMessage(): void {
   chrome.runtime
     .sendMessage({
       type: MessageType.UPDATE_STATS,
@@ -378,6 +379,21 @@ function updateBadge(): void {
     .catch(() => {
       // Background may not be ready
     });
+}
+
+function updateBadge(): void {
+  if (badgeTimer) {
+    badgePending = true;
+    return;
+  }
+  sendBadgeMessage();
+  badgeTimer = setTimeout(() => {
+    badgeTimer = null;
+    if (badgePending) {
+      badgePending = false;
+      sendBadgeMessage();
+    }
+  }, 500);
 }
 
 /**
@@ -528,10 +544,17 @@ async function initImageFiltering(): Promise<void> {
     hideScanProgress();
   });
 
-  // Show/update banner each time an image is hidden
-  onImageHidden((count) => {
+  // Show/update banner each time an image is hidden; also batch-log the activity
+  onImageHidden((count, source) => {
     showImageFilterBanner(count);
     updateBadge();
+    if (source) {
+      queueActivity({
+        type: 'image',
+        original: source.length > 100 ? source.slice(0, 97) + '...' : source,
+        timestamp: Date.now(),
+      });
+    }
   });
 
   // Scan existing images on the page

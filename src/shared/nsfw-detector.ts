@@ -21,7 +21,7 @@ function getSharedCanvas(): { canvas: HTMLCanvasElement; ctx: CanvasRenderingCon
     sharedCanvas = document.createElement('canvas');
     sharedCanvas.width = MODEL_INPUT_SIZE;
     sharedCanvas.height = MODEL_INPUT_SIZE;
-    sharedCtx = sharedCanvas.getContext('2d')!;
+    sharedCtx = sharedCanvas.getContext('2d', { willReadFrequently: true })!;
   }
   return { canvas: sharedCanvas, ctx: sharedCtx };
 }
