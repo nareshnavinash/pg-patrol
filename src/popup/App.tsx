@@ -86,7 +86,7 @@ export default function App() {
       />
 
       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-center">
-        <p className="text-xs text-gray-400">PG Patrol v1.0.0</p>
+        <p className="text-xs text-gray-400">PG Patrol v{chrome.runtime.getManifest().version}</p>
       </div>
 
       <Toast toast={toast} />

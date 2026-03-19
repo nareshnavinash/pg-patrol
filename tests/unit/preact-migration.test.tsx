@@ -96,7 +96,7 @@ describe('Preact migration — hooks', () => {
   it('App renders version footer', async () => {
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByText('PG Patrol v1.0.0')).toBeTruthy();
+      expect(screen.getByText('PG Patrol v1.5.0')).toBeTruthy();
     });
   });
 });

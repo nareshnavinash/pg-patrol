@@ -20,7 +20,7 @@ describe('App', () => {
   it('renders the version', async () => {
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByText('PG Patrol v1.0.0')).toBeInTheDocument();
+      expect(screen.getByText('PG Patrol v1.5.0')).toBeInTheDocument();
     });
   });
 
@@ -135,7 +135,7 @@ describe('App — onboarding', () => {
     });
 
     // Main UI should NOT be visible
-    expect(screen.queryByText('PG Patrol v1.0.0')).not.toBeInTheDocument();
+    expect(screen.queryByText('PG Patrol v1.5.0')).not.toBeInTheDocument();
   });
 
   it('renders main UI when hasSeenOnboarding is true', async () => {
@@ -145,7 +145,7 @@ describe('App — onboarding', () => {
 
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByText('PG Patrol v1.0.0')).toBeInTheDocument();
+      expect(screen.getByText('PG Patrol v1.5.0')).toBeInTheDocument();
     });
 
     expect(screen.queryByText('Welcome to PG Patrol')).not.toBeInTheDocument();

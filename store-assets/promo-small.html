@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=440, initial-scale=1.0">
+  <title>PG Patrol — Small Promo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 440px;
+      height: 280px;
+      overflow: hidden;
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #4f46e5 0%, #ec4899 50%, #f97316 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      position: relative;
+    }
+
+    /* Subtle pattern overlay */
+    body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 50%);
+    }
+
+    .logo {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      margin-bottom: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .tagline {
+      font-size: 18px;
+      font-weight: 800;
+      text-align: center;
+      line-height: 1.3;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      position: relative;
+      z-index: 1;
+      max-width: 340px;
+    }
+
+    .pills {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .pill {
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 50px;
+      padding: 5px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <img class="logo" src="../src/assets/icons/icon-128.png" alt="PG Patrol">
+  <div class="tagline">Let them explore.<br>We'll keep it clean.</div>
+  <div class="pills">
+    <span class="pill">Text Filter</span>
+    <span class="pill">Image AI</span>
+    <span class="pill">Good Vibes</span>
+  </div>
+</body>
+</html>

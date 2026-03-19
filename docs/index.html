@@ -261,14 +261,77 @@
     .privacy-badge h3 { font-size: 1.5rem; font-weight: 900; color: #065f46; margin-bottom: 8px; }
     .privacy-badge p { color: #047857; font-size: 1rem; max-width: 500px; margin: 0 auto; }
 
-    /* Demo section */
-    .demo-wrap {
-      text-align: center; max-width: 800px; margin: 0 auto;
+    /* Invisible Protection section */
+    .invisible-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+      max-width: 800px; margin: 0 auto 40px;
     }
-    .demo-media {
-      width: 100%; border-radius: 16px;
+    .invisible-card {
+      border-radius: var(--radius); padding: 32px 28px;
+      box-shadow: var(--shadow);
+    }
+    .invisible-card.card-red {
+      background: linear-gradient(135deg, #fef2f2, #fee2e2);
+      border: 2px solid #fca5a5;
+    }
+    .invisible-card.card-green {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border: 2px solid #86efac;
+    }
+    .invisible-card h3 {
+      font-size: 1.15rem; font-weight: 800; margin-bottom: 16px;
+    }
+    .invisible-card.card-red h3 { color: #991b1b; }
+    .invisible-card.card-green h3 { color: #166534; }
+    .invisible-card ul {
+      list-style: none; display: flex; flex-direction: column; gap: 10px;
+    }
+    .invisible-card li {
+      font-size: 0.92rem; line-height: 1.4;
+      display: flex; align-items: flex-start; gap: 8px;
+    }
+    .invisible-card.card-red li::before {
+      content: '\2717'; color: #dc2626; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .invisible-card.card-green li::before {
+      content: '\2713'; color: #16a34a; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .invisible-card.card-red li { color: #7f1d1d; }
+    .invisible-card.card-green li { color: #14532d; }
+
+    .invisible-img {
+      display: block; max-width: 900px; width: 100%; margin: 0 auto;
+      border-radius: 16px;
       box-shadow: 0 12px 48px rgba(0,0,0,0.15);
       border: 3px solid rgba(99,102,241,0.2);
+    }
+
+    /* Screenshot Gallery */
+    .gallery-track {
+      display: flex; gap: 24px;
+      overflow-x: auto; scroll-snap-type: x mandatory;
+      padding: 8px 0 24px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .gallery-track::-webkit-scrollbar { height: 8px; }
+    .gallery-track::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
+    .gallery-track::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 4px; }
+    .gallery-track::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.5); }
+
+    .gallery-item {
+      flex: 0 0 auto; width: 520px; scroll-snap-align: center;
+    }
+    .gallery-item img {
+      width: 100%; border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      border: 2px solid rgba(99,102,241,0.15);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .gallery-item img:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.2); }
+    .gallery-caption {
+      text-align: center; margin-top: 12px;
+      font-size: 0.92rem; font-weight: 700; color: var(--text-muted);
     }
 
     /* Install CTA */
@@ -310,6 +373,8 @@
       .feature-grid { grid-template-columns: 1fr 1fr; }
       .compare-table th, .compare-table td { padding: 10px 14px; font-size: 0.85rem; }
       .install-section { margin: 0 16px; padding: 40px 24px; }
+      .invisible-grid { grid-template-columns: 1fr; }
+      .gallery-item { width: 85vw; }
     }
     @media (max-width: 480px) {
       .feature-grid { grid-template-columns: 1fr; }
@@ -335,6 +400,7 @@
       <a href="#how-it-works">How It Works</a>
       <a href="#features">Features</a>
       <a href="#privacy">Privacy</a>
+      <a href="#invisible">Why It Works</a>
       <a href="#install" class="nav-cta">Install Free</a>
     </div>
   </nav>
@@ -514,13 +580,68 @@
     </div>
   </section>
 
-  <!-- Demo -->
+  <!-- Invisible Protection -->
+  <section class="section" id="invisible">
+    <div class="container">
+      <h2 class="section-title">Invisible Protection</h2>
+      <p class="section-subtitle">Other filters block pages and spike curiosity. PG Patrol replaces content silently — kids never know it's there.</p>
+
+      <div class="invisible-grid">
+        <div class="invisible-card card-red">
+          <h3>Typical Content Filters</h3>
+          <ul>
+            <li>Big red "ACCESS RESTRICTED" banners</li>
+            <li>Age verification walls on every page</li>
+            <li>"5 items blocked" toast notifications</li>
+            <li>Kids think: "What's behind that?"</li>
+          </ul>
+        </div>
+        <div class="invisible-card card-green">
+          <h3>PG Patrol</h3>
+          <ul>
+            <li>Profanity becomes funny words seamlessly</li>
+            <li>NSFW images become cute animals</li>
+            <li>Pages look completely natural</li>
+            <li>Kids think: "Just a normal page"</li>
+          </ul>
+        </div>
+      </div>
+
+      <img src="screenshots/06-invisible-protection.png" alt="Side-by-side comparison: typical content filters show blocking warnings while PG Patrol shows a clean, natural page" class="invisible-img" loading="lazy">
+    </div>
+  </section>
+
+  <!-- Screenshot Gallery -->
   <section class="section" id="demo">
     <div class="container">
       <h2 class="section-title">See It in Action</h2>
-      <p class="section-subtitle">Watch PG Patrol clean up a page in real-time.</p>
-      <div class="demo-wrap">
-        <img src="banner.gif" alt="PG Patrol demo showing profanity being replaced and images being blocked" class="demo-media" loading="lazy">
+      <p class="section-subtitle">Browse through PG Patrol's features in action.</p>
+
+      <div class="gallery-track">
+        <div class="gallery-item">
+          <img src="screenshots/01-before-after-text.png" alt="Text filtering: before and after comparison" loading="lazy">
+          <div class="gallery-caption">Text Filtering: Before &amp; After</div>
+        </div>
+        <div class="gallery-item">
+          <img src="screenshots/03-nsfw-image-blocking.png" alt="NSFW images replaced with cute animals" loading="lazy">
+          <div class="gallery-caption">NSFW Images Replaced with Cute Animals</div>
+        </div>
+        <div class="gallery-item">
+          <img src="screenshots/06-invisible-protection.png" alt="Invisible protection: no blocks, no warnings" loading="lazy">
+          <div class="gallery-caption">Invisible Protection: No Blocks, No Warnings</div>
+        </div>
+        <div class="gallery-item">
+          <img src="screenshots/04-good-vibes-mode.png" alt="Good Vibes Mode softens distressing content" loading="lazy">
+          <div class="gallery-caption">Good Vibes Mode Softens Distressing Content</div>
+        </div>
+        <div class="gallery-item">
+          <img src="screenshots/02-text-filtering-popup.png" alt="Popup dashboard with live stats" loading="lazy">
+          <div class="gallery-caption">Popup Dashboard with Live Stats</div>
+        </div>
+        <div class="gallery-item">
+          <img src="screenshots/05-settings-sensitivity.png" alt="Customizable settings and sensitivity levels" loading="lazy">
+          <div class="gallery-caption">Customizable Settings &amp; Sensitivity</div>
+        </div>
       </div>
     </div>
   </section>

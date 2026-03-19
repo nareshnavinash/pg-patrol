@@ -38,6 +38,7 @@ const mockChrome = {
       removeListener: jest.fn(),
     },
     getURL: jest.fn((path: string) => `chrome-extension://test-id/${path}`),
+    getManifest: jest.fn(() => ({ version: '1.5.0' })),
     onInstalled: {
       addListener: jest.fn(),
     },
